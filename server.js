@@ -37,6 +37,23 @@ let recipes = [
       fiber: "3g",
     },
     tags: ["pasta", "quick", "comfort food"],
+    allergens: ["eggs", "dairy"],
+    dietaryInfo: {
+      vegetarian: false,
+      vegan: false,
+      glutenFree: false,
+      dairyFree: false,
+    },
+    matchableIngredients: [
+      "spaghetti",
+      "pasta",
+      "eggs",
+      "bacon",
+      "parmesan",
+      "cheese",
+      "black pepper",
+      "salt",
+    ],
   },
   {
     id: 2,
