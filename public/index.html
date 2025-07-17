@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipe Bot</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1 class="title">🍳 Recipe Bot</h1>
+        <p class="subtitle">Discover delicious recipes!</p>
+      </header>
+
+      <main class="main-content">
+        <div class="recipe-search">
+          <input
+            type="text"
+            id="searchInput"
+            class="search-input"
+            placeholder="Search for recipes..."
+          />
+          <button id="searchBtn" class="search-button">Search</button>
+        </div>
+
+        <div class="recipe-grid" id="recipeGrid">
+          <!-- Recipes will be loaded here -->
+        </div>
+
+        <div class="recipe-detail" id="recipeDetail" style="display: none">
+          <button id="backBtn" class="back-button">← Back to Recipes</button>
+          <div id="recipeContent"></div>
+        </div>
+      </main>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
