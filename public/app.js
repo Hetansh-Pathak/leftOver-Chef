@@ -200,6 +200,8 @@ class RecipeBot {
       this.displayFavorites();
     } else if (tabName === "browse") {
       this.displayRecipes();
+    } else if (tabName === "generator") {
+      this.loadGeneratorStats();
     }
   }
 
