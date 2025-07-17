@@ -365,6 +365,9 @@ class RecipeBot {
   async showRecipeDetail(recipeId) {
     try {
       const response = await fetch(`/api/recipes/${recipeId}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const recipe = await response.json();
 
       const isFavorite = this.favoriteRecipes.some(
@@ -498,6 +501,9 @@ class RecipeBot {
       const response = await fetch(`/api/recipes/${recipeId}/favorite`, {
         method: "POST",
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const result = await response.json();
 
       // Refresh favorites list
@@ -531,6 +537,9 @@ class RecipeBot {
         },
         body: JSON.stringify({ rating }),
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
       if (response.ok) {
         // Refresh recipes
@@ -583,6 +592,9 @@ class RecipeBot {
         },
         body: JSON.stringify(formData),
       });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
 
       if (response.ok) {
         alert("Recipe added successfully!");
