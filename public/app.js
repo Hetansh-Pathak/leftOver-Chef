@@ -149,6 +149,41 @@ class RecipeBot {
         this.clearFilters();
       });
 
+    // Smart Recipe Finder controls
+    document
+      .getElementById("addIngredientBtn")
+      .addEventListener("click", () => this.addIngredient());
+    document
+      .getElementById("ingredientInput")
+      .addEventListener("keypress", (e) => {
+        if (e.key === "Enter") this.addIngredient();
+      });
+    document
+      .getElementById("findRecipesBtn")
+      .addEventListener("click", () => this.findSmartRecipes());
+    document
+      .getElementById("clearFinderBtn")
+      .addEventListener("click", () => this.clearSmartFinder());
+
+    // Nutrition sliders
+    document.getElementById("maxCalories").addEventListener("input", (e) => {
+      document.getElementById("caloriesValue").textContent = e.target.value;
+    });
+    document.getElementById("minProtein").addEventListener("input", (e) => {
+      document.getElementById("proteinValue").textContent = e.target.value;
+    });
+    document.getElementById("maxCarbs").addEventListener("input", (e) => {
+      document.getElementById("carbsValue").textContent = e.target.value;
+    });
+
+    // Quick ingredient suggestions
+    document.querySelectorAll(".suggestion-tag").forEach((tag) => {
+      tag.addEventListener("click", (e) => {
+        const ingredient = e.target.dataset.ingredient;
+        this.addIngredientFromSuggestion(ingredient);
+      });
+    });
+
     // Modal controls
     document
       .getElementById("closeModal")
