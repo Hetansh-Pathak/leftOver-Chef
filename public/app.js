@@ -10,6 +10,7 @@ class RecipeBot {
     };
     this.currentSort = "name";
     this.currentTab = "browse";
+    this.selectedIngredients = [];
     this.timer = {
       interval: null,
       timeLeft: 0,
