@@ -50,6 +50,281 @@
       </nav>
 
       <main class="main-content">
+        <!-- Smart Recipe Finder Tab -->
+        <div class="tab-content" id="smart-finder-tab">
+          <h2 class="section-title">
+            <i class="fas fa-brain text-purple"></i> Smart Recipe Finder
+          </h2>
+          <p class="finder-description">
+            Enter the ingredients you have at home, and we'll find the perfect
+            recipes for you! Set your dietary preferences and allergen
+            restrictions for personalized results.
+          </p>
+
+          <!-- Ingredient Input Section -->
+          <div class="ingredients-input-section">
+            <h3 class="subsection-title">
+              <i class="fas fa-carrot"></i> What ingredients do you have?
+            </h3>
+            <div class="ingredient-input-container">
+              <div class="ingredient-tags" id="selectedIngredients">
+                <!-- Selected ingredients will appear here -->
+              </div>
+              <div class="ingredient-input-row">
+                <input
+                  type="text"
+                  id="ingredientInput"
+                  class="ingredient-input"
+                  placeholder="Type an ingredient (e.g., roti, chicken, tomatoes)..."
+                  autocomplete="off"
+                />
+                <button id="addIngredientBtn" class="add-ingredient-btn">
+                  <i class="fas fa-plus"></i> Add
+                </button>
+              </div>
+              <div class="ingredient-suggestions" id="ingredientSuggestions">
+                <!-- Ingredient suggestions will appear here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dietary Preferences Section -->
+          <div class="dietary-preferences-section">
+            <h3 class="subsection-title">
+              <i class="fas fa-leaf"></i> Dietary Preferences & Restrictions
+            </h3>
+            <div class="preferences-grid">
+              <div class="preference-group">
+                <h4>Diet Type</h4>
+                <div class="checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="vegetarian" value="vegetarian" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-seedling"></i> Vegetarian
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="vegan" value="vegan" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-leaf"></i> Vegan
+                  </label>
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      id="gluten-free"
+                      value="gluten-free"
+                    />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-wheat"></i> Gluten-Free
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="dairy-free" value="dairy-free" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-cow"></i> Dairy-Free
+                  </label>
+                </div>
+              </div>
+
+              <div class="preference-group">
+                <h4>Allergen Warnings</h4>
+                <div class="checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="no-nuts" value="nuts" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-exclamation-triangle"></i> No Nuts
+                  </label>
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      id="no-shellfish"
+                      value="shellfish"
+                    />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-fish"></i> No Shellfish
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="no-eggs" value="eggs" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-egg"></i> No Eggs
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="no-soy" value="soy" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-seedling"></i> No Soy
+                  </label>
+                </div>
+              </div>
+
+              <div class="preference-group">
+                <h4>Nutrition Goals</h4>
+                <div class="nutrition-sliders">
+                  <div class="slider-group">
+                    <label for="maxCalories"
+                      >Max Calories: <span id="caloriesValue">800</span></label
+                    >
+                    <input
+                      type="range"
+                      id="maxCalories"
+                      min="200"
+                      max="1000"
+                      value="800"
+                      class="nutrition-slider"
+                    />
+                  </div>
+                  <div class="slider-group">
+                    <label for="minProtein"
+                      >Min Protein: <span id="proteinValue">20</span>g</label
+                    >
+                    <input
+                      type="range"
+                      id="minProtein"
+                      min="5"
+                      max="50"
+                      value="20"
+                      class="nutrition-slider"
+                    />
+                  </div>
+                  <div class="slider-group">
+                    <label for="maxCarbs"
+                      >Max Carbs: <span id="carbsValue">60</span>g</label
+                    >
+                    <input
+                      type="range"
+                      id="maxCarbs"
+                      min="10"
+                      max="100"
+                      value="60"
+                      class="nutrition-slider"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Controls -->
+          <div class="smart-search-controls">
+            <div class="search-options">
+              <label for="matchType">Ingredient Matching:</label>
+              <select id="matchType" class="match-select">
+                <option value="any">Match ANY ingredient (more results)</option>
+                <option value="all">
+                  Match ALL ingredients (exact matches)
+                </option>
+                <option value="most">
+                  Match MOST ingredients (recommended)
+                </option>
+              </select>
+            </div>
+            <div class="search-buttons">
+              <button id="findRecipesBtn" class="find-recipes-btn">
+                <i class="fas fa-search"></i>
+                Find Recipes
+              </button>
+              <button id="clearFinderBtn" class="clear-finder-btn">
+                <i class="fas fa-broom"></i>
+                Clear All
+              </button>
+            </div>
+          </div>
+
+          <!-- Results Section -->
+          <div
+            class="smart-results-section"
+            id="smartResults"
+            style="display: none"
+          >
+            <div class="results-header">
+              <h3 class="results-title">
+                <i class="fas fa-utensils"></i>
+                Found <span id="resultsCount">0</span> Recipes
+              </h3>
+              <div class="results-sort">
+                <label for="smartSort">Sort by:</label>
+                <select id="smartSort" class="sort-select">
+                  <option value="match">Best Match</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="calories">Lowest Calories</option>
+                  <option value="protein">Highest Protein</option>
+                  <option value="time">Shortest Cook Time</option>
+                </select>
+              </div>
+            </div>
+            <div class="smart-recipe-grid" id="smartRecipeGrid">
+              <!-- Smart recipe results will appear here -->
+            </div>
+          </div>
+
+          <!-- Quick Ingredient Suggestions -->
+          <div class="quick-suggestions">
+            <h3 class="subsection-title">
+              <i class="fas fa-lightbulb"></i> Quick Ingredient Ideas
+            </h3>
+            <div class="suggestion-categories">
+              <div class="suggestion-category">
+                <h4>Indian Staples</h4>
+                <div class="suggestion-tags">
+                  <span class="suggestion-tag" data-ingredient="roti"
+                    >roti</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="rice"
+                    >rice</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="dal">dal</span>
+                  <span class="suggestion-tag" data-ingredient="paneer"
+                    >paneer</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="chapati"
+                    >chapati</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="curry leaves"
+                    >curry leaves</span
+                  >
+                </div>
+              </div>
+              <div class="suggestion-category">
+                <h4>Common Proteins</h4>
+                <div class="suggestion-tags">
+                  <span class="suggestion-tag" data-ingredient="chicken"
+                    >chicken</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="mutton"
+                    >mutton</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="fish"
+                    >fish</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="eggs"
+                    >eggs</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="tofu"
+                    >tofu</span
+                  >
+                </div>
+              </div>
+              <div class="suggestion-category">
+                <h4>Fresh Vegetables</h4>
+                <div class="suggestion-tags">
+                  <span class="suggestion-tag" data-ingredient="tomatoes"
+                    >tomatoes</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="onions"
+                    >onions</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="potatoes"
+                    >potatoes</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="spinach"
+                    >spinach</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="bell peppers"
+                    >bell peppers</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Browse Recipes Tab -->
         <div class="tab-content active" id="browse-tab">
           <!-- Filters -->
