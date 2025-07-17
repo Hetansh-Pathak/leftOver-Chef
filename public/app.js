@@ -41,6 +41,9 @@ class RecipeBot {
   async loadFavorites() {
     try {
       const response = await fetch("/api/favorites");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       this.favoriteRecipes = await response.json();
     } catch (error) {
       console.error("Error loading favorites:", error);
@@ -51,6 +54,9 @@ class RecipeBot {
   async loadFilters() {
     try {
       const response = await fetch("/api/filters");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const filters = await response.json();
 
       this.populateFilterOptions("categoryFilter", filters.categories);
@@ -63,6 +69,9 @@ class RecipeBot {
   async loadDailyRecipe() {
     try {
       const response = await fetch("/api/recipe-of-the-day");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const dailyRecipe = await response.json();
       this.displayDailyRecipe(dailyRecipe);
     } catch (error) {
