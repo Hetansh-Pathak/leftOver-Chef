@@ -888,6 +888,259 @@ class RecipeBot {
       }
     }
   }
+
+  // Smart Recipe Finder Methods
+  addIngredient() {
+    const input = document.getElementById("ingredientInput");
+    const ingredient = input.value.trim().toLowerCase();
+
+    if (ingredient && !this.selectedIngredients.includes(ingredient)) {
+      this.selectedIngredients = this.selectedIngredients || [];
+      this.selectedIngredients.push(ingredient);
+      this.updateIngredientTags();
+      input.value = "";
+    }
+  }
+
+  addIngredientFromSuggestion(ingredient) {
+    if (!this.selectedIngredients.includes(ingredient.toLowerCase())) {
+      this.selectedIngredients = this.selectedIngredients || [];
+      this.selectedIngredients.push(ingredient.toLowerCase());
+      this.updateIngredientTags();
+    }
+  }
+
+  removeIngredient(ingredient) {
+    this.selectedIngredients = this.selectedIngredients.filter(
+      (ing) => ing !== ingredient,
+    );
+    this.updateIngredientTags();
+  }
+
+  updateIngredientTags() {
+    const container = document.getElementById("selectedIngredients");
+    container.innerHTML = this.selectedIngredients
+      .map(
+        (ingredient) => `
+      <div class="ingredient-tag">
+        <span>${ingredient}</span>
+        <button class="remove-ingredient" onclick="recipeBot.removeIngredient('${ingredient}')">×</button>
+      </div>
+    `,
+      )
+      .join("");
+  }
+
+  async findSmartRecipes() {
+    if (!this.selectedIngredients || this.selectedIngredients.length === 0) {
+      alert("Please add at least one ingredient to search for recipes.");
+      return;
+    }
+
+    const findBtn = document.getElementById("findRecipesBtn");
+    findBtn.disabled = true;
+    findBtn.innerHTML =
+      '<i class="fas fa-spinner fa-spin"></i> Finding Recipes...';
+
+    try {
+      // Gather search criteria
+      const criteria = {
+        ingredients: this.selectedIngredients,
+        matchType: document.getElementById("matchType").value,
+        dietaryRestrictions: {
+          vegetarian: document.getElementById("vegetarian").checked,
+          vegan: document.getElementById("vegan").checked,
+          glutenFree: document.getElementById("gluten-free").checked,
+          dairyFree: document.getElementById("dairy-free").checked,
+        },
+        allergenAvoidance: [
+          document.getElementById("no-nuts").checked && "nuts",
+          document.getElementById("no-shellfish").checked && "shellfish",
+          document.getElementById("no-eggs").checked && "eggs",
+          document.getElementById("no-soy").checked && "soy",
+        ].filter(Boolean),
+        nutritionGoals: {
+          maxCalories: parseInt(document.getElementById("maxCalories").value),
+          minProtein: parseInt(document.getElementById("minProtein").value),
+          maxCarbs: parseInt(document.getElementById("maxCarbs").value),
+        },
+      };
+
+      const response = await fetch("/api/find-recipes", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(criteria),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result = await response.json();
+      this.displaySmartResults(result);
+    } catch (error) {
+      console.error("Error finding recipes:", error);
+      alert("Error finding recipes. Please try again.");
+    } finally {
+      findBtn.disabled = false;
+      findBtn.innerHTML = '<i class="fas fa-search"></i> Find Recipes';
+    }
+  }
+
+  displaySmartResults(result) {
+    const resultsSection = document.getElementById("smartResults");
+    const resultsCount = document.getElementById("resultsCount");
+    const resultsGrid = document.getElementById("smartRecipeGrid");
+
+    resultsCount.textContent = result.totalFound;
+    resultsSection.style.display = "block";
+
+    if (result.recipes.length === 0) {
+      resultsGrid.innerHTML = `
+        <div class="no-results">
+          <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.3;"></i>
+          <h3>No recipes found</h3>
+          <p>Try adjusting your ingredients or search criteria</p>
+        </div>
+      `;
+      return;
+    }
+
+    resultsGrid.innerHTML = result.recipes
+      .map((recipe) => this.createSmartRecipeCard(recipe))
+      .join("");
+  }
+
+  createSmartRecipeCard(recipe) {
+    const matchPercentage = Math.round(recipe.matchScore * 100);
+    let matchClass = "partial";
+    let matchText = `${matchPercentage}% Match`;
+
+    if (recipe.matchScore >= 0.8) {
+      matchClass = "perfect";
+      matchText = "Perfect Match!";
+    } else if (recipe.matchScore >= 0.6) {
+      matchClass = "good";
+      matchText = "Great Match";
+    }
+
+    const stars =
+      "★".repeat(Math.floor(recipe.rating)) +
+      "☆".repeat(5 - Math.floor(recipe.rating));
+    const isFavorite = this.favoriteRecipes.some((fav) => fav.id === recipe.id);
+
+    return `
+      <div class="smart-recipe-card ${matchClass}-match" onclick="recipeBot.showRecipeDetail(${recipe.id})">
+        <div class="match-indicator ${matchClass}">${matchText}</div>
+        <img src="${recipe.image}" alt="${recipe.name}" class="recipe-image" onerror="this.src='https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400'">
+
+        <div class="recipe-card-content">
+          <div class="recipe-card-header">
+            <h3 class="recipe-name">${recipe.name}</h3>
+            <button class="favorite-btn ${isFavorite ? "favorited" : ""}" onclick="event.stopPropagation(); recipeBot.toggleFavorite(${recipe.id})">
+              <i class="fas fa-heart"></i>
+            </button>
+          </div>
+
+          <div class="recipe-rating">
+            <span class="stars">${stars}</span>
+            <span class="rating-value">${recipe.rating}</span>
+          </div>
+
+          <div class="recipe-meta">
+            <span class="recipe-category">${recipe.category}</span>
+            <span class="recipe-difficulty ${recipe.difficulty}">${recipe.difficulty}</span>
+          </div>
+
+          <div class="ingredient-matches">
+            <h5>✅ You have: ${recipe.matchedIngredients.length} ingredients</h5>
+            <div class="matched-ingredients">
+              ${recipe.matchedIngredients.map((ing) => `<span class="matched-ingredient">${ing}</span>`).join("")}
+            </div>
+            ${
+              recipe.missingIngredients.length > 0
+                ? `
+              <div class="missing-ingredients">
+                <h5>🛒 You'll need: ${recipe.missingIngredients.length} more</h5>
+                <div class="matched-ingredients">
+                  ${recipe.missingIngredients.map((ing) => `<span class="missing-ingredient">${ing}</span>`).join("")}
+                </div>
+              </div>
+            `
+                : ""
+            }
+          </div>
+
+          <div class="nutrition-highlight">
+            <div class="nutrition-grid-small">
+              <div class="nutrition-item-small">
+                <div class="nutrition-value-small">${recipe.calories}</div>
+                <div class="nutrition-label-small">Calories</div>
+              </div>
+              <div class="nutrition-item-small">
+                <div class="nutrition-value-small">${recipe.nutrition.protein}</div>
+                <div class="nutrition-label-small">Protein</div>
+              </div>
+              <div class="nutrition-item-small">
+                <div class="nutrition-value-small">${recipe.nutrition.carbs}</div>
+                <div class="nutrition-label-small">Carbs</div>
+              </div>
+              <div class="nutrition-item-small">
+                <div class="nutrition-value-small">${recipe.nutrition.fat}</div>
+                <div class="nutrition-label-small">Fat</div>
+              </div>
+            </div>
+          </div>
+
+          ${
+            recipe.allergens && recipe.allergens.length > 0
+              ? `
+            <div class="allergen-warnings">
+              <h5>⚠️ Contains Allergens</h5>
+              <div class="allergen-list">
+                ${recipe.allergens.map((allergen) => `<span class="allergen-tag">${allergen}</span>`).join("")}
+              </div>
+            </div>
+          `
+              : ""
+          }
+
+          <div class="recipe-times">
+            <span><i class="fas fa-clock"></i> ${recipe.prepTime}</span>
+            <span><i class="fas fa-fire"></i> ${recipe.cookTime}</span>
+            <span><i class="fas fa-users"></i> ${recipe.servings}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  clearSmartFinder() {
+    this.selectedIngredients = [];
+    this.updateIngredientTags();
+    document.getElementById("ingredientInput").value = "";
+    document.getElementById("smartResults").style.display = "none";
+
+    // Reset checkboxes
+    document
+      .querySelectorAll('#smart-finder-tab input[type="checkbox"]')
+      .forEach((checkbox) => {
+        checkbox.checked = false;
+      });
+
+    // Reset sliders
+    document.getElementById("maxCalories").value = 800;
+    document.getElementById("minProtein").value = 20;
+    document.getElementById("maxCarbs").value = 60;
+    document.getElementById("caloriesValue").textContent = "800";
+    document.getElementById("proteinValue").textContent = "20";
+    document.getElementById("carbsValue").textContent = "60";
+
+    // Reset match type
+    document.getElementById("matchType").value = "any";
+  }
 }
 
 // Initialize the app
