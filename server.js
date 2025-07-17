@@ -175,11 +175,7 @@ const categories = [...new Set(recipes.map((recipe) => recipe.category))];
 const difficulties = [...new Set(recipes.map((recipe) => recipe.difficulty))];
 const tags = [...new Set(recipes.flatMap((recipe) => recipe.tags))];
 
-// Routes
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "index.html"));
-});
-
+// API Routes
 app.get("/api/recipes", (req, res) => {
   res.json(recipes);
 });
