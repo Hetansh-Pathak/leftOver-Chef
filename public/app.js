@@ -135,6 +135,20 @@ class RecipeBot {
       this.addNewRecipe();
     });
 
+    // Recipe generator controls
+    document
+      .getElementById("generateRecipesBtn")
+      .addEventListener("click", () => this.generateRecipes());
+    document
+      .getElementById("clearAllRecipesBtn")
+      .addEventListener("click", () => this.clearGeneratedRecipes());
+    document
+      .getElementById("viewGeneratedBtn")
+      .addEventListener("click", () => {
+        this.switchTab("browse");
+        this.clearFilters();
+      });
+
     // Modal controls
     document
       .getElementById("closeModal")
