@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipe Bot - Advanced Cooking Assistant</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <div class="container">
+      <header class="header">
+        <h1 class="title">🍳 Recipe Bot</h1>
+        <p class="subtitle">Your Advanced Cooking Assistant</p>
+        <div class="header-stats">
+          <span class="stat-item">
+            <i class="fas fa-utensils"></i>
+            <span id="totalRecipes">0</span> Recipes
+          </span>
+          <span class="stat-item">
+            <i class="fas fa-heart"></i>
+            <span id="totalFavorites">0</span> Favorites
+          </span>
+        </div>
+      </header>
+
+      <!-- Navigation Tabs -->
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="browse">
+          <i class="fas fa-search"></i> Browse Recipes
+        </button>
+        <button class="nav-tab" data-tab="smart-finder">
+          <i class="fas fa-brain"></i> Smart Finder
+        </button>
+        <button class="nav-tab" data-tab="favorites">
+          <i class="fas fa-heart"></i> Favorites
+        </button>
+        <button class="nav-tab" data-tab="add">
+          <i class="fas fa-plus"></i> Add Recipe
+        </button>
+        <button class="nav-tab" data-tab="generator">
+          <i class="fas fa-magic"></i> Recipe Generator
+        </button>
+        <button class="nav-tab" data-tab="daily">
+          <i class="fas fa-star"></i> Recipe of the Day
+        </button>
+      </nav>
+
+      <main class="main-content">
+        <!-- Smart Recipe Finder Tab -->
+        <div class="tab-content" id="smart-finder-tab">
+          <h2 class="section-title">
+            <i class="fas fa-brain text-purple"></i> Smart Recipe Finder
+          </h2>
+          <p class="finder-description">
+            Enter the ingredients you have at home, and we'll find the perfect
+            recipes for you! Set your dietary preferences and allergen
+            restrictions for personalized results.
+          </p>
+
+          <!-- Ingredient Input Section -->
+          <div class="ingredients-input-section">
+            <h3 class="subsection-title">
+              <i class="fas fa-carrot"></i> What ingredients do you have?
+            </h3>
+            <div class="ingredient-input-container">
+              <div class="ingredient-tags" id="selectedIngredients">
+                <!-- Selected ingredients will appear here -->
+              </div>
+              <div class="ingredient-input-row">
+                <input
+                  type="text"
+                  id="ingredientInput"
+                  class="ingredient-input"
+                  placeholder="Type an ingredient (e.g., roti, chicken, tomatoes)..."
+                  autocomplete="off"
+                />
+                <button id="addIngredientBtn" class="add-ingredient-btn">
+                  <i class="fas fa-plus"></i> Add
+                </button>
+              </div>
+              <div class="ingredient-suggestions" id="ingredientSuggestions">
+                <!-- Ingredient suggestions will appear here -->
+              </div>
+            </div>
+          </div>
+
+          <!-- Dietary Preferences Section -->
+          <div class="dietary-preferences-section">
+            <h3 class="subsection-title">
+              <i class="fas fa-leaf"></i> Dietary Preferences & Restrictions
+            </h3>
+            <div class="preferences-grid">
+              <div class="preference-group">
+                <h4>Diet Type</h4>
+                <div class="checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="vegetarian" value="vegetarian" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-seedling"></i> Vegetarian
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="vegan" value="vegan" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-leaf"></i> Vegan
+                  </label>
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      id="gluten-free"
+                      value="gluten-free"
+                    />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-wheat"></i> Gluten-Free
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="dairy-free" value="dairy-free" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-cow"></i> Dairy-Free
+                  </label>
+                </div>
+              </div>
+
+              <div class="preference-group">
+                <h4>Allergen Warnings</h4>
+                <div class="checkbox-group">
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="no-nuts" value="nuts" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-exclamation-triangle"></i> No Nuts
+                  </label>
+                  <label class="checkbox-label">
+                    <input
+                      type="checkbox"
+                      id="no-shellfish"
+                      value="shellfish"
+                    />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-fish"></i> No Shellfish
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="no-eggs" value="eggs" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-egg"></i> No Eggs
+                  </label>
+                  <label class="checkbox-label">
+                    <input type="checkbox" id="no-soy" value="soy" />
+                    <span class="checkmark"></span>
+                    <i class="fas fa-seedling"></i> No Soy
+                  </label>
+                </div>
+              </div>
+
+              <div class="preference-group">
+                <h4>Nutrition Goals</h4>
+                <div class="nutrition-sliders">
+                  <div class="slider-group">
+                    <label for="maxCalories"
+                      >Max Calories: <span id="caloriesValue">800</span></label
+                    >
+                    <input
+                      type="range"
+                      id="maxCalories"
+                      min="200"
+                      max="1000"
+                      value="800"
+                      class="nutrition-slider"
+                    />
+                  </div>
+                  <div class="slider-group">
+                    <label for="minProtein"
+                      >Min Protein: <span id="proteinValue">20</span>g</label
+                    >
+                    <input
+                      type="range"
+                      id="minProtein"
+                      min="5"
+                      max="50"
+                      value="20"
+                      class="nutrition-slider"
+                    />
+                  </div>
+                  <div class="slider-group">
+                    <label for="maxCarbs"
+                      >Max Carbs: <span id="carbsValue">60</span>g</label
+                    >
+                    <input
+                      type="range"
+                      id="maxCarbs"
+                      min="10"
+                      max="100"
+                      value="60"
+                      class="nutrition-slider"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Search Controls -->
+          <div class="smart-search-controls">
+            <div class="search-options">
+              <label for="matchType">Ingredient Matching:</label>
+              <select id="matchType" class="match-select">
+                <option value="any">Match ANY ingredient (more results)</option>
+                <option value="all">
+                  Match ALL ingredients (exact matches)
+                </option>
+                <option value="most">
+                  Match MOST ingredients (recommended)
+                </option>
+              </select>
+            </div>
+            <div class="search-buttons">
+              <button id="findRecipesBtn" class="find-recipes-btn">
+                <i class="fas fa-search"></i>
+                Find Recipes
+              </button>
+              <button id="clearFinderBtn" class="clear-finder-btn">
+                <i class="fas fa-broom"></i>
+                Clear All
+              </button>
+            </div>
+          </div>
+
+          <!-- Results Section -->
+          <div
+            class="smart-results-section"
+            id="smartResults"
+            style="display: none"
+          >
+            <div class="results-header">
+              <h3 class="results-title">
+                <i class="fas fa-utensils"></i>
+                Found <span id="resultsCount">0</span> Recipes
+              </h3>
+              <div class="results-sort">
+                <label for="smartSort">Sort by:</label>
+                <select id="smartSort" class="sort-select">
+                  <option value="match">Best Match</option>
+                  <option value="rating">Highest Rated</option>
+                  <option value="calories">Lowest Calories</option>
+                  <option value="protein">Highest Protein</option>
+                  <option value="time">Shortest Cook Time</option>
+                </select>
+              </div>
+            </div>
+            <div class="smart-recipe-grid" id="smartRecipeGrid">
+              <!-- Smart recipe results will appear here -->
+            </div>
+          </div>
+
+          <!-- Quick Ingredient Suggestions -->
+          <div class="quick-suggestions">
+            <h3 class="subsection-title">
+              <i class="fas fa-lightbulb"></i> Quick Ingredient Ideas
+            </h3>
+            <div class="suggestion-categories">
+              <div class="suggestion-category">
+                <h4>Indian Staples</h4>
+                <div class="suggestion-tags">
+                  <span class="suggestion-tag" data-ingredient="roti"
+                    >roti</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="rice"
+                    >rice</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="dal">dal</span>
+                  <span class="suggestion-tag" data-ingredient="paneer"
+                    >paneer</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="chapati"
+                    >chapati</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="curry leaves"
+                    >curry leaves</span
+                  >
+                </div>
+              </div>
+              <div class="suggestion-category">
+                <h4>Common Proteins</h4>
+                <div class="suggestion-tags">
+                  <span class="suggestion-tag" data-ingredient="chicken"
+                    >chicken</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="mutton"
+                    >mutton</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="fish"
+                    >fish</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="eggs"
+                    >eggs</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="tofu"
+                    >tofu</span
+                  >
+                </div>
+              </div>
+              <div class="suggestion-category">
+                <h4>Fresh Vegetables</h4>
+                <div class="suggestion-tags">
+                  <span class="suggestion-tag" data-ingredient="tomatoes"
+                    >tomatoes</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="onions"
+                    >onions</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="potatoes"
+                    >potatoes</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="spinach"
+                    >spinach</span
+                  >
+                  <span class="suggestion-tag" data-ingredient="bell peppers"
+                    >bell peppers</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Browse Recipes Tab -->
+        <div class="tab-content active" id="browse-tab">
+          <!-- Filters -->
+          <div class="filters-section">
+            <div class="filter-group">
+              <label for="categoryFilter">Category:</label>
+              <select id="categoryFilter" class="filter-select">
+                <option value="">All Categories</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="difficultyFilter">Difficulty:</label>
+              <select id="difficultyFilter" class="filter-select">
+                <option value="">All Levels</option>
+              </select>
+            </div>
+            <div class="filter-group">
+              <label for="ratingFilter">Min Rating:</label>
+              <select id="ratingFilter" class="filter-select">
+                <option value="">Any Rating</option>
+                <option value="4">4+ Stars</option>
+                <option value="4.5">4.5+ Stars</option>
+              </select>
+            </div>
+            <button id="clearFilters" class="clear-filters-btn">
+              <i class="fas fa-times"></i> Clear Filters
+            </button>
+          </div>
+
+          <!-- Search -->
+          <div class="recipe-search">
+            <div class="search-container">
+              <i class="fas fa-search search-icon"></i>
+              <input
+                type="text"
+                id="searchInput"
+                class="search-input"
+                placeholder="Search recipes, ingredients, or tags..."
+              />
+              <button id="searchBtn" class="search-button">
+                <i class="fas fa-search"></i>
+              </button>
+            </div>
+          </div>
+
+          <!-- Recipe Grid -->
+          <div class="recipes-header">
+            <h2 class="section-title">
+              <span id="recipesCount">0</span> Recipes Found
+            </h2>
+            <div class="sort-options">
+              <label for="sortBy">Sort by:</label>
+              <select id="sortBy" class="sort-select">
+                <option value="name">Name</option>
+                <option value="rating">Rating</option>
+                <option value="cookTime">Cook Time</option>
+                <option value="difficulty">Difficulty</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="recipe-grid" id="recipeGrid">
+            <!-- Recipes will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Favorites Tab -->
+        <div class="tab-content" id="favorites-tab">
+          <h2 class="section-title">
+            <i class="fas fa-heart text-red"></i> Your Favorite Recipes
+          </h2>
+          <div class="recipe-grid" id="favoritesGrid">
+            <!-- Favorite recipes will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Add Recipe Tab -->
+        <div class="tab-content" id="add-tab">
+          <h2 class="section-title">
+            <i class="fas fa-plus-circle"></i> Add New Recipe
+          </h2>
+          <form class="add-recipe-form" id="addRecipeForm">
+            <div class="form-row">
+              <div class="form-group">
+                <label for="recipeName">Recipe Name *</label>
+                <input type="text" id="recipeName" required />
+              </div>
+              <div class="form-group">
+                <label for="recipeCategory">Category *</label>
+                <select id="recipeCategory" required>
+                  <option value="">Select Category</option>
+                  <option value="Italian">Italian</option>
+                  <option value="Asian">Asian</option>
+                  <option value="Mexican">Mexican</option>
+                  <option value="Desserts">Desserts</option>
+                  <option value="Salads">Salads</option>
+                  <option value="American">American</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="recipeDifficulty">Difficulty *</label>
+                <select id="recipeDifficulty" required>
+                  <option value="">Select Difficulty</option>
+                  <option value="Easy">Easy</option>
+                  <option value="Medium">Medium</option>
+                  <option value="Hard">Hard</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="recipeServings">Servings *</label>
+                <input type="number" id="recipeServings" min="1" required />
+              </div>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="recipePrepTime">Prep Time *</label>
+                <input
+                  type="text"
+                  id="recipePrepTime"
+                  placeholder="e.g., 15 minutes"
+                  required
+                />
+              </div>
+              <div class="form-group">
+                <label for="recipeCookTime">Cook Time *</label>
+                <input
+                  type="text"
+                  id="recipeCookTime"
+                  placeholder="e.g., 30 minutes"
+                  required
+                />
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="recipeIngredients"
+                >Ingredients * (one per line)</label
+              >
+              <textarea
+                id="recipeIngredients"
+                rows="6"
+                placeholder="2 cups flour&#10;1 tsp salt&#10;3 eggs"
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="recipeInstructions">Instructions *</label>
+              <textarea
+                id="recipeInstructions"
+                rows="8"
+                placeholder="1. First step...&#10;2. Second step..."
+                required
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label for="recipeTags">Tags (comma-separated)</label>
+              <input
+                type="text"
+                id="recipeTags"
+                placeholder="quick, healthy, vegetarian"
+              />
+            </div>
+
+            <button type="submit" class="submit-recipe-btn">
+              <i class="fas fa-plus"></i> Add Recipe
+            </button>
+          </form>
+        </div>
+
+        <!-- Recipe Generator Tab -->
+        <div class="tab-content" id="generator-tab">
+          <h2 class="section-title">
+            <i class="fas fa-magic text-purple"></i> Recipe Generator
+          </h2>
+          <div class="generator-container">
+            <div class="generator-header">
+              <p class="generator-description">
+                Generate thousands of unique recipes instantly! Our AI-powered
+                recipe generator creates diverse combinations of proteins,
+                vegetables, grains, and cooking methods from various cuisines.
+              </p>
+            </div>
+
+            <div class="generator-stats" id="generatorStats">
+              <div class="stat-card">
+                <div class="stat-number" id="totalRecipesCount">0</div>
+                <div class="stat-label">Total Recipes</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" id="avgRating">0</div>
+                <div class="stat-label">Avg Rating</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" id="categoriesCount">0</div>
+                <div class="stat-label">Categories</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-number" id="lastGenerated">0</div>
+                <div class="stat-label">Last Generated</div>
+              </div>
+            </div>
+
+            <div class="generator-controls">
+              <div class="control-group">
+                <label for="recipeCount">Number of Recipes to Generate:</label>
+                <select id="recipeCount" class="count-select">
+                  <option value="100">100 Recipes</option>
+                  <option value="500">500 Recipes</option>
+                  <option value="1000" selected>1,000 Recipes</option>
+                  <option value="5000">5,000 Recipes</option>
+                  <option value="10000">10,000 Recipes (⚡ Fast)</option>
+                  <option value="25000">25,000 Recipes (🚀 Turbo)</option>
+                  <option value="50000">50,000 Recipes (💥 MEGA)</option>
+                </select>
+              </div>
+
+              <div class="generation-buttons">
+                <button id="generateRecipesBtn" class="generate-btn">
+                  <i class="fas fa-magic"></i>
+                  Generate Recipes
+                </button>
+                <button id="clearAllRecipesBtn" class="clear-btn">
+                  <i class="fas fa-trash"></i>
+                  Clear All Generated
+                </button>
+              </div>
+            </div>
+
+            <div
+              class="generation-progress"
+              id="generationProgress"
+              style="display: none"
+            >
+              <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+              </div>
+              <div class="progress-text" id="progressText">
+                Generating recipes...
+              </div>
+            </div>
+
+            <div
+              class="generation-result"
+              id="generationResult"
+              style="display: none"
+            >
+              <div class="result-success">
+                <i class="fas fa-check-circle"></i>
+                <h3>Generation Complete!</h3>
+                <p id="resultMessage">Successfully generated recipes</p>
+                <button id="viewGeneratedBtn" class="view-generated-btn">
+                  <i class="fas fa-eye"></i>
+                  View Generated Recipes
+                </button>
+              </div>
+            </div>
+
+            <div class="generator-features">
+              <h3>🎯 What You'll Get:</h3>
+              <div class="features-grid">
+                <div class="feature-item">
+                  <i class="fas fa-utensils"></i>
+                  <div>
+                    <strong>Diverse Proteins</strong>
+                    <p>Chicken, beef, fish, tofu, and more</p>
+                  </div>
+                </div>
+                <div class="feature-item">
+                  <i class="fas fa-leaf"></i>
+                  <div>
+                    <strong>Fresh Vegetables</strong>
+                    <p>Seasonal vegetables and herbs</p>
+                  </div>
+                </div>
+                <div class="feature-item">
+                  <i class="fas fa-globe"></i>
+                  <div>
+                    <strong>Global Cuisines</strong>
+                    <p>Italian, Asian, Mexican, and more</p>
+                  </div>
+                </div>
+                <div class="feature-item">
+                  <i class="fas fa-fire"></i>
+                  <div>
+                    <strong>Cooking Methods</strong>
+                    <p>Grilled, baked, stir-fried, roasted</p>
+                  </div>
+                </div>
+                <div class="feature-item">
+                  <i class="fas fa-chart-line"></i>
+                  <div>
+                    <strong>Nutrition Info</strong>
+                    <p>Calories, protein, carbs, and more</p>
+                  </div>
+                </div>
+                <div class="feature-item">
+                  <i class="fas fa-star"></i>
+                  <div>
+                    <strong>Auto Ratings</strong>
+                    <p>Realistic ratings from 3-5 stars</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recipe of the Day Tab -->
+        <div class="tab-content" id="daily-tab">
+          <h2 class="section-title">
+            <i class="fas fa-star text-gold"></i> Recipe of the Day
+          </h2>
+          <div id="dailyRecipe" class="daily-recipe-container">
+            <!-- Daily recipe will be loaded here -->
+          </div>
+        </div>
+
+        <!-- Recipe Detail Modal -->
+        <div
+          class="recipe-detail-modal"
+          id="recipeDetailModal"
+          style="display: none"
+        >
+          <div class="modal-content">
+            <div class="modal-header">
+              <button id="closeModal" class="close-modal">
+                <i class="fas fa-times"></i>
+              </button>
+            </div>
+            <div id="recipeDetailContent">
+              <!-- Recipe details will be loaded here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Cooking Timer Modal -->
+        <div class="timer-modal" id="timerModal" style="display: none">
+          <div class="timer-content">
+            <h3>Cooking Timer</h3>
+            <div class="timer-display">
+              <span id="timerDisplay">00:00</span>
+            </div>
+            <div class="timer-controls">
+              <input
+                type="number"
+                id="timerMinutes"
+                placeholder="Minutes"
+                min="1"
+                max="180"
+              />
+              <button id="startTimer" class="timer-btn start">
+                <i class="fas fa-play"></i> Start
+              </button>
+              <button
+                id="pauseTimer"
+                class="timer-btn pause"
+                style="display: none"
+              >
+                <i class="fas fa-pause"></i> Pause
+              </button>
+              <button id="resetTimer" class="timer-btn reset">
+                <i class="fas fa-stop"></i> Reset
+              </button>
+              <button id="closeTimer" class="timer-btn close">
+                <i class="fas fa-times"></i> Close
+              </button>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- Floating Action Button for Timer -->
+      <button class="fab-timer" id="fabTimer" title="Cooking Timer">
+        <i class="fas fa-clock"></i>
+      </button>
+    </div>
+
+    <script src="app.js"></script>
+  </body>
+</html>
