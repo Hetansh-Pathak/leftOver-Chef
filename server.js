@@ -261,6 +261,14 @@ app.get("/api/favorites", (req, res) => {
   res.json(favoriteRecipes);
 });
 
+// Serve static files (after API routes)
+app.use(express.static("public"));
+
+// Catch-all handler for React Router (if needed)
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
 app.listen(PORT, () => {
   console.log(`Recipe Bot server running on http://localhost:${PORT}`);
 });
