@@ -233,8 +233,8 @@ class RecipeBot {
         const searchIn = [
           recipe.name,
           recipe.category,
-          ...recipe.ingredients,
-          ...recipe.tags,
+          ...(recipe.ingredients || []),
+          ...(recipe.tags || []),
           recipe.instructions,
         ]
           .join(" ")
