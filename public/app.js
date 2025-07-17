@@ -342,8 +342,8 @@ class RecipeBot {
                         <span><i class="fas fa-users"></i> Serves: ${recipe.servings}</span>
                     </div>
                     
-                    <div class="recipe-tags">
-                        ${recipe.tags.map((tag) => `<span class="recipe-tag">${tag}</span>`).join("")}
+                                        <div class="recipe-tags">
+                        ${(recipe.tags || []).map((tag) => `<span class="recipe-tag">${tag}</span>`).join("")}
                     </div>
                 </div>
             </div>
