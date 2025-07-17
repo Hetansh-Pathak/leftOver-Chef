@@ -743,6 +743,134 @@ app.get("/api/stats", (req, res) => {
   });
 });
 
+// Smart recipe finder endpoint
+app.post("/api/find-recipes", (req, res) => {
+  const {
+    ingredients = [],
+    matchType = "any",
+    dietaryRestrictions = {},
+    allergenAvoidance = [],
+    nutritionGoals = {},
+  } = req.body;
+
+  if (!ingredients || ingredients.length === 0) {
+    return res.json({
+      recipes: [],
+      message: "Please provide at least one ingredient",
+    });
+  }
+
+  let matchedRecipes = recipes.map((recipe) => {
+    const recipeIngredients = recipe.matchableIngredients || [];
+    const matchedIngredients = ingredients.filter((ingredient) =>
+      recipeIngredients.some(
+        (recipeIng) =>
+          recipeIng.toLowerCase().includes(ingredient.toLowerCase()) ||
+          ingredient.toLowerCase().includes(recipeIng.toLowerCase()),
+      ),
+    );
+
+    const matchScore = matchedIngredients.length / ingredients.length;
+    const totalIngredientMatch =
+      matchedIngredients.length / recipeIngredients.length;
+
+    return {
+      ...recipe,
+      matchedIngredients,
+      missingIngredients: ingredients.filter(
+        (ing) => !matchedIngredients.includes(ing),
+      ),
+      matchScore,
+      totalIngredientMatch,
+      overallScore: matchScore * 0.7 + totalIngredientMatch * 0.3,
+    };
+  });
+
+  // Filter based on match type
+  switch (matchType) {
+    case "all":
+      matchedRecipes = matchedRecipes.filter(
+        (recipe) => recipe.matchScore === 1,
+      );
+      break;
+    case "most":
+      matchedRecipes = matchedRecipes.filter(
+        (recipe) => recipe.matchScore >= 0.6,
+      );
+      break;
+    case "any":
+    default:
+      matchedRecipes = matchedRecipes.filter((recipe) => recipe.matchScore > 0);
+      break;
+  }
+
+  // Filter by dietary restrictions
+  if (dietaryRestrictions.vegetarian) {
+    matchedRecipes = matchedRecipes.filter(
+      (recipe) => recipe.dietaryInfo?.vegetarian,
+    );
+  }
+  if (dietaryRestrictions.vegan) {
+    matchedRecipes = matchedRecipes.filter(
+      (recipe) => recipe.dietaryInfo?.vegan,
+    );
+  }
+  if (dietaryRestrictions.glutenFree) {
+    matchedRecipes = matchedRecipes.filter(
+      (recipe) => recipe.dietaryInfo?.glutenFree,
+    );
+  }
+  if (dietaryRestrictions.dairyFree) {
+    matchedRecipes = matchedRecipes.filter(
+      (recipe) => recipe.dietaryInfo?.dairyFree,
+    );
+  }
+
+  // Filter by allergen avoidance
+  if (allergenAvoidance.length > 0) {
+    matchedRecipes = matchedRecipes.filter((recipe) => {
+      const recipeAllergens = recipe.allergens || [];
+      return !allergenAvoidance.some((allergen) =>
+        recipeAllergens.includes(allergen),
+      );
+    });
+  }
+
+  // Filter by nutrition goals
+  if (nutritionGoals.maxCalories) {
+    matchedRecipes = matchedRecipes.filter(
+      (recipe) => recipe.calories <= nutritionGoals.maxCalories,
+    );
+  }
+  if (nutritionGoals.minProtein) {
+    matchedRecipes = matchedRecipes.filter((recipe) => {
+      const protein = parseInt(recipe.nutrition?.protein) || 0;
+      return protein >= nutritionGoals.minProtein;
+    });
+  }
+  if (nutritionGoals.maxCarbs) {
+    matchedRecipes = matchedRecipes.filter((recipe) => {
+      const carbs = parseInt(recipe.nutrition?.carbs) || 0;
+      return carbs <= nutritionGoals.maxCarbs;
+    });
+  }
+
+  // Sort by match score (best matches first)
+  matchedRecipes.sort((a, b) => b.overallScore - a.overallScore);
+
+  res.json({
+    recipes: matchedRecipes,
+    totalFound: matchedRecipes.length,
+    searchCriteria: {
+      ingredients,
+      matchType,
+      dietaryRestrictions,
+      allergenAvoidance,
+      nutritionGoals,
+    },
+  });
+});
+
 // Serve static files (after API routes)
 app.use(express.static("public"));
 
