@@ -31,6 +31,9 @@ class RecipeBot {
   async loadRecipes() {
     try {
       const response = await fetch("/api/recipes");
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       this.recipes = await response.json();
     } catch (error) {
       console.error("Error loading recipes:", error);
