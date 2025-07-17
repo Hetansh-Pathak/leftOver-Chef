@@ -209,6 +209,8 @@ app.post("/api/recipes", (req, res) => {
     id: recipes.length + 1,
     ...req.body,
     rating: 0,
+    tags: req.body.tags || [],
+    ingredients: req.body.ingredients || [],
     image:
       req.body.image ||
       "https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400",
