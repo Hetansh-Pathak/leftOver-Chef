@@ -1044,4 +1044,9 @@ router.get('/admin/stats', async (req, res) => {
   }
 });
 
+// Initialize mock users when module loads
+if (global.MOCK_MODE) {
+  initializeMockUsers();
+}
+
 module.exports = router;
