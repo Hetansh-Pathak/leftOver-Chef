@@ -136,19 +136,7 @@ class RecipeBot {
       this.addNewRecipe();
     });
 
-    // Recipe generator controls
-    document
-      .getElementById("generateRecipesBtn")
-      .addEventListener("click", () => this.generateRecipes());
-    document
-      .getElementById("clearAllRecipesBtn")
-      .addEventListener("click", () => this.clearGeneratedRecipes());
-    document
-      .getElementById("viewGeneratedBtn")
-      .addEventListener("click", () => {
-        this.switchTab("browse");
-        this.clearFilters();
-      });
+    
 
     // Smart Recipe Finder controls
     document
@@ -236,9 +224,7 @@ class RecipeBot {
       this.displayFavorites();
     } else if (tabName === "browse") {
       this.displayRecipes();
-    } else if (tabName === "generator") {
-      this.loadGeneratorStats();
-    }
+    
   }
 
   applyFilters() {
@@ -756,139 +742,7 @@ class RecipeBot {
     }
   }
 
-  // Recipe Generator Methods
-  async loadGeneratorStats() {
-    try {
-      const response = await fetch("/api/stats");
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-      const stats = await response.json();
-
-      document.getElementById("totalRecipesCount").textContent =
-        stats.totalRecipes.toLocaleString();
-      document.getElementById("avgRating").textContent = stats.averageRating;
-      document.getElementById("categoriesCount").textContent =
-        stats.categories || 0;
-      document.getElementById("lastGenerated").textContent =
-        this.lastGeneratedCount || 0;
-    } catch (error) {
-      console.error("Error loading generator stats:", error);
-    }
-  }
-
-  async generateRecipes() {
-    const count = parseInt(document.getElementById("recipeCount").value);
-    const generateBtn = document.getElementById("generateRecipesBtn");
-    const progressDiv = document.getElementById("generationProgress");
-    const resultDiv = document.getElementById("generationResult");
-
-    // Reset UI
-    generateBtn.disabled = true;
-    generateBtn.innerHTML =
-      '<i class="fas fa-spinner fa-spin"></i> Generating...';
-    progressDiv.style.display = "block";
-    resultDiv.style.display = "none";
-
-    // Simulate progress for better UX
-    this.animateProgress(count);
-
-    try {
-      const response = await fetch("/api/generate-recipes", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ count }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-      }
-
-      const result = await response.json();
-
-      // Update stats
-      this.lastGeneratedCount = result.generatedCount;
-      await this.loadRecipes();
-      await this.loadGeneratorStats();
-
-      // Show success
-      setTimeout(() => {
-        progressDiv.style.display = "none";
-        resultDiv.style.display = "block";
-        document.getElementById("resultMessage").textContent =
-          `Successfully generated ${result.generatedCount.toLocaleString()} unique recipes! Total: ${result.totalRecipes.toLocaleString()}`;
-
-        generateBtn.disabled = false;
-        generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Recipes';
-      }, 1000);
-    } catch (error) {
-      console.error("Error generating recipes:", error);
-      alert("Error generating recipes. Please try again.");
-
-      progressDiv.style.display = "none";
-      generateBtn.disabled = false;
-      generateBtn.innerHTML = '<i class="fas fa-magic"></i> Generate Recipes';
-    }
-  }
-
-  animateProgress(totalCount) {
-    const progressFill = document.getElementById("progressFill");
-    const progressText = document.getElementById("progressText");
-
-    let progress = 0;
-    const duration = Math.min(2000 + totalCount / 10, 8000); // 2-8 seconds based on count
-    const steps = 100;
-    const stepTime = duration / steps;
-
-    const interval = setInterval(() => {
-      progress += 1;
-      progressFill.style.width = `${progress}%`;
-
-      if (progress < 30) {
-        progressText.textContent = "Preparing recipe templates...";
-      } else if (progress < 60) {
-        progressText.textContent = "Generating ingredient combinations...";
-      } else if (progress < 90) {
-        progressText.textContent = "Creating cooking instructions...";
-      } else {
-        progressText.textContent = "Finalizing recipes...";
-      }
-
-      if (progress >= 100) {
-        clearInterval(interval);
-        progressText.textContent = "Complete!";
-      }
-    }, stepTime);
-  }
-
-  async clearGeneratedRecipes() {
-    if (
-      confirm(
-        "Are you sure you want to clear all generated recipes? This action cannot be undone.",
-      )
-    ) {
-      try {
-        // Reset to original recipes only (keep first 5)
-        const response = await fetch("/api/recipes");
-        if (response.ok) {
-          const allRecipes = await response.json();
-          // This would need a server endpoint to actually clear generated recipes
-          // For now, just reload and show a message
-          alert(
-            "Clear functionality would remove all generated recipes. For demo purposes, this just refreshes the view.",
-          );
-          await this.loadRecipes();
-          await this.loadGeneratorStats();
-          this.displayRecipes();
-        }
-      } catch (error) {
-        console.error("Error clearing recipes:", error);
-        alert("Error clearing recipes. Please try again.");
-      }
-    }
-  }
+  
 
   // Smart Recipe Finder Methods
   addIngredient() {
