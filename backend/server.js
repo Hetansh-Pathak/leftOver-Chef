@@ -348,6 +348,11 @@ app.get('/api/recipe-of-the-day', async (req, res) => {
   }
 });
 
+// Admin dashboard route
+app.get('/admin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'views', 'admin.html'));
+});
+
 // Default route with API information
 app.get('/', (req, res) => {
   res.json({
