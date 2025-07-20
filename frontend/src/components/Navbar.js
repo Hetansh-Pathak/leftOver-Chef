@@ -91,16 +91,16 @@ const NavLink = styled(Link)`
   font-weight: 500;
   position: relative;
   transition: ${props => props.theme.transitions.default};
-  background: ${props => props.isActive ? 
+  background: ${props => props.$isActive ? 
     `linear-gradient(45deg, ${props.theme.colors.primary}, ${props.theme.colors.secondary})` : 
     'transparent'
   };
-  color: ${props => props.isActive ? 'white' : props.theme.colors.textDark};
-  transform: ${props => props.isActive ? 'translateY(-2px)' : 'translateY(0)'};
-  box-shadow: ${props => props.isActive ? props.theme.shadows.cardHover : 'none'};
+  color: ${props => props.$isActive ? 'white' : props.theme.colors.textDark};
+  transform: ${props => props.$isActive ? 'translateY(-2px)' : 'translateY(0)'};
+  box-shadow: ${props => props.$isActive ? props.theme.shadows.cardHover : 'none'};
 
   &:hover {
-    background: ${props => props.isActive ? 
+    background: ${props => props.$isActive ? 
       `linear-gradient(45deg, ${props.theme.colors.primary}, ${props.theme.colors.secondary})` : 
       'rgba(102, 126, 234, 0.1)'
     };
@@ -214,11 +214,11 @@ const MobileNavLink = styled(Link)`
   color: ${props => props.theme.colors.textDark};
   font-weight: 600;
   font-size: 1.2rem;
-  background: ${props => props.isActive ? 
+  background: ${props => props.$isActive ? 
     `linear-gradient(45deg, ${props.theme.colors.primary}, ${props.theme.colors.secondary})` : 
     'rgba(102, 126, 234, 0.1)'
   };
-  color: ${props => props.isActive ? 'white' : props.theme.colors.textDark};
+  color: ${props => props.$isActive ? 'white' : props.theme.colors.textDark};
   width: 80%;
   max-width: 300px;
   text-align: center;
