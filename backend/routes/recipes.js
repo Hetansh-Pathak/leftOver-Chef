@@ -519,6 +519,11 @@ router.get('/meta/filters', async (req, res) => {
 // GET daily featured recipe
 router.get('/daily/featured', async (req, res) => {
   try {
+        // Check if we're in mock mode first
+    if (global.MOCK_MODE) {
+      return res.json(mockData.getDailyRecipe());
+    }
+
     const dailyRecipe = await recipeService.getRecipeOfTheDay();
     
     if (!dailyRecipe) {
