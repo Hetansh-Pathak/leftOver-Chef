@@ -1,51 +1,69 @@
 const express = require('express');
 const User = require('../models/User');
+const Recipe = require('../models/Recipe');
+const aiService = require('../services/aiService');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
 
 // JWT Secret (in production, use environment variable)
 const JWT_SECRET = process.env.JWT_SECRET || 'leftover-chef-secret-key';
 
-// Register user
-router.post('/register', async (req, res) => {
+// Middleware for authentication
+const authenticateUser = async (req, res, next) => {
   try {
-    const { name, email, password } = req.body;
-    
-    // Check if user already exists
-    let existingUser;
-    try {
-      existingUser = await User.findOne({ email });
-    } catch (dbError) {
-      // If MongoDB is not connected, proceed with registration
-      console.log('MongoDB not connected, proceeding with registration');
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ message: 'Access denied. No token provided.' });
     }
     
+    const decoded = jwt.verify(token, JWT_SECRET);
+    req.userId = decoded.userId;
+    next();
+  } catch (error) {
+    res.status(401).json({ message: 'Invalid token.' });
+  }
+};
+
+// POST register user
+router.post('/register', async (req, res) => {
+  try {
+    const { name, email, password, ...profileData } = req.body;
+    
+    // Check if user already exists
+    const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists with this email' });
     }
     
-    // Create new user
-    const user = new User({ name, email, password });
+    // Create new user with extended profile data
+    const userData = {
+      name,
+      email,
+      password,
+      ...profileData,
+      // Set default equipment for new users
+      availableEquipment: [
+        { name: 'Stove', category: 'cooking' },
+        { name: 'Oven', category: 'baking' },
+        { name: 'Microwave', category: 'cooking' },
+        { name: 'Refrigerator', category: 'storage' },
+        { name: 'Basic Knives', category: 'prep' }
+      ]
+    };
     
-    try {
-      await user.save();
-    } catch (dbError) {
-      console.log('Could not save to database, returning mock user');
-      // Return a mock response for development
-      return res.status(201).json({
-        message: 'User registered successfully (mock)',
-        user: {
-          id: 'mock-user-id',
-          name,
-          email,
-          avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
-        },
-        token: jwt.sign({ userId: 'mock-user-id' }, JWT_SECRET, { expiresIn: '7d' })
-      });
-    }
+    const user = new User(userData);
+    await user.save();
     
     // Generate JWT
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+    
+    // Add welcome achievement
+    user.achievements.push({
+      name: 'Welcome to Leftover Chef!',
+      description: 'Started your journey to reduce food waste',
+      category: 'milestone'
+    });
+    await user.save();
     
     res.status(201).json({
       message: 'User registered successfully',
@@ -53,7 +71,10 @@ router.post('/register', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        avatar: user.avatar
+        avatar: user.avatar,
+        cookingSkillLevel: user.cookingSkillLevel,
+        points: user.points,
+        level: user.level
       },
       token
     });
@@ -64,41 +85,24 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Login user
+// POST login user
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     
-    let user;
-    try {
-      user = await User.findOne({ email });
-    } catch (dbError) {
-      // Mock login for development
-      if (email === 'demo@leftoverchef.com' && password === 'demo123') {
-        const token = jwt.sign({ userId: 'demo-user-id' }, JWT_SECRET, { expiresIn: '7d' });
-        return res.json({
-          message: 'Login successful (demo)',
-          user: {
-            id: 'demo-user-id',
-            name: 'Demo User',
-            email: 'demo@leftoverchef.com',
-            avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face'
-          },
-          token
-        });
-      }
+    const user = await User.findOne({ email });
+    if (!user || !user.isActive) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
     
-    if (!user) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-    
-    // Check password
     const isPasswordValid = await user.comparePassword(password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
+    
+    // Update last login
+    user.lastLogin = new Date();
+    await user.save();
     
     // Generate JWT
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
@@ -109,7 +113,12 @@ router.post('/login', async (req, res) => {
         id: user._id,
         name: user.name,
         email: user.email,
-        avatar: user.avatar
+        avatar: user.avatar,
+        cookingSkillLevel: user.cookingSkillLevel,
+        points: user.points,
+        level: user.level,
+        dietaryPreferences: user.dietaryPreferences,
+        allergens: user.allergens
       },
       token
     });
@@ -120,81 +129,109 @@ router.post('/login', async (req, res) => {
   }
 });
 
-// Get user profile
-router.get('/profile/:id', async (req, res) => {
+// GET user profile
+router.get('/profile/:id', authenticateUser, async (req, res) => {
   try {
-    let user;
-    
-    try {
-      user = await User.findById(req.params.id).select('-password');
-    } catch (dbError) {
-      // Return mock user data
-      user = {
-        _id: req.params.id,
-        name: 'Demo User',
-        email: 'demo@leftoverchef.com',
-        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-        favorites: [],
-        myRecipes: [],
-        dietaryPreferences: {
-          vegetarian: false,
-          vegan: false,
-          glutenFree: false,
-          dairyFree: false,
-          nutFree: false
-        },
-        kitchenInventory: [
-          { ingredient: 'rice', quantity: '2 cups', category: 'grains' },
-          { ingredient: 'chicken', quantity: '1 lb', category: 'proteins' },
-          { ingredient: 'broccoli', quantity: '1 head', category: 'vegetables' }
-        ],
-        cookingSkillLevel: 'Intermediate',
-        preferredCuisines: ['Asian', 'Italian'],
-        createdAt: new Date(),
-        updatedAt: new Date()
-      };
-    }
+    const user = await User.findById(req.params.id)
+      .select('-password')
+      .populate('favorites', 'title image rating')
+      .populate('myRecipes', 'title image rating createdAt')
+      .populate('recentlyViewed.recipeId', 'title image rating');
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
     
-    res.json(user);
+    // Calculate additional stats
+    const stats = {
+      totalFavorites: user.favorites?.length || 0,
+      totalRecipesCreated: user.myRecipes?.length || 0,
+      totalCookingSessions: user.cookingHistory?.length || 0,
+      currentStreak: user.streak?.current || 0,
+      longestStreak: user.streak?.longest || 0,
+      expiringIngredientsCount: user.getUrgentIngredients().length,
+      inventoryValue: user.kitchenInventory?.reduce((sum, item) => 
+        sum + (item.estimatedCost || 0), 0) || 0
+    };
+    
+    res.json({
+      ...user.toObject(),
+      stats
+    });
+    
   } catch (error) {
     console.error('Error fetching user profile:', error);
     res.status(500).json({ message: 'Error fetching user profile', error: error.message });
   }
 });
 
-// Update kitchen inventory
-router.post('/inventory', async (req, res) => {
+// PUT update user profile
+router.put('/profile/:id', authenticateUser, async (req, res) => {
   try {
-    const { userId, ingredients } = req.body;
-    
-    try {
-      const user = await User.findById(userId);
-      if (!user) {
-        return res.status(404).json({ message: 'User not found' });
-      }
-      
-      // Add ingredients to inventory
-      ingredients.forEach(ingredient => {
-        user.addToInventory(ingredient);
-      });
-      
-      await user.save();
-      res.json({ message: 'Inventory updated successfully', inventory: user.kitchenInventory });
-      
-    } catch (dbError) {
-      // Mock response for development
-      res.json({ 
-        message: 'Inventory updated successfully (mock)',
-        inventory: ingredients.map(ing => ({
-          ...ing,
-          _id: Date.now() + Math.random()
-        }))
-      });
+    if (req.params.id !== req.userId) {
+      return res.status(403).json({ message: 'Not authorized to update this profile' });
     }
+    
+    const updateData = { ...req.body };
+    delete updateData.password; // Don't allow password updates through this route
+    delete updateData.email; // Don't allow email updates without verification
+    
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      updateData,
+      { new: true, runValidators: true }
+    ).select('-password');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json({
+      message: 'Profile updated successfully',
+      user
+    });
+    
+  } catch (error) {
+    console.error('Error updating profile:', error);
+    res.status(500).json({ message: 'Error updating profile', error: error.message });
+  }
+});
+
+// POST add to kitchen inventory
+router.post('/inventory', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const { ingredients } = req.body;
+    
+    if (!Array.isArray(ingredients)) {
+      return res.status(400).json({ message: 'Ingredients must be an array' });
+    }
+    
+    // Add multiple ingredients
+    for (const ingredient of ingredients) {
+      await user.addToInventory(ingredient);
+    }
+    
+    // Check for achievements
+    if (user.kitchenInventory.length >= 10 && !user.achievements.some(a => a.name === 'Inventory Master')) {
+      user.achievements.push({
+        name: 'Inventory Master',
+        description: 'Added 10+ items to your kitchen inventory',
+        category: 'organization'
+      });
+      user.points += 50;
+      await user.save();
+    }
+    
+    res.json({ 
+      message: 'Inventory updated successfully', 
+      inventory: user.kitchenInventory.slice(-10), // Return last 10 items
+      totalItems: user.kitchenInventory.length
+    });
     
   } catch (error) {
     console.error('Error updating inventory:', error);
@@ -202,23 +239,452 @@ router.post('/inventory', async (req, res) => {
   }
 });
 
-// Get user favorites
-router.get('/:userId/favorites', async (req, res) => {
+// GET kitchen inventory with expiration alerts
+router.get('/inventory', authenticateUser, async (req, res) => {
   try {
-    let favorites = [];
-    
-    try {
-      const user = await User.findById(req.params.userId).populate('favorites');
-      favorites = user ? user.favorites : [];
-    } catch (dbError) {
-      // Return empty array for development
-      favorites = [];
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
     
-    res.json(favorites);
+    const availableIngredients = user.getAvailableIngredients();
+    const expiringIngredients = user.getExpiringIngredients(3); // Next 3 days
+    const urgentIngredients = user.getUrgentIngredients(); // Today/tomorrow
+    
+    // Categorize ingredients
+    const categorizedInventory = {};
+    availableIngredients.forEach(item => {
+      if (!categorizedInventory[item.category]) {
+        categorizedInventory[item.category] = [];
+      }
+      categorizedInventory[item.category].push(item);
+    });
+    
+    res.json({
+      inventory: categorizedInventory,
+      alerts: {
+        expiring: expiringIngredients,
+        urgent: urgentIngredients,
+        totalItems: availableIngredients.length
+      },
+      suggestions: urgentIngredients.length > 0 ? 
+        'You have ingredients expiring soon! Consider using them in a recipe.' : null
+    });
+    
   } catch (error) {
-    console.error('Error fetching favorites:', error);
-    res.status(500).json({ message: 'Error fetching favorites', error: error.message });
+    console.error('Error fetching inventory:', error);
+    res.status(500).json({ message: 'Error fetching inventory', error: error.message });
+  }
+});
+
+// DELETE remove from inventory
+router.delete('/inventory/:itemId', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const item = user.kitchenInventory.id(req.params.itemId);
+    if (!item) {
+      return res.status(404).json({ message: 'Inventory item not found' });
+    }
+    
+    item.remove();
+    await user.save();
+    
+    res.json({ message: 'Item removed from inventory' });
+    
+  } catch (error) {
+    console.error('Error removing inventory item:', error);
+    res.status(500).json({ message: 'Error removing item', error: error.message });
+  }
+});
+
+// GET shopping list
+router.get('/shopping-list', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Group shopping list by category
+    const groupedList = {};
+    user.shoppingList.forEach(item => {
+      if (!groupedList[item.category]) {
+        groupedList[item.category] = [];
+      }
+      groupedList[item.category].push(item);
+    });
+    
+    // Calculate estimated total cost
+    const estimatedTotal = user.shoppingList.reduce((sum, item) => 
+      sum + (item.estimatedPrice || 0), 0);
+    
+    res.json({
+      shoppingList: groupedList,
+      summary: {
+        totalItems: user.shoppingList.length,
+        pendingItems: user.shoppingList.filter(item => !item.purchased).length,
+        estimatedTotal
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching shopping list:', error);
+    res.status(500).json({ message: 'Error fetching shopping list', error: error.message });
+  }
+});
+
+// POST add to shopping list
+router.post('/shopping-list', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const { items } = req.body;
+    await user.addToShoppingList(items);
+    
+    res.json({ 
+      message: 'Items added to shopping list',
+      totalItems: user.shoppingList.length
+    });
+    
+  } catch (error) {
+    console.error('Error adding to shopping list:', error);
+    res.status(500).json({ message: 'Error adding to shopping list', error: error.message });
+  }
+});
+
+// PUT mark shopping item as purchased
+router.put('/shopping-list/:itemId/purchase', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    await user.markAsPurchased(req.params.itemId);
+    
+    res.json({ message: 'Item marked as purchased and added to inventory' });
+    
+  } catch (error) {
+    console.error('Error marking item as purchased:', error);
+    res.status(500).json({ message: 'Error updating item', error: error.message });
+  }
+});
+
+// GET meal plan
+router.get('/meal-plan', authenticateUser, async (req, res) => {
+  try {
+    const { startDate, days = 7 } = req.query;
+    
+    const user = await User.findById(req.userId)
+      .populate('mealPlan.recipeId', 'title image readyInMinutes difficulty rating nutrition');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    let mealPlan = user.mealPlan || [];
+    
+    // Filter by date range if specified
+    if (startDate) {
+      const start = new Date(startDate);
+      const end = new Date(start);
+      end.setDate(start.getDate() + parseInt(days));
+      
+      mealPlan = mealPlan.filter(meal => 
+        meal.date >= start && meal.date < end
+      );
+    }
+    
+    // Group by date
+    const groupedMealPlan = {};
+    mealPlan.forEach(meal => {
+      const dateKey = meal.date.toISOString().split('T')[0];
+      if (!groupedMealPlan[dateKey]) {
+        groupedMealPlan[dateKey] = {};
+      }
+      groupedMealPlan[dateKey][meal.mealType] = meal;
+    });
+    
+    res.json({
+      mealPlan: groupedMealPlan,
+      totalMeals: mealPlan.length,
+      dateRange: {
+        start: startDate || 'today',
+        days: parseInt(days)
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching meal plan:', error);
+    res.status(500).json({ message: 'Error fetching meal plan', error: error.message });
+  }
+});
+
+// POST generate AI meal plan
+router.post('/meal-plan/generate', authenticateUser, async (req, res) => {
+  try {
+    const { days = 7, preferences = {} } = req.body;
+    
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Generate AI-powered meal plan
+    const mealPlan = await aiService.generateAIMealPlan(user, days);
+    
+    res.json({
+      message: 'AI meal plan generated successfully',
+      mealPlan,
+      generatedFor: days,
+      basedOn: {
+        availableIngredients: user.getAvailableIngredients().length,
+        dietaryPreferences: Object.keys(user.dietaryPreferences).filter(key => user.dietaryPreferences[key]),
+        skillLevel: user.cookingSkillLevel
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error generating meal plan:', error);
+    res.status(500).json({ message: 'Error generating meal plan', error: error.message });
+  }
+});
+
+// POST add cooking session to history
+router.post('/cooking-history', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const cookingData = {
+      ...req.body,
+      cookedAt: new Date()
+    };
+    
+    await user.addCookingHistory(cookingData);
+    
+    // Check for cooking achievements
+    const cookingCount = user.cookingHistory.length;
+    if (cookingCount === 1) {
+      user.achievements.push({
+        name: 'First Cook!',
+        description: 'Completed your first recipe',
+        category: 'cooking'
+      });
+    } else if (cookingCount === 10) {
+      user.achievements.push({
+        name: 'Home Chef',
+        description: 'Cooked 10 recipes',
+        category: 'cooking'
+      });
+    } else if (cookingCount === 50) {
+      user.achievements.push({
+        name: 'Master Chef',
+        description: 'Cooked 50 recipes',
+        category: 'cooking'
+      });
+    }
+    
+    await user.save();
+    
+    res.json({
+      message: 'Cooking session recorded',
+      totalSessions: user.cookingHistory.length,
+      currentStreak: user.streak.current,
+      pointsEarned: 10
+    });
+    
+  } catch (error) {
+    console.error('Error recording cooking session:', error);
+    res.status(500).json({ message: 'Error recording cooking session', error: error.message });
+  }
+});
+
+// GET cooking history and analytics
+router.get('/cooking-history', authenticateUser, async (req, res) => {
+  try {
+    const { limit = 20, offset = 0 } = req.query;
+    
+    const user = await User.findById(req.userId)
+      .populate('cookingHistory.recipeId', 'title image rating difficulty cuisines');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const cookingHistory = user.cookingHistory
+      .slice(offset, offset + limit)
+      .sort((a, b) => b.cookedAt - a.cookedAt);
+    
+    // Calculate analytics
+    const analytics = {
+      totalSessions: user.cookingHistory.length,
+      averageRating: user.cookingHistory.reduce((sum, session) => 
+        sum + (session.rating || 0), 0) / user.cookingHistory.length || 0,
+      favoriteCuisines: this.calculateTopCuisines(user.cookingHistory),
+      cookingStreak: user.streak,
+      totalCookingTime: user.cookingHistory.reduce((sum, session) => 
+        sum + (session.actualCookTime || 0), 0)
+    };
+    
+    res.json({
+      cookingHistory,
+      analytics,
+      pagination: {
+        limit: parseInt(limit),
+        offset: parseInt(offset),
+        total: user.cookingHistory.length
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching cooking history:', error);
+    res.status(500).json({ message: 'Error fetching cooking history', error: error.message });
+  }
+});
+
+// Helper function to calculate top cuisines
+function calculateTopCuisines(cookingHistory) {
+  const cuisineCounts = {};
+  
+  cookingHistory.forEach(session => {
+    if (session.recipeId && session.recipeId.cuisines) {
+      session.recipeId.cuisines.forEach(cuisine => {
+        cuisineCounts[cuisine] = (cuisineCounts[cuisine] || 0) + 1;
+      });
+    }
+  });
+  
+  return Object.entries(cuisineCounts)
+    .sort(([,a], [,b]) => b - a)
+    .slice(0, 5)
+    .map(([cuisine, count]) => ({ cuisine, count }));
+}
+
+// GET user achievements and gamification
+router.get('/achievements', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const pointsToNextLevel = (user.level * 100) - (user.points % 100);
+    
+    res.json({
+      achievements: user.achievements.sort((a, b) => b.unlockedAt - a.unlockedAt),
+      gamification: {
+        level: user.level,
+        points: user.points,
+        pointsToNextLevel,
+        streak: user.streak,
+        nextLevelAt: user.level * 100
+      },
+      categories: {
+        cooking: user.achievements.filter(a => a.category === 'cooking').length,
+        sustainability: user.achievements.filter(a => a.category === 'sustainability').length,
+        social: user.achievements.filter(a => a.category === 'social').length,
+        exploration: user.achievements.filter(a => a.category === 'exploration').length
+      }
+    });
+    
+  } catch (error) {
+    console.error('Error fetching achievements:', error);
+    res.status(500).json({ message: 'Error fetching achievements', error: error.message });
+  }
+});
+
+// GET personalized dashboard
+router.get('/dashboard', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findById(req.userId)
+      .populate('recentlyViewed.recipeId', 'title image rating')
+      .populate('favorites', 'title image rating', null, { limit: 5 });
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    const urgentIngredients = user.getUrgentIngredients();
+    const availableIngredients = user.getAvailableIngredients().map(item => item.ingredient);
+    
+    // Get personalized recommendations
+    const recommendations = await aiService.generatePersonalizedRecommendations(
+      user, 
+      availableIngredients.slice(0, 5)
+    );
+    
+    const dashboard = {
+      welcome: {
+        name: user.name,
+        level: user.level,
+        points: user.points,
+        streak: user.streak.current
+      },
+      alerts: {
+        expiringIngredients: urgentIngredients.length,
+        urgentItems: urgentIngredients.slice(0, 3),
+        pendingShoppingItems: user.shoppingList.filter(item => !item.purchased).length
+      },
+      quickStats: {
+        totalRecipes: user.myRecipes?.length || 0,
+        favoriteRecipes: user.favorites?.length || 0,
+        cookingSessions: user.cookingHistory?.length || 0,
+        inventoryItems: user.kitchenInventory?.length || 0
+      },
+      recommendations: recommendations.slice(0, 4),
+      recentActivity: {
+        recentlyViewed: user.recentlyViewed.slice(0, 3),
+        lastCookingSession: user.cookingHistory?.[0] || null
+      },
+      todaysMealPlan: user.mealPlan.filter(meal => {
+        const today = new Date().toISOString().split('T')[0];
+        const mealDate = meal.date.toISOString().split('T')[0];
+        return mealDate === today;
+      })
+    };
+    
+    res.json(dashboard);
+    
+  } catch (error) {
+    console.error('Error fetching dashboard:', error);
+    res.status(500).json({ message: 'Error fetching dashboard', error: error.message });
+  }
+});
+
+// POST update notification preferences
+router.put('/notifications', authenticateUser, async (req, res) => {
+  try {
+    const user = await User.findByIdAndUpdate(
+      req.userId,
+      { 
+        notifications: req.body,
+        'appSettings.lastNotificationUpdate': new Date()
+      },
+      { new: true }
+    ).select('notifications');
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    res.json({
+      message: 'Notification preferences updated',
+      notifications: user.notifications
+    });
+    
+  } catch (error) {
+    console.error('Error updating notifications:', error);
+    res.status(500).json({ message: 'Error updating notifications', error: error.message });
   }
 });
 
