@@ -1371,6 +1371,18 @@ body {
   }
 }
 
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 /* Recipe Generator Styles */
 .generator-container {
   max-width: 1000px;
