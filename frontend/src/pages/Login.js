@@ -1,6 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -10,11 +9,12 @@ import {
   FaEyeSlash, 
   FaSignInAlt, 
   FaUserPlus,
-    FaGoogle,
+  FaGoogle,
   FaFacebook,
   FaUtensils
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const LoginContainer = styled(motion.div)`
   min-height: 100vh;
@@ -268,6 +268,12 @@ const SocialButton = styled(motion.button)`
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   }
 
+  &:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+  }
+
   .social-icon {
     font-size: 1.2rem;
     
@@ -295,7 +301,7 @@ const ForgotPassword = styled(motion.button)`
 
 const Login = () => {
   const navigate = useNavigate();
-    const { loginUser, registerUser } = useAuth();
+  const { loginUser, registerUser, googleAuth, facebookAuth } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -304,6 +310,29 @@ const Login = () => {
     password: '',
     name: ''
   });
+
+  // Initialize Google API
+  useEffect(() => {
+    const initializeGapi = async () => {
+      if (window.gapi) {
+        await window.gapi.load('auth2', () => {
+          window.gapi.auth2.init({
+            client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || 'demo-google-client-id'
+          });
+        });
+      }
+    };
+
+    // Load Google API script if not already loaded
+    if (!window.gapi) {
+      const script = document.createElement('script');
+      script.src = 'https://apis.google.com/js/api.js';
+      script.onload = initializeGapi;
+      document.body.appendChild(script);
+    } else {
+      initializeGapi();
+    }
+  }, []);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -316,9 +345,9 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-            try {
+    try {
       let result;
-
+      
       if (isLogin) {
         // Login
         result = await loginUser({
@@ -333,14 +362,22 @@ const Login = () => {
           password: formData.password
         });
       }
-
+      
       setIsLoading(false);
-
+      
       if (result.success) {
         toast.success(`${isLogin ? 'Login' : 'Registration'} successful!`);
         navigate('/');
       } else {
-        toast.error(result.error || 'Something went wrong');
+        // Handle specific error types
+        if (result.userNotFound) {
+          toast.error('No account found. Please sign up first!');
+          setIsLogin(false); // Switch to signup mode
+        } else if (result.invalidPassword) {
+          toast.error('Invalid password. Please try again.');
+        } else {
+          toast.error(result.error || 'Something went wrong');
+        }
       }
     } catch (error) {
       setIsLoading(false);
@@ -349,11 +386,79 @@ const Login = () => {
     }
   };
 
-  const handleSocialLogin = (provider) => {
-    toast.success(`${provider} login coming soon!`);
+  const handleGoogleLogin = async () => {
+    try {
+      if (!window.gapi || !window.gapi.auth2) {
+        toast.error('Google API not loaded. Please refresh the page.');
+        return;
+      }
+
+      const authInstance = window.gapi.auth2.getAuthInstance();
+      const googleUser = await authInstance.signIn();
+      const idToken = googleUser.getAuthResponse().id_token;
+
+      setIsLoading(true);
+      const result = await googleAuth(idToken, !isLogin);
+      setIsLoading(false);
+
+      if (result.success) {
+        toast.success(`Google ${isLogin ? 'login' : 'registration'} successful!`);
+        navigate('/');
+      } else {
+        if (result.userExists && !isLogin) {
+          toast.error('Account already exists. Please sign in instead.');
+          setIsLogin(true);
+        } else if (result.userNotFound && isLogin) {
+          toast.error('No account found. Please sign up first.');
+          setIsLogin(false);
+        } else {
+          toast.error(result.error || 'Google authentication failed');
+        }
+      }
+    } catch (error) {
+      setIsLoading(false);
+      console.error('Google login error:', error);
+      toast.error('Google login failed. Please try again.');
+    }
   };
 
-    const handleBack = () => {
+  const handleFacebookLogin = () => {
+    // For demo purposes, we'll simulate Facebook login
+    // In production, you would integrate with Facebook SDK
+    setIsLoading(true);
+    
+    setTimeout(async () => {
+      const mockFacebookData = {
+        accessToken: 'demo-facebook-token',
+        userID: 'demo-user-' + Date.now()
+      };
+
+      const result = await facebookAuth(
+        mockFacebookData.accessToken, 
+        mockFacebookData.userID, 
+        !isLogin
+      );
+      
+      setIsLoading(false);
+
+      if (result.success) {
+        toast.success(`Facebook ${isLogin ? 'login' : 'registration'} successful!`);
+        navigate('/');
+      } else {
+        if (result.userExists && !isLogin) {
+          toast.error('Account already exists. Please sign in instead.');
+          setIsLogin(true);
+        } else if (result.userNotFound && isLogin) {
+          toast.error('No account found. Please sign up first.');
+          setIsLogin(false);
+        } else {
+          toast.error(result.error || 'Facebook authentication failed');
+        }
+      }
+    }, 1000);
+  };
+
+  const handleBack = () => {
     navigate('/welcome');
   };
 
@@ -386,7 +491,7 @@ const Login = () => {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.4, duration: 0.8, type: "spring" }}
           >
-                        <FaUtensils />
+            <FaUtensils />
           </Logo>
           <Title
             initial={{ opacity: 0, y: 20 }}
@@ -543,7 +648,8 @@ const Login = () => {
           <SocialButton
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => handleSocialLogin('Google')}
+            onClick={handleGoogleLogin}
+            disabled={isLoading}
           >
             <FaGoogle className="social-icon google" />
             Google
@@ -551,7 +657,8 @@ const Login = () => {
           <SocialButton
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => handleSocialLogin('Facebook')}
+            onClick={handleFacebookLogin}
+            disabled={isLoading}
           >
             <FaFacebook className="social-icon facebook" />
             Facebook
