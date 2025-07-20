@@ -295,7 +295,7 @@ const ForgotPassword = styled(motion.button)`
 
 const Login = () => {
   const navigate = useNavigate();
-  const { login } = useAuth();
+    const { loginUser, registerUser } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
