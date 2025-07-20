@@ -303,6 +303,181 @@ const ClearButton = styled(motion.button)`
   }
 `;
 
+const DietaryPreferencesSection = styled(motion.div)`
+  background: white;
+  border-radius: ${props => props.theme.borderRadius};
+  padding: 2rem;
+  box-shadow: ${props => props.theme.shadows.card};
+  margin-bottom: 2rem;
+`;
+
+const PreferencesGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+`;
+
+const PreferenceGroup = styled.div`
+  h4 {
+    color: ${props => props.theme.colors.textDark};
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+`;
+
+const CheckboxGroup = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: background 0.2s;
+  position: relative;
+
+  &:hover {
+    background: ${props => props.theme.colors.backgroundLight};
+  }
+
+  input[type="checkbox"] {
+    display: none;
+  }
+
+  .checkmark {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #ddd;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: ${props => props.theme.transitions.default};
+
+    &::after {
+      content: "";
+      width: 6px;
+      height: 10px;
+      border: solid white;
+      border-width: 0 2px 2px 0;
+      transform: rotate(45deg);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+  }
+
+  input[type="checkbox"]:checked + .checkmark {
+    background: ${props => props.theme.colors.primary};
+    border-color: ${props => props.theme.colors.primary};
+
+    &::after {
+      opacity: 1;
+    }
+  }
+
+  .checkbox-icon {
+    color: ${props => props.theme.colors.primary};
+    width: 16px;
+  }
+
+  .checkbox-text {
+    font-weight: 500;
+    color: ${props => props.theme.colors.textDark};
+  }
+`;
+
+const NutritionSliders = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+`;
+
+const SliderGroup = styled.div`
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+    color: ${props => props.theme.colors.textDark};
+    font-weight: 500;
+    font-size: 0.9rem;
+  }
+
+  .slider-value {
+    color: ${props => props.theme.colors.primary};
+    font-weight: 600;
+  }
+`;
+
+const NutritionSlider = styled.input`
+  width: 100%;
+  height: 8px;
+  border-radius: 5px;
+  background: #ddd;
+  outline: none;
+  cursor: pointer;
+  appearance: none;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: ${props => props.theme.colors.primary};
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background: ${props => props.theme.colors.secondary};
+    }
+  }
+
+  &::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: ${props => props.theme.colors.primary};
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+
+    &:hover {
+      background: ${props => props.theme.colors.secondary};
+    }
+  }
+`;
+
+const MatchingOptions = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  label {
+    font-weight: 500;
+    color: ${props => props.theme.colors.textDark};
+  }
+
+  select {
+    padding: 0.75rem;
+    border: 2px solid #e1e5e9;
+    border-radius: 8px;
+    font-size: 1rem;
+    min-width: 250px;
+    background: white;
+    transition: ${props => props.theme.transitions.default};
+
+    &:focus {
+      outline: none;
+      border-color: ${props => props.theme.colors.primary};
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+  }
+`;
+
 const ResultsSection = styled(motion.div)`
   background: white;
   border-radius: ${props => props.theme.borderRadius};
