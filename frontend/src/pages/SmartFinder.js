@@ -741,12 +741,51 @@ const SmartFinder = () => {
     }
   };
 
-  const clearAll = () => {
+    const clearAll = () => {
     setIngredients([]);
     setCurrentInput('');
     setResults([]);
     setHasSearched(false);
-    toast.success('Cleared all ingredients!');
+    setDietaryPreferences({
+      vegetarian: false,
+      vegan: false,
+      glutenFree: false,
+      dairyFree: false
+    });
+    setAllergenRestrictions({
+      noNuts: false,
+      noShellfish: false,
+      noEggs: false,
+      noSoy: false
+    });
+    setNutritionGoals({
+      maxCalories: 800,
+      minProtein: 20,
+      maxCarbs: 60
+    });
+    setMatchType('any');
+    toast.success('Cleared all preferences!');
+  };
+
+  const handleDietaryChange = (preference) => {
+    setDietaryPreferences(prev => ({
+      ...prev,
+      [preference]: !prev[preference]
+    }));
+  };
+
+  const handleAllergenChange = (allergen) => {
+    setAllergenRestrictions(prev => ({
+      ...prev,
+      [allergen]: !prev[allergen]
+    }));
+  };
+
+  const handleNutritionChange = (goal, value) => {
+    setNutritionGoals(prev => ({
+      ...prev,
+      [goal]: parseInt(value)
+    }));
   };
 
   const handleKeyPress = (e) => {
