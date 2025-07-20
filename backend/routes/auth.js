@@ -460,4 +460,9 @@ router.get('/facebook/callback',
   }
 );
 
+// Initialize mock users when module loads
+if (global.MOCK_MODE) {
+  initializeMockUsers();
+}
+
 module.exports = router;
