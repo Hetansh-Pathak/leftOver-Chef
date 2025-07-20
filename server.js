@@ -1,11 +1,35 @@
 const express = require("express");
 const path = require("path");
+const compression = require('compression');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(express.json());
+app.use(compression());
+app.use(express.json({ limit: '10mb' }));
+
+// Security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// Cache control middleware
+app.use('/api', (req, res, next) => {
+  // Cache API responses for 5 minutes
+  res.setHeader('Cache-Control', 'public, max-age=300');
+  next();
+});
+
+// Static file caching
+app.use(express.static('public', {
+  maxAge: '1d', // Cache static files for 1 day
+  etag: true,
+  lastModified: true
+}));
 
 // Enhanced recipes data with additional features
 let recipes = [
@@ -637,8 +661,11 @@ app.post("/api/find-recipes", (req, res) => {
   });
 });
 
-// Serve static files (after API routes)
-app.use(express.static("public"));
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(500).json({ error: 'Internal server error' });
+});
 
 // Catch-all handler for React Router (if needed)
 app.get("*", (req, res) => {
