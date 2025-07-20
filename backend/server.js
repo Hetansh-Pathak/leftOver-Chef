@@ -3,6 +3,8 @@ const mongoose = require('mongoose');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const session = require('express-session');
+const { passport } = require('./config/oauth');
 
 // Load environment variables
 dotenv.config();
