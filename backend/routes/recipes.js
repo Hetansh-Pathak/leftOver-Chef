@@ -498,7 +498,25 @@ router.get('/user/:userId/favorites', authenticateUser, async (req, res) => {
 
 // GET recipe categories and filters
 router.get('/meta/filters', async (req, res) => {
-  try {
+    try {
+    // Check if we're in mock mode first
+    if (global.MOCK_MODE) {
+      return res.json({
+        categories: ['Main Course', 'Lunch', 'Appetizer', 'Dessert', 'Breakfast', 'Dinner', 'Snack', 'Soup', 'Salad', 'Side Dish'],
+        cuisines: ['Asian', 'Italian', 'American', 'Mexican', 'Indian', 'Mediterranean', 'French', 'Thai'],
+        difficulties: ['Easy', 'Medium', 'Hard'],
+        dietaryOptions: [
+          'vegetarian',
+          'vegan',
+          'glutenFree',
+          'dairyFree',
+          'ketogenic',
+          'lowFodmap',
+          'whole30'
+        ]
+      });
+    }
+
     const [categories, cuisines, difficulties] = await Promise.all([
       Recipe.distinct('dishTypes'),
       Recipe.distinct('cuisines'),
