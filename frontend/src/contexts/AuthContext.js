@@ -85,6 +85,66 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+    // OAuth functions
+  const googleAuth = async (token, isSignup = false) => {
+    try {
+      const response = await axios.post('/api/auth/google/verify', {
+        token,
+        isSignup
+      });
+
+      if (response.data.success) {
+        const { user, token: jwtToken } = response.data;
+        login(user, jwtToken);
+        return { success: true, user, token: jwtToken };
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Google auth error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Google authentication failed',
+        ...error.response?.data
+      };
+    }
+  };
+
+  const facebookAuth = async (accessToken, userID, isSignup = false) => {
+    try {
+      const response = await axios.post('/api/auth/facebook/verify', {
+        accessToken,
+        userID,
+        isSignup
+      });
+
+      if (response.data.success) {
+        const { user, token: jwtToken } = response.data;
+        login(user, jwtToken);
+        return { success: true, user, token: jwtToken };
+      }
+
+      return response.data;
+    } catch (error) {
+      console.error('Facebook auth error:', error);
+      return {
+        success: false,
+        error: error.response?.data?.error || 'Facebook authentication failed',
+        ...error.response?.data
+      };
+    }
+  };
+
+  const checkEmailExists = async (email) => {
+    try {
+      const response = await axios.post('/api/auth/check-email', { email });
+      return response.data;
+    } catch (error) {
+      console.error('Email check error:', error);
+      return { success: false, error: 'Failed to check email' };
+    }
+  };
+
   const value = {
     isAuthenticated,
     user,
@@ -92,7 +152,10 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     registerUser,
-    loginUser
+    loginUser,
+    googleAuth,
+    facebookAuth,
+    checkEmailExists
   };
 
   return (
