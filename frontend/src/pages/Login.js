@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -294,6 +295,7 @@ const ForgotPassword = styled(motion.button)`
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -314,9 +316,21 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate API call
+        // Simulate API call
     setTimeout(() => {
       setIsLoading(false);
+
+      // Mock user data and token
+      const userData = {
+        id: '1',
+        name: formData.name || 'Chef User',
+        email: formData.email
+      };
+      const token = 'mock-jwt-token';
+
+      // Login user
+      login(userData, token);
+
       toast.success(`${isLogin ? 'Login' : 'Registration'} successful!`);
       navigate('/');
     }, 1500);
@@ -326,8 +340,8 @@ const Login = () => {
     toast.success(`${provider} login coming soon!`);
   };
 
-  const handleBack = () => {
-    navigate('/');
+    const handleBack = () => {
+    navigate('/welcome');
   };
 
   return (
