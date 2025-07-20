@@ -359,7 +359,7 @@ const Navbar = () => {
                 >
                   <NavLink
                     to={item.path}
-                    isActive={location.pathname === item.path}
+                                        $isActive={location.pathname === item.path}
                   >
                     <IconComponent className="nav-icon" />
                     {item.label}
@@ -421,7 +421,7 @@ const Navbar = () => {
                 >
                   <MobileNavLink
                     to={item.path}
-                    isActive={location.pathname === item.path}
+                                        $isActive={location.pathname === item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <IconComponent className="nav-icon" />
