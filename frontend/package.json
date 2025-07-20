@@ -1,7 +1,7 @@
 {
   "name": "leftover-chef-frontend",
   "version": "1.0.0",
-  "private": true,
+    "private": true,
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -18,7 +18,9 @@
     "styled-components": "^6.0.7",
     "react-query": "^3.39.3",
     "react-hot-toast": "^2.4.1",
-    "lottie-react": "^2.4.0"
+    "lottie-react": "^2.4.0",
+            "@google-cloud/local-auth": "^2.1.0",
+    "gapi-script": "^1.2.0"
   },
   "scripts": {
     "start": "react-scripts start",
