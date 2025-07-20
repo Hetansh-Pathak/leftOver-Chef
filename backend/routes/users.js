@@ -186,8 +186,18 @@ router.post('/login', async (req, res) => {
     }
     
     const user = await User.findOne({ email });
-    if (!user || !user.isActive) {
-      return res.status(401).json({ message: 'Invalid credentials' });
+        if (!user) {
+      return res.status(401).json({
+        message: 'No account found with this email. Please sign up first.',
+        userNotFound: true
+      });
+    }
+
+    if (!user.isActive) {
+      return res.status(401).json({
+        message: 'Account is deactivated. Please contact support.',
+        accountDeactivated: true
+      });
     }
     
     const isPasswordValid = await user.comparePassword(password);
