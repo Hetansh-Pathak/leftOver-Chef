@@ -24,10 +24,66 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
+// In-memory storage for mock mode
+let mockUsers = [];
+let mockUserIdCounter = 1;
+
 // POST register user
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, ...profileData } = req.body;
+
+    // Handle mock mode
+    if (global.MOCK_MODE) {
+      // Check if user already exists
+      const existingUser = mockUsers.find(user => user.email === email);
+      if (existingUser) {
+        return res.status(400).json({ message: 'User already exists with this email' });
+      }
+
+      // Create mock user
+      const mockUser = {
+        _id: mockUserIdCounter++,
+        name,
+        email,
+        password, // In real app, this would be hashed
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+        cookingSkillLevel: 'Beginner',
+        points: 0,
+        level: 1,
+        isActive: true,
+        emailVerified: false,
+        accountCreated: new Date(),
+        achievements: [{
+          name: 'Welcome to Leftover Chef!',
+          description: 'Started your journey to reduce food waste',
+          category: 'milestone',
+          unlockedAt: new Date()
+        }],
+        dietaryPreferences: {},
+        allergens: {},
+        ...profileData
+      };
+
+      mockUsers.push(mockUser);
+
+      // Generate JWT
+      const token = jwt.sign({ userId: mockUser._id }, JWT_SECRET, { expiresIn: '7d' });
+
+      return res.status(201).json({
+        message: 'User registered successfully',
+        user: {
+          id: mockUser._id,
+          name: mockUser.name,
+          email: mockUser.email,
+          avatar: mockUser.avatar,
+          cookingSkillLevel: mockUser.cookingSkillLevel,
+          points: mockUser.points,
+          level: mockUser.level
+        },
+        token
+      });
+    }
     
     // Check if user already exists
     const existingUser = await User.findOne({ email });
