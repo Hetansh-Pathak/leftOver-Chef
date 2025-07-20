@@ -91,16 +91,16 @@ const NavLink = styled(Link)`
   font-weight: 500;
   position: relative;
   transition: ${props => props.theme.transitions.default};
-  background: ${props => props.isActive ? 
+  background: ${props => props.$isActive ? 
     `linear-gradient(45deg, ${props.theme.colors.primary}, ${props.theme.colors.secondary})` : 
     'transparent'
   };
-  color: ${props => props.isActive ? 'white' : props.theme.colors.textDark};
-  transform: ${props => props.isActive ? 'translateY(-2px)' : 'translateY(0)'};
-  box-shadow: ${props => props.isActive ? props.theme.shadows.cardHover : 'none'};
+  color: ${props => props.$isActive ? 'white' : props.theme.colors.textDark};
+  transform: ${props => props.$isActive ? 'translateY(-2px)' : 'translateY(0)'};
+  box-shadow: ${props => props.$isActive ? props.theme.shadows.cardHover : 'none'};
 
   &:hover {
-    background: ${props => props.isActive ? 
+    background: ${props => props.$isActive ? 
       `linear-gradient(45deg, ${props.theme.colors.primary}, ${props.theme.colors.secondary})` : 
       'rgba(102, 126, 234, 0.1)'
     };
@@ -214,11 +214,11 @@ const MobileNavLink = styled(Link)`
   color: ${props => props.theme.colors.textDark};
   font-weight: 600;
   font-size: 1.2rem;
-  background: ${props => props.isActive ? 
+  background: ${props => props.$isActive ? 
     `linear-gradient(45deg, ${props.theme.colors.primary}, ${props.theme.colors.secondary})` : 
     'rgba(102, 126, 234, 0.1)'
   };
-  color: ${props => props.isActive ? 'white' : props.theme.colors.textDark};
+  color: ${props => props.$isActive ? 'white' : props.theme.colors.textDark};
   width: 80%;
   max-width: 300px;
   text-align: center;
@@ -331,21 +331,21 @@ const Navbar = () => {
         }}
       >
         <NavContent>
-          <Logo
-            as={Link}
-            to="/"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <motion.div
-              className="logo-icon"
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
+                    <Link to="/" style={{ textDecoration: 'none' }}>
+            <Logo
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              🍳
-            </motion.div>
-            <span className="logo-text">Leftover Chef</span>
-          </Logo>
+              <motion.div
+                className="logo-icon"
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              >
+                🍳
+              </motion.div>
+              <span className="logo-text">Leftover Chef</span>
+            </Logo>
+          </Link>
 
           <NavLinks>
             {navItems.map((item, index) => {
@@ -359,7 +359,7 @@ const Navbar = () => {
                 >
                   <NavLink
                     to={item.path}
-                    isActive={location.pathname === item.path}
+                                        $isActive={location.pathname === item.path}
                   >
                     <IconComponent className="nav-icon" />
                     {item.label}
@@ -421,7 +421,7 @@ const Navbar = () => {
                 >
                   <MobileNavLink
                     to={item.path}
-                    isActive={location.pathname === item.path}
+                                        $isActive={location.pathname === item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <IconComponent className="nav-icon" />

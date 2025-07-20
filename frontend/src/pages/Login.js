@@ -117,18 +117,18 @@ const TabContainer = styled.div`
 
 const Tab = styled(motion.button)`
   flex: 1;
-  background: ${props => props.active ? 'white' : 'transparent'};
-  color: ${props => props.active ? props.theme.colors.primary : props.theme.colors.textLight};
+  background: ${props => props.$active ? 'white' : 'transparent'};
+  color: ${props => props.$active ? props.theme.colors.primary : props.theme.colors.textLight};
   border: none;
   padding: 0.75rem 1.5rem;
   border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: ${props => props.active ? '0 4px 12px rgba(102, 126, 234, 0.2)' : 'none'};
+  box-shadow: ${props => props.$active ? '0 4px 12px rgba(102, 126, 234, 0.2)' : 'none'};
 
   &:hover {
-    background: ${props => props.active ? 'white' : 'rgba(255, 255, 255, 0.5)'};
+    background: ${props => props.$active ? 'white' : 'rgba(255, 255, 255, 0.5)'};
   }
 `;
 
@@ -363,12 +363,26 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    toast.info('Google login - Coming Soon!');
+    const handleGoogleLogin = () => {
+    toast('Google login - Coming Soon!', {
+      icon: 'ℹ️',
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
   };
 
   const handleFacebookLogin = () => {
-    toast.info('Facebook login - Coming Soon!');
+    toast('Facebook login - Coming Soon!', {
+      icon: 'ℹ️',
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
   };
 
   const handleBack = () => {
@@ -422,9 +436,9 @@ const Login = () => {
           </Subtitle>
         </Header>
 
-        <TabContainer>
+                <TabContainer>
           <Tab
-            active={isLogin}
+            $active={isLogin}
             onClick={() => setIsLogin(true)}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
@@ -432,7 +446,7 @@ const Login = () => {
             Sign In
           </Tab>
           <Tab
-            active={!isLogin}
+            $active={!isLogin}
             onClick={() => setIsLogin(false)}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}

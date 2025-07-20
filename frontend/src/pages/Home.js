@@ -123,7 +123,7 @@ const ActionCard = styled(motion.div)`
     left: 0;
     width: 100%;
     height: 4px;
-    background: ${props => props.gradient || props.theme.colors.primary};
+    background: ${props => props.$gradient || props.theme.colors.primary};
   }
 
   &:hover {
@@ -134,7 +134,7 @@ const ActionCard = styled(motion.div)`
   .action-icon {
     font-size: 2.5rem;
     margin-bottom: 1rem;
-    color: ${props => props.color || props.theme.colors.primary};
+    color: ${props => props.$color || props.theme.colors.primary};
     animation: pulse 2s ease-in-out infinite;
   }
 
@@ -152,7 +152,7 @@ const ActionCard = styled(motion.div)`
   }
 
   .action-button {
-    background: ${props => props.buttonColor || props.theme.colors.primary};
+    background: ${props => props.$buttonColor || props.theme.colors.primary};
     color: white;
     border: none;
     padding: 0.75rem 1.5rem;
@@ -462,11 +462,11 @@ const Home = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 * index, duration: 0.6 }}
               whileHover={{ scale: 1.03 }}
-              as={Link}
+                            as={Link}
               to={card.link}
-              color={card.color}
-              buttonColor={card.buttonColor}
-              gradient={card.gradient}
+              $color={card.color}
+              $buttonColor={card.buttonColor}
+              $gradient={card.gradient}
             >
               <IconComponent className="action-icon" />
               <div className="action-title">{card.title}</div>
