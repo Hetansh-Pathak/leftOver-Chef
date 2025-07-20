@@ -316,24 +316,37 @@ const Login = () => {
     e.preventDefault();
     setIsLoading(true);
 
-        // Simulate API call
-    setTimeout(() => {
+            try {
+      let result;
+
+      if (isLogin) {
+        // Login
+        result = await loginUser({
+          email: formData.email,
+          password: formData.password
+        });
+      } else {
+        // Registration
+        result = await registerUser({
+          name: formData.name,
+          email: formData.email,
+          password: formData.password
+        });
+      }
+
       setIsLoading(false);
 
-      // Mock user data and token
-      const userData = {
-        id: '1',
-        name: formData.name || 'Chef User',
-        email: formData.email
-      };
-      const token = 'mock-jwt-token';
-
-      // Login user
-      login(userData, token);
-
-      toast.success(`${isLogin ? 'Login' : 'Registration'} successful!`);
-      navigate('/');
-    }, 1500);
+      if (result.success) {
+        toast.success(`${isLogin ? 'Login' : 'Registration'} successful!`);
+        navigate('/');
+      } else {
+        toast.error(result.error || 'Something went wrong');
+      }
+    } catch (error) {
+      setIsLoading(false);
+      toast.error('Network error. Please try again.');
+      console.error('Authentication error:', error);
+    }
   };
 
   const handleSocialLogin = (provider) => {
