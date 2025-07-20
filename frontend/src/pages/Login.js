@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -301,7 +301,7 @@ const ForgotPassword = styled(motion.button)`
 
 const Login = () => {
   const navigate = useNavigate();
-  const { loginUser, registerUser, googleAuth, facebookAuth } = useAuth();
+  const { loginUser, registerUser } = useAuth();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -310,29 +310,6 @@ const Login = () => {
     password: '',
     name: ''
   });
-
-  // Initialize Google API
-  useEffect(() => {
-    const initializeGapi = async () => {
-      if (window.gapi) {
-        await window.gapi.load('auth2', () => {
-          window.gapi.auth2.init({
-            client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || 'demo-google-client-id'
-          });
-        });
-      }
-    };
-
-    // Load Google API script if not already loaded
-    if (!window.gapi) {
-      const script = document.createElement('script');
-      script.src = 'https://apis.google.com/js/api.js';
-      script.onload = initializeGapi;
-      document.body.appendChild(script);
-    } else {
-      initializeGapi();
-    }
-  }, []);
 
   const handleInputChange = (e) => {
     setFormData({
@@ -386,76 +363,12 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = async () => {
-    try {
-      if (!window.gapi || !window.gapi.auth2) {
-        toast.error('Google API not loaded. Please refresh the page.');
-        return;
-      }
-
-      const authInstance = window.gapi.auth2.getAuthInstance();
-      const googleUser = await authInstance.signIn();
-      const idToken = googleUser.getAuthResponse().id_token;
-
-      setIsLoading(true);
-      const result = await googleAuth(idToken, !isLogin);
-      setIsLoading(false);
-
-      if (result.success) {
-        toast.success(`Google ${isLogin ? 'login' : 'registration'} successful!`);
-        navigate('/');
-      } else {
-        if (result.userExists && !isLogin) {
-          toast.error('Account already exists. Please sign in instead.');
-          setIsLogin(true);
-        } else if (result.userNotFound && isLogin) {
-          toast.error('No account found. Please sign up first.');
-          setIsLogin(false);
-        } else {
-          toast.error(result.error || 'Google authentication failed');
-        }
-      }
-    } catch (error) {
-      setIsLoading(false);
-      console.error('Google login error:', error);
-      toast.error('Google login failed. Please try again.');
-    }
+  const handleGoogleLogin = () => {
+    toast.info('Google login - Coming Soon!');
   };
 
   const handleFacebookLogin = () => {
-    // For demo purposes, we'll simulate Facebook login
-    // In production, you would integrate with Facebook SDK
-    setIsLoading(true);
-    
-    setTimeout(async () => {
-      const mockFacebookData = {
-        accessToken: 'demo-facebook-token',
-        userID: 'demo-user-' + Date.now()
-      };
-
-      const result = await facebookAuth(
-        mockFacebookData.accessToken, 
-        mockFacebookData.userID, 
-        !isLogin
-      );
-      
-      setIsLoading(false);
-
-      if (result.success) {
-        toast.success(`Facebook ${isLogin ? 'login' : 'registration'} successful!`);
-        navigate('/');
-      } else {
-        if (result.userExists && !isLogin) {
-          toast.error('Account already exists. Please sign in instead.');
-          setIsLogin(true);
-        } else if (result.userNotFound && isLogin) {
-          toast.error('No account found. Please sign up first.');
-          setIsLogin(false);
-        } else {
-          toast.error(result.error || 'Facebook authentication failed');
-        }
-      }
-    }, 1000);
+    toast.info('Facebook login - Coming Soon!');
   };
 
   const handleBack = () => {
