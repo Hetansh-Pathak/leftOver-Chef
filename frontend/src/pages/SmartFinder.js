@@ -476,6 +476,30 @@ const SmartFinder = () => {
   const [results, setResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [matchType, setMatchType] = useState('any');
+
+  // Dietary Preferences
+  const [dietaryPreferences, setDietaryPreferences] = useState({
+    vegetarian: false,
+    vegan: false,
+    glutenFree: false,
+    dairyFree: false
+  });
+
+  // Allergen Restrictions
+  const [allergenRestrictions, setAllergenRestrictions] = useState({
+    noNuts: false,
+    noShellfish: false,
+    noEggs: false,
+    noSoy: false
+  });
+
+  // Nutrition Goals
+  const [nutritionGoals, setNutritionGoals] = useState({
+    maxCalories: 800,
+    minProtein: 20,
+    maxCarbs: 60
+  });
 
   const suggestionCategories = [
     {
