@@ -959,7 +959,7 @@ const SmartFinder = () => {
                   onChange={() => handleDietaryChange('glutenFree')}
                 />
                 <span className="checkmark"></span>
-                <FaWheat className="checkbox-icon" />
+                                <FaBreadSlice className="checkbox-icon" />
                 <span className="checkbox-text">Gluten-Free</span>
               </CheckboxLabel>
 
