@@ -453,29 +453,28 @@ const Home = () => {
       </HeroSection>
 
       <QuickActionsGrid>
-        {actionCards.map((card, index) => {
+                {actionCards.map((card, index) => {
           const IconComponent = card.icon;
           return (
-            <ActionCard
-              key={card.title}
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 * index, duration: 0.6 }}
-              whileHover={{ scale: 1.03 }}
-                            as={Link}
-              to={card.link}
-              $color={card.color}
-              $buttonColor={card.buttonColor}
-              $gradient={card.gradient}
-            >
-              <IconComponent className="action-icon" />
-              <div className="action-title">{card.title}</div>
-              <div className="action-description">{card.description}</div>
-              <div className="action-button">
-                Get Started
-                <IconComponent />
-              </div>
-            </ActionCard>
+            <Link key={card.title} to={card.link} style={{ textDecoration: 'none' }}>
+              <ActionCard
+                initial={{ opacity: 0, y: 50 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 * index, duration: 0.6 }}
+                whileHover={{ scale: 1.03 }}
+                $color={card.color}
+                $buttonColor={card.buttonColor}
+                $gradient={card.gradient}
+              >
+                <IconComponent className="action-icon" />
+                <div className="action-title">{card.title}</div>
+                <div className="action-description">{card.description}</div>
+                <div className="action-button">
+                  Get Started
+                  <IconComponent />
+                </div>
+              </ActionCard>
+            </Link>
           );
         })}
       </QuickActionsGrid>

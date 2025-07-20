@@ -28,6 +28,84 @@ const authenticateUser = async (req, res, next) => {
 let mockUsers = [];
 let mockUserIdCounter = 1;
 
+// Initialize mock users for testing when in mock mode
+const initializeMockUsers = () => {
+  // Use global mock users if available, otherwise create them
+  if (global.MOCK_MODE && global.mockUsers && global.mockUsers.length > 0) {
+    mockUsers = global.mockUsers;
+    mockUserIdCounter = mockUsers.length + 1;
+    return;
+  }
+
+  if (global.MOCK_MODE && mockUsers.length === 0) {
+    mockUsers = [
+      {
+        _id: mockUserIdCounter++,
+        name: 'Demo User',
+        email: 'demo@example.com',
+        password: 'password123',
+        avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+        cookingSkillLevel: 'Beginner',
+        points: 0,
+        level: 1,
+        isActive: true,
+        emailVerified: true,
+        accountCreated: new Date(),
+        lastLogin: new Date(),
+        achievements: [{
+          name: 'Welcome to Leftover Chef!',
+          description: 'Started your journey to reduce food waste',
+          category: 'milestone',
+          unlockedAt: new Date()
+        }],
+        dietaryPreferences: {},
+        allergens: {},
+        kitchenInventory: [],
+        shoppingList: [],
+        mealPlan: [],
+        cookingHistory: [],
+        favorites: [],
+        myRecipes: [],
+        recentlyViewed: [],
+        streak: { current: 0, longest: 0 }
+      },
+      {
+        _id: mockUserIdCounter++,
+        name: 'Chef Tester',
+        email: 'chef@test.com',
+        password: 'chef123',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+        cookingSkillLevel: 'Intermediate',
+        points: 250,
+        level: 3,
+        isActive: true,
+        emailVerified: true,
+        accountCreated: new Date(),
+        lastLogin: new Date(),
+        achievements: [{
+          name: 'Welcome to Leftover Chef!',
+          description: 'Started your journey to reduce food waste',
+          category: 'milestone',
+          unlockedAt: new Date()
+        }],
+        dietaryPreferences: { vegetarian: true },
+        allergens: {},
+        kitchenInventory: [],
+        shoppingList: [],
+        mealPlan: [],
+        cookingHistory: [],
+        favorites: [],
+        myRecipes: [],
+        recentlyViewed: [],
+        streak: { current: 5, longest: 12 }
+      }
+    ];
+    console.log('👤 Mock users initialized for testing');
+    console.log('   📧 demo@example.com / password123');
+    console.log('   📧 chef@test.com / chef123');
+  }
+};
+
 // POST register user
 router.post('/register', async (req, res) => {
   try {
@@ -148,6 +226,8 @@ router.post('/login', async (req, res) => {
 
         // Handle mock mode
     if (global.MOCK_MODE) {
+      // Initialize mock users if not already done
+      initializeMockUsers();
       const user = mockUsers.find(u => u.email === email);
       if (!user) {
         return res.status(401).json({
@@ -963,5 +1043,10 @@ router.get('/admin/stats', async (req, res) => {
     });
   }
 });
+
+// Initialize mock users when module loads
+if (global.MOCK_MODE) {
+  initializeMockUsers();
+}
 
 module.exports = router;

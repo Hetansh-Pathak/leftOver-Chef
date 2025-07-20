@@ -126,7 +126,74 @@ const setupMockData = async () => {
   // For now, the routes will handle mock data internally
   global.MOCK_MODE = true;
   
-  console.log('�� Mock data setup complete');
+    // Initialize mock users immediately
+  global.mockUsers = [
+    {
+      _id: 1,
+      name: 'Demo User',
+      email: 'demo@example.com',
+      password: 'password123',
+      avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+      cookingSkillLevel: 'Beginner',
+      points: 0,
+      level: 1,
+      isActive: true,
+      emailVerified: true,
+      accountCreated: new Date(),
+      lastLogin: new Date(),
+      achievements: [{
+        name: 'Welcome to Leftover Chef!',
+        description: 'Started your journey to reduce food waste',
+        category: 'milestone',
+        unlockedAt: new Date()
+      }],
+      dietaryPreferences: {},
+      allergens: {},
+      kitchenInventory: [],
+      shoppingList: [],
+      mealPlan: [],
+      cookingHistory: [],
+      favorites: [],
+      myRecipes: [],
+      recentlyViewed: [],
+      streak: { current: 0, longest: 0 }
+    },
+    {
+      _id: 2,
+      name: 'Chef Tester',
+      email: 'chef@test.com',
+      password: 'chef123',
+      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+      cookingSkillLevel: 'Intermediate',
+      points: 250,
+      level: 3,
+      isActive: true,
+      emailVerified: true,
+      accountCreated: new Date(),
+      lastLogin: new Date(),
+      achievements: [{
+        name: 'Welcome to Leftover Chef!',
+        description: 'Started your journey to reduce food waste',
+        category: 'milestone',
+        unlockedAt: new Date()
+      }],
+      dietaryPreferences: { vegetarian: true },
+      allergens: {},
+      kitchenInventory: [],
+      shoppingList: [],
+      mealPlan: [],
+      cookingHistory: [],
+      favorites: [],
+      myRecipes: [],
+      recentlyViewed: [],
+      streak: { current: 5, longest: 12 }
+    }
+  ];
+
+  console.log('🥗 Mock data setup complete');
+  console.log('👤 Test users available:');
+  console.log('   📧 demo@example.com / password123');
+  console.log('   📧 chef@test.com / chef123');
 };
 
 // Import route modules
