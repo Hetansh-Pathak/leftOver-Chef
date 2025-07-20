@@ -914,7 +914,162 @@ const SmartFinder = () => {
             ))}
           </div>
         </QuickSuggestions>
-      </IngredientsSection>
+            </IngredientsSection>
+
+      <DietaryPreferencesSection
+        initial={{ opacity: 0, y: 30 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.5, duration: 0.8 }}
+      >
+        <SectionTitle>
+          <FaLeaf className="section-icon" />
+          Dietary Preferences & Restrictions
+        </SectionTitle>
+
+        <PreferencesGrid>
+          <PreferenceGroup>
+            <h4>Diet Type</h4>
+            <CheckboxGroup>
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={dietaryPreferences.vegetarian}
+                  onChange={() => handleDietaryChange('vegetarian')}
+                />
+                <span className="checkmark"></span>
+                <FaSeedling className="checkbox-icon" />
+                <span className="checkbox-text">Vegetarian</span>
+              </CheckboxLabel>
+
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={dietaryPreferences.vegan}
+                  onChange={() => handleDietaryChange('vegan')}
+                />
+                <span className="checkmark"></span>
+                <FaLeaf className="checkbox-icon" />
+                <span className="checkbox-text">Vegan</span>
+              </CheckboxLabel>
+
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={dietaryPreferences.glutenFree}
+                  onChange={() => handleDietaryChange('glutenFree')}
+                />
+                <span className="checkmark"></span>
+                <FaWheat className="checkbox-icon" />
+                <span className="checkbox-text">Gluten-Free</span>
+              </CheckboxLabel>
+
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={dietaryPreferences.dairyFree}
+                  onChange={() => handleDietaryChange('dairyFree')}
+                />
+                <span className="checkmark"></span>
+                <FaCow className="checkbox-icon" />
+                <span className="checkbox-text">Dairy-Free</span>
+              </CheckboxLabel>
+            </CheckboxGroup>
+          </PreferenceGroup>
+
+          <PreferenceGroup>
+            <h4>Allergen Warnings</h4>
+            <CheckboxGroup>
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={allergenRestrictions.noNuts}
+                  onChange={() => handleAllergenChange('noNuts')}
+                />
+                <span className="checkmark"></span>
+                <FaExclamationTriangle className="checkbox-icon" />
+                <span className="checkbox-text">No Nuts</span>
+              </CheckboxLabel>
+
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={allergenRestrictions.noShellfish}
+                  onChange={() => handleAllergenChange('noShellfish')}
+                />
+                <span className="checkmark"></span>
+                <FaFish className="checkbox-icon" />
+                <span className="checkbox-text">No Shellfish</span>
+              </CheckboxLabel>
+
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={allergenRestrictions.noEggs}
+                  onChange={() => handleAllergenChange('noEggs')}
+                />
+                <span className="checkmark"></span>
+                <FaEgg className="checkbox-icon" />
+                <span className="checkbox-text">No Eggs</span>
+              </CheckboxLabel>
+
+              <CheckboxLabel>
+                <input
+                  type="checkbox"
+                  checked={allergenRestrictions.noSoy}
+                  onChange={() => handleAllergenChange('noSoy')}
+                />
+                <span className="checkmark"></span>
+                <FaSeedling className="checkbox-icon" />
+                <span className="checkbox-text">No Soy</span>
+              </CheckboxLabel>
+            </CheckboxGroup>
+          </PreferenceGroup>
+
+          <PreferenceGroup>
+            <h4>Nutrition Goals</h4>
+            <NutritionSliders>
+              <SliderGroup>
+                <label>
+                  Max Calories: <span className="slider-value">{nutritionGoals.maxCalories}</span>
+                </label>
+                <NutritionSlider
+                  type="range"
+                  min="200"
+                  max="1000"
+                  value={nutritionGoals.maxCalories}
+                  onChange={(e) => handleNutritionChange('maxCalories', e.target.value)}
+                />
+              </SliderGroup>
+
+              <SliderGroup>
+                <label>
+                  Min Protein: <span className="slider-value">{nutritionGoals.minProtein}g</span>
+                </label>
+                <NutritionSlider
+                  type="range"
+                  min="5"
+                  max="50"
+                  value={nutritionGoals.minProtein}
+                  onChange={(e) => handleNutritionChange('minProtein', e.target.value)}
+                />
+              </SliderGroup>
+
+              <SliderGroup>
+                <label>
+                  Max Carbs: <span className="slider-value">{nutritionGoals.maxCarbs}g</span>
+                </label>
+                <NutritionSlider
+                  type="range"
+                  min="10"
+                  max="100"
+                  value={nutritionGoals.maxCarbs}
+                  onChange={(e) => handleNutritionChange('maxCarbs', e.target.value)}
+                />
+              </SliderGroup>
+            </NutritionSliders>
+          </PreferenceGroup>
+        </PreferencesGrid>
+      </DietaryPreferencesSection>
 
       <SearchControls
         initial={{ opacity: 0, y: 30 }}
