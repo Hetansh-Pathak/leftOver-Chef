@@ -231,13 +231,11 @@ class RecipeBot {
 
     this.currentTab = tabName;
 
-    // Load specific content
+        // Load specific content
     if (tabName === "favorites") {
       this.displayFavorites();
     } else if (tabName === "browse") {
       this.displayRecipes();
-    } else if (tabName === "generator") {
-      this.loadGeneratorStats();
     }
   }
 
