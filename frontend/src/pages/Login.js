@@ -363,12 +363,26 @@ const Login = () => {
     }
   };
 
-  const handleGoogleLogin = () => {
-    toast.info('Google login - Coming Soon!');
+    const handleGoogleLogin = () => {
+    toast('Google login - Coming Soon!', {
+      icon: 'ℹ️',
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
   };
 
   const handleFacebookLogin = () => {
-    toast.info('Facebook login - Coming Soon!');
+    toast('Facebook login - Coming Soon!', {
+      icon: 'ℹ️',
+      style: {
+        borderRadius: '10px',
+        background: '#333',
+        color: '#fff',
+      },
+    });
   };
 
   const handleBack = () => {
