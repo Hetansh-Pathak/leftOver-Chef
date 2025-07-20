@@ -41,9 +41,7 @@
         <button class="nav-tab" data-tab="add">
           <i class="fas fa-plus"></i> Add Recipe
         </button>
-        <button class="nav-tab" data-tab="generator">
-          <i class="fas fa-magic"></i> Recipe Generator
-        </button>
+        
         <button class="nav-tab" data-tab="daily">
           <i class="fas fa-star"></i> Recipe of the Day
         </button>
@@ -500,143 +498,7 @@
           </form>
         </div>
 
-        <!-- Recipe Generator Tab -->
-        <div class="tab-content" id="generator-tab">
-          <h2 class="section-title">
-            <i class="fas fa-magic text-purple"></i> Recipe Generator
-          </h2>
-          <div class="generator-container">
-            <div class="generator-header">
-              <p class="generator-description">
-                Generate thousands of unique recipes instantly! Our AI-powered
-                recipe generator creates diverse combinations of proteins,
-                vegetables, grains, and cooking methods from various cuisines.
-              </p>
-            </div>
-
-            <div class="generator-stats" id="generatorStats">
-              <div class="stat-card">
-                <div class="stat-number" id="totalRecipesCount">0</div>
-                <div class="stat-label">Total Recipes</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number" id="avgRating">0</div>
-                <div class="stat-label">Avg Rating</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number" id="categoriesCount">0</div>
-                <div class="stat-label">Categories</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-number" id="lastGenerated">0</div>
-                <div class="stat-label">Last Generated</div>
-              </div>
-            </div>
-
-            <div class="generator-controls">
-              <div class="control-group">
-                <label for="recipeCount">Number of Recipes to Generate:</label>
-                <select id="recipeCount" class="count-select">
-                  <option value="100">100 Recipes</option>
-                  <option value="500">500 Recipes</option>
-                  <option value="1000" selected>1,000 Recipes</option>
-                  <option value="5000">5,000 Recipes</option>
-                  <option value="10000">10,000 Recipes (⚡ Fast)</option>
-                  <option value="25000">25,000 Recipes (🚀 Turbo)</option>
-                  <option value="50000">50,000 Recipes (💥 MEGA)</option>
-                </select>
-              </div>
-
-              <div class="generation-buttons">
-                <button id="generateRecipesBtn" class="generate-btn">
-                  <i class="fas fa-magic"></i>
-                  Generate Recipes
-                </button>
-                <button id="clearAllRecipesBtn" class="clear-btn">
-                  <i class="fas fa-trash"></i>
-                  Clear All Generated
-                </button>
-              </div>
-            </div>
-
-            <div
-              class="generation-progress"
-              id="generationProgress"
-              style="display: none"
-            >
-              <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-              </div>
-              <div class="progress-text" id="progressText">
-                Generating recipes...
-              </div>
-            </div>
-
-            <div
-              class="generation-result"
-              id="generationResult"
-              style="display: none"
-            >
-              <div class="result-success">
-                <i class="fas fa-check-circle"></i>
-                <h3>Generation Complete!</h3>
-                <p id="resultMessage">Successfully generated recipes</p>
-                <button id="viewGeneratedBtn" class="view-generated-btn">
-                  <i class="fas fa-eye"></i>
-                  View Generated Recipes
-                </button>
-              </div>
-            </div>
-
-            <div class="generator-features">
-              <h3>🎯 What You'll Get:</h3>
-              <div class="features-grid">
-                <div class="feature-item">
-                  <i class="fas fa-utensils"></i>
-                  <div>
-                    <strong>Diverse Proteins</strong>
-                    <p>Chicken, beef, fish, tofu, and more</p>
-                  </div>
-                </div>
-                <div class="feature-item">
-                  <i class="fas fa-leaf"></i>
-                  <div>
-                    <strong>Fresh Vegetables</strong>
-                    <p>Seasonal vegetables and herbs</p>
-                  </div>
-                </div>
-                <div class="feature-item">
-                  <i class="fas fa-globe"></i>
-                  <div>
-                    <strong>Global Cuisines</strong>
-                    <p>Italian, Asian, Mexican, and more</p>
-                  </div>
-                </div>
-                <div class="feature-item">
-                  <i class="fas fa-fire"></i>
-                  <div>
-                    <strong>Cooking Methods</strong>
-                    <p>Grilled, baked, stir-fried, roasted</p>
-                  </div>
-                </div>
-                <div class="feature-item">
-                  <i class="fas fa-chart-line"></i>
-                  <div>
-                    <strong>Nutrition Info</strong>
-                    <p>Calories, protein, carbs, and more</p>
-                  </div>
-                </div>
-                <div class="feature-item">
-                  <i class="fas fa-star"></i>
-                  <div>
-                    <strong>Auto Ratings</strong>
-                    <p>Realistic ratings from 3-5 stars</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        
 
         <!-- Recipe of the Day Tab -->
         <div class="tab-content" id="daily-tab">
