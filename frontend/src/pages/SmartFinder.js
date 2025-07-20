@@ -725,9 +725,15 @@ const SmartFinder = () => {
     setIsSearching(true);
     setHasSearched(true);
 
-    try {
+        try {
       const response = await axios.post('/api/recipes/search-by-ingredients', {
-        ingredients
+        ingredients,
+        matchType,
+        preferences: {
+          dietary: dietaryPreferences,
+          allergens: allergenRestrictions,
+          nutrition: nutritionGoals
+        }
       });
 
       setResults(response.data.recipes);
