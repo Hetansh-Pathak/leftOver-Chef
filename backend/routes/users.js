@@ -777,6 +777,46 @@ router.put('/notifications', authenticateUser, async (req, res) => {
 // GET all users (admin endpoint)
 router.get('/admin/all-users', async (req, res) => {
   try {
+    // Handle mock mode
+    if (global.MOCK_MODE) {
+      const stats = {
+        totalUsers: mockUsers.length,
+        activeUsers: mockUsers.filter(u => u.isActive).length,
+        verifiedUsers: mockUsers.filter(u => u.emailVerified).length,
+        premiumUsers: 0,
+        recentRegistrations: mockUsers.filter(u =>
+          new Date() - new Date(u.accountCreated) < 7 * 24 * 60 * 60 * 1000
+        ).length,
+        averageLevel: mockUsers.reduce((sum, u) => sum + (u.level || 1), 0) / Math.max(mockUsers.length, 1),
+        topCookingSkillLevels: []
+      };
+
+      return res.json({
+        message: 'Users retrieved successfully (Mock Mode)',
+        stats,
+        users: mockUsers.map(user => ({
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          cookingSkillLevel: user.cookingSkillLevel,
+          level: user.level,
+          points: user.points,
+          isActive: user.isActive,
+          emailVerified: user.emailVerified,
+          subscriptionType: 'free',
+          lastLogin: user.lastLogin,
+          accountCreated: user.accountCreated,
+          favoriteRecipes: 0,
+          cookingSessions: 0,
+          achievements: user.achievements?.length || 0,
+          currentStreak: 0,
+          dietaryPreferences: [],
+          allergens: []
+        })),
+        totalReturned: mockUsers.length
+      });
+    }
     // Get all users with basic information (excluding passwords)
     const users = await User.find({})
       .select('-password -cookingHistory -searchHistory -kitchenInventory -shoppingList -mealPlan')
