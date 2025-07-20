@@ -136,8 +136,6 @@ class RecipeBot {
       this.addNewRecipe();
     });
 
-    
-
     // Smart Recipe Finder controls
     document
       .getElementById("addIngredientBtn")
@@ -224,7 +222,7 @@ class RecipeBot {
       this.displayFavorites();
     } else if (tabName === "browse") {
       this.displayRecipes();
-    
+    }
   }
 
   applyFilters() {
@@ -392,7 +390,7 @@ class RecipeBot {
                         <span><i class="fas fa-users"></i> Serves: ${recipe.servings}</span>
                     </div>
                     
-                                        <div class="recipe-tags">
+                    <div class="recipe-tags">
                         ${(recipe.tags || []).map((tag) => `<span class="recipe-tag">${tag}</span>`).join("")}
                     </div>
                 </div>
@@ -741,8 +739,6 @@ class RecipeBot {
       // Silent fail if audio doesn't work
     }
   }
-
-  
 
   // Smart Recipe Finder Methods
   addIngredient() {
