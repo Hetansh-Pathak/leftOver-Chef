@@ -1,12 +1,10 @@
 const express = require("express");
 const path = require("path");
-const compression = require('compression');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 // Middleware
-app.use(compression());
 app.use(express.json({ limit: '10mb' }));
 
 // Security headers
