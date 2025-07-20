@@ -725,19 +725,26 @@ const SmartFinder = () => {
     setIsSearching(true);
     setHasSearched(true);
 
-        try {
+            try {
       const response = await axios.post('/api/recipes/search-by-ingredients', {
         ingredients,
         matchType,
         preferences: {
           dietary: dietaryPreferences,
-          allergens: allergenRestrictions,
-          nutrition: nutritionGoals
-        }
+          allergens: allergenRestrictions
+        },
+        nutrition: nutritionGoals,
+        useAI: true, // Enable AI-enhanced search
+        limit: 20
       });
 
       setResults(response.data.recipes);
       toast.success(`Found ${response.data.totalFound} recipes!`);
+
+      // Show AI enhancement message if applicable
+      if (response.data.aiEnhanced) {
+        toast.success('🤖 AI-enhanced results based on your preferences!');
+      }
     } catch (error) {
       console.error('Search error:', error);
       toast.error('Error searching recipes. Please try again.');
