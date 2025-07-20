@@ -19,14 +19,45 @@ class RecipeBot {
     this.init();
   }
 
-  async init() {
-    await this.loadRecipes();
-    await this.loadFavorites();
-    await this.loadFilters();
-    await this.loadDailyRecipe();
-    this.setupEventListeners();
-    this.displayRecipes();
-    this.updateStats();
+    async init() {
+    // Show loading state
+    this.showLoadingState();
+
+    try {
+      // Load critical data first
+      await Promise.all([
+        this.loadRecipes(),
+        this.loadFavorites(),
+        this.loadFilters()
+      ]);
+
+      // Setup UI
+      this.setupEventListeners();
+      this.displayRecipes();
+      this.updateStats();
+
+      // Load non-critical data
+      this.loadDailyRecipe();
+
+      // Hide loading state
+      this.hideLoadingState();
+    } catch (error) {
+      console.error('Failed to initialize app:', error);
+      this.showErrorState();
+    }
+  }
+
+  showLoadingState() {
+    document.body.style.cursor = 'wait';
+  }
+
+  hideLoadingState() {
+    document.body.style.cursor = 'default';
+  }
+
+  showErrorState() {
+    console.error('App initialization failed');
+    document.body.style.cursor = 'default';
   }
 
   async loadRecipes() {
@@ -108,9 +139,9 @@ class RecipeBot {
     document.getElementById("searchInput").addEventListener("keypress", (e) => {
       if (e.key === "Enter") this.applyFilters();
     });
-    document
+        document
       .getElementById("searchInput")
-      .addEventListener("input", () => this.applyFilters());
+      .addEventListener("input", this.debounce(() => this.applyFilters(), 300));
 
     // Filter controls
     document
@@ -966,6 +997,51 @@ class RecipeBot {
         </div>
       </div>
     `;
+  }
+
+    // Utility function for debouncing
+  debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func.apply(this, args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
+  }
+
+  // Utility function for throttling
+  throttle(func, limit) {
+    let inThrottle;
+    return function(...args) {
+      if (!inThrottle) {
+        func.apply(this, args);
+        inThrottle = true;
+        setTimeout(() => inThrottle = false, limit);
+      }
+    };
+  }
+
+  // Lazy load images
+  lazyLoadImages() {
+    if ('IntersectionObserver' in window) {
+      const imageObserver = new IntersectionObserver((entries, observer) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            const img = entry.target;
+            img.src = img.dataset.src;
+            img.classList.remove('lazy');
+            imageObserver.unobserve(img);
+          }
+        });
+      });
+
+      document.querySelectorAll('img[data-src]').forEach(img => {
+        imageObserver.observe(img);
+      });
+    }
   }
 
   clearSmartFinder() {
