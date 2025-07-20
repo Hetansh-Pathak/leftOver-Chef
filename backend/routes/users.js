@@ -30,6 +30,13 @@ let mockUserIdCounter = 1;
 
 // Initialize mock users for testing when in mock mode
 const initializeMockUsers = () => {
+  // Use global mock users if available, otherwise create them
+  if (global.MOCK_MODE && global.mockUsers && global.mockUsers.length > 0) {
+    mockUsers = global.mockUsers;
+    mockUserIdCounter = mockUsers.length + 1;
+    return;
+  }
+
   if (global.MOCK_MODE && mockUsers.length === 0) {
     mockUsers = [
       {
