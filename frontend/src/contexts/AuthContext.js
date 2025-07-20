@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
 
 const AuthContext = createContext();
 
@@ -24,6 +25,8 @@ export const AuthProvider = ({ children }) => {
       if (token && userData) {
         setIsAuthenticated(true);
         setUser(JSON.parse(userData));
+        // Set axios default authorization header
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
       setIsLoading(false);
     };
@@ -36,6 +39,9 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
     localStorage.setItem('authToken', token);
     localStorage.setItem('userData', JSON.stringify(userData));
+    
+    // Set axios default authorization header
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
   };
 
   const logout = () => {
@@ -43,6 +49,40 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
+    
+    // Remove axios default authorization header
+    delete axios.defaults.headers.common['Authorization'];
+  };
+
+  // API functions
+  const registerUser = async (userData) => {
+    try {
+      const response = await axios.post('/api/users/register', userData);
+      const { user, token } = response.data;
+      login(user, token);
+      return { success: true, user, token };
+    } catch (error) {
+      console.error('Registration error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Registration failed' 
+      };
+    }
+  };
+  
+  const loginUser = async (credentials) => {
+    try {
+      const response = await axios.post('/api/users/login', credentials);
+      const { user, token } = response.data;
+      login(user, token);
+      return { success: true, user, token };
+    } catch (error) {
+      console.error('Login error:', error);
+      return { 
+        success: false, 
+        error: error.response?.data?.message || 'Login failed' 
+      };
+    }
   };
 
   const value = {
@@ -50,7 +90,9 @@ export const AuthProvider = ({ children }) => {
     user,
     isLoading,
     login,
-    logout
+    logout,
+    registerUser,
+    loginUser
   };
 
   return (
