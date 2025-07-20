@@ -132,10 +132,12 @@ const setupMockData = async () => {
 // Import route modules
 const recipeRoutes = require('./routes/recipes');
 const userRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth');
 
 // API Routes
 app.use('/api/recipes', recipeRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
 
 // Additional API endpoints
 
