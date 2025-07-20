@@ -970,7 +970,7 @@ const SmartFinder = () => {
                   onChange={() => handleDietaryChange('dairyFree')}
                 />
                 <span className="checkmark"></span>
-                                <FaGlassWater className="checkbox-icon" />
+                                                <FaTint className="checkbox-icon" />
                 <span className="checkbox-text">Dairy-Free</span>
               </CheckboxLabel>
             </CheckboxGroup>
