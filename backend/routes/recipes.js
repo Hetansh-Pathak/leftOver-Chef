@@ -23,7 +23,20 @@ const authenticateUser = async (req, res, next) => {
 
 // GET all recipes with advanced filtering and search
 router.get('/', authenticateUser, async (req, res) => {
-  try {
+    try {
+    // Check if we're in mock mode first
+    if (global.MOCK_MODE) {
+      const filters = {
+        search: req.query.search,
+        leftoverFriendly: req.query.leftoverFriendly === 'true',
+        quickMeal: req.query.quickMeal === 'true',
+        vegetarian: req.query.vegetarian === 'true',
+        maxTime: req.query.maxTime ? parseInt(req.query.maxTime) : null
+      };
+
+      return res.json(mockData.searchRecipes(filters));
+    }
+
     const {
       search,
       category,
