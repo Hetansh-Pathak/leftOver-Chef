@@ -145,6 +145,36 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
+
+    // Handle mock mode
+    if (global.MOCK_MODE) {
+      const user = mockUsers.find(u => u.email === email);
+      if (!user || user.password !== password) {
+        return res.status(401).json({ message: 'Invalid credentials' });
+      }
+
+      // Update last login
+      user.lastLogin = new Date();
+
+      // Generate JWT
+      const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+
+      return res.json({
+        message: 'Login successful',
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          avatar: user.avatar,
+          cookingSkillLevel: user.cookingSkillLevel,
+          points: user.points,
+          level: user.level,
+          dietaryPreferences: user.dietaryPreferences,
+          allergens: user.allergens
+        },
+        token
+      });
+    }
     
     const user = await User.findOne({ email });
     if (!user || !user.isActive) {
