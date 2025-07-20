@@ -9,7 +9,7 @@ import {
   FaStar, 
   FaBars, 
   FaTimes,
-  FaUtensils,
+  
   FaHome,
   FaSignOutAlt,
   FaUser
