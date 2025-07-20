@@ -688,4 +688,132 @@ router.put('/notifications', authenticateUser, async (req, res) => {
   }
 });
 
+// GET all users (admin endpoint)
+router.get('/admin/all-users', async (req, res) => {
+  try {
+    // Get all users with basic information (excluding passwords)
+    const users = await User.find({})
+      .select('-password -cookingHistory -searchHistory -kitchenInventory -shoppingList -mealPlan')
+      .sort({ accountCreated: -1 })
+      .limit(100); // Limit to prevent huge responses
+
+    // Calculate summary statistics
+    const stats = {
+      totalUsers: await User.countDocuments(),
+      activeUsers: await User.countDocuments({ isActive: true }),
+      verifiedUsers: await User.countDocuments({ emailVerified: true }),
+      premiumUsers: await User.countDocuments({ subscriptionType: { $ne: 'free' } }),
+      recentRegistrations: await User.countDocuments({
+        accountCreated: { $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) }
+      }),
+      averageLevel: await User.aggregate([
+        { $group: { _id: null, avgLevel: { $avg: '$level' } } }
+      ]).then(result => result[0]?.avgLevel || 0),
+      topCookingSkillLevels: await User.aggregate([
+        { $group: { _id: '$cookingSkillLevel', count: { $sum: 1 } } },
+        { $sort: { count: -1 } }
+      ])
+    };
+
+    res.json({
+      message: 'Users retrieved successfully',
+      stats,
+      users: users.map(user => ({
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        avatar: user.avatar,
+        cookingSkillLevel: user.cookingSkillLevel,
+        level: user.level,
+        points: user.points,
+        isActive: user.isActive,
+        emailVerified: user.emailVerified,
+        subscriptionType: user.subscriptionType,
+        lastLogin: user.lastLogin,
+        accountCreated: user.accountCreated,
+        favoriteRecipes: user.favorites?.length || 0,
+        cookingSessions: user.cookingHistory?.length || 0,
+        achievements: user.achievements?.length || 0,
+        currentStreak: user.streak?.current || 0,
+        dietaryPreferences: Object.keys(user.dietaryPreferences || {})
+          .filter(key => user.dietaryPreferences[key]),
+        allergens: Object.keys(user.allergens || {})
+          .filter(key => user.allergens[key])
+      })),
+      totalReturned: users.length
+    });
+
+  } catch (error) {
+    console.error('Error fetching all users:', error);
+    res.status(500).json({
+      message: 'Error fetching users',
+      error: error.message
+    });
+  }
+});
+
+// GET user statistics for admin dashboard
+router.get('/admin/stats', async (req, res) => {
+  try {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - 7);
+
+    const stats = {
+      overview: {
+        totalUsers: await User.countDocuments(),
+        activeUsers: await User.countDocuments({ isActive: true }),
+        newThisMonth: await User.countDocuments({ accountCreated: { $gte: startOfMonth } }),
+        newThisWeek: await User.countDocuments({ accountCreated: { $gte: startOfWeek } })
+      },
+      engagement: {
+        dailyActiveUsers: await User.countDocuments({
+          lastLogin: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+        }),
+        weeklyActiveUsers: await User.countDocuments({
+          lastLogin: { $gte: startOfWeek }
+        }),
+        monthlyActiveUsers: await User.countDocuments({
+          lastLogin: { $gte: startOfMonth }
+        })
+      },
+      demographics: {
+        cookingSkillLevels: await User.aggregate([
+          { $group: { _id: '$cookingSkillLevel', count: { $sum: 1 } } }
+        ]),
+        subscriptionTypes: await User.aggregate([
+          { $group: { _id: '$subscriptionType', count: { $sum: 1 } } }
+        ]),
+        dietaryPreferences: await User.aggregate([
+          { $unwind: { path: '$dietaryPreferences', preserveNullAndEmptyArrays: true } },
+          { $match: { 'dietaryPreferences': { $exists: true } } },
+          { $group: { _id: '$dietaryPreferences', count: { $sum: 1 } } }
+        ])
+      },
+      activity: {
+        totalCookingSessions: await User.aggregate([
+          { $project: { cookingSessionCount: { $size: { $ifNull: ['$cookingHistory', []] } } } },
+          { $group: { _id: null, total: { $sum: '$cookingSessionCount' } } }
+        ]).then(result => result[0]?.total || 0),
+        totalRecipesCreated: await User.aggregate([
+          { $project: { recipeCount: { $size: { $ifNull: ['$myRecipes', []] } } } },
+          { $group: { _id: null, total: { $sum: '$recipeCount' } } }
+        ]).then(result => result[0]?.total || 0),
+        avgUserLevel: await User.aggregate([
+          { $group: { _id: null, avgLevel: { $avg: '$level' } } }
+        ]).then(result => result[0]?.avgLevel || 0)
+      }
+    };
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Error fetching user stats:', error);
+    res.status(500).json({
+      message: 'Error fetching statistics',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
