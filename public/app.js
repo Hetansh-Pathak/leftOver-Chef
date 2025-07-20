@@ -9,7 +9,7 @@ class RecipeBot {
       search: "",
     };
     this.currentSort = "name";
-    this.currentTab = "browse";
+        this.currentTab = "smart-finder";
     this.selectedIngredients = [];
     this.timer = {
       interval: null,
