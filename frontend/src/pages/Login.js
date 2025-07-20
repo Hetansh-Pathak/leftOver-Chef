@@ -10,9 +10,9 @@ import {
   FaEyeSlash, 
   FaSignInAlt, 
   FaUserPlus,
-  FaGoogle,
+    FaGoogle,
   FaFacebook,
-  FaChefHat
+  FaUtensils
 } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
