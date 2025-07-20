@@ -1075,8 +1075,21 @@ const SmartFinder = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6, duration: 0.8 }}
-      >
+            >
         <div className="controls-row">
+          <MatchingOptions>
+            <label htmlFor="matchType">Ingredient Matching:</label>
+            <select
+              id="matchType"
+              value={matchType}
+              onChange={(e) => setMatchType(e.target.value)}
+            >
+              <option value="any">Match ANY ingredient (more results)</option>
+              <option value="all">Match ALL ingredients (exact matches)</option>
+              <option value="most">Match MOST ingredients (recommended)</option>
+            </select>
+          </MatchingOptions>
+
           <div className="search-buttons">
             <SearchButton
               onClick={searchRecipes}
