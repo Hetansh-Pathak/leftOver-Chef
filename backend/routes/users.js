@@ -219,6 +219,8 @@ router.post('/login', async (req, res) => {
 
         // Handle mock mode
     if (global.MOCK_MODE) {
+      // Initialize mock users if not already done
+      initializeMockUsers();
       const user = mockUsers.find(u => u.email === email);
       if (!user) {
         return res.status(401).json({
