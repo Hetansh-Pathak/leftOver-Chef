@@ -373,7 +373,7 @@ const Login = () => {
             animate={{ scale: 1, rotate: 0 }}
             transition={{ delay: 0.4, duration: 0.8, type: "spring" }}
           >
-            <FaChefHat />
+                        <FaUtensils />
           </Logo>
           <Title
             initial={{ opacity: 0, y: 20 }}
