@@ -3,6 +3,7 @@ const Recipe = require('../models/Recipe');
 const User = require('../models/User');
 const recipeService = require('../services/recipeService');
 const aiService = require('../services/aiService');
+const mockData = require('../mockData');
 const router = express.Router();
 
 // Middleware for authentication (optional for most routes)
@@ -22,7 +23,20 @@ const authenticateUser = async (req, res, next) => {
 
 // GET all recipes with advanced filtering and search
 router.get('/', authenticateUser, async (req, res) => {
-  try {
+    try {
+    // Check if we're in mock mode first
+    if (global.MOCK_MODE) {
+      const filters = {
+        search: req.query.search,
+        leftoverFriendly: req.query.leftoverFriendly === 'true',
+        quickMeal: req.query.quickMeal === 'true',
+        vegetarian: req.query.vegetarian === 'true',
+        maxTime: req.query.maxTime ? parseInt(req.query.maxTime) : null
+      };
+
+      return res.json(mockData.searchRecipes(filters));
+    }
+
     const {
       search,
       category,
@@ -484,7 +498,25 @@ router.get('/user/:userId/favorites', authenticateUser, async (req, res) => {
 
 // GET recipe categories and filters
 router.get('/meta/filters', async (req, res) => {
-  try {
+    try {
+    // Check if we're in mock mode first
+    if (global.MOCK_MODE) {
+      return res.json({
+        categories: ['Main Course', 'Lunch', 'Appetizer', 'Dessert', 'Breakfast', 'Dinner', 'Snack', 'Soup', 'Salad', 'Side Dish'],
+        cuisines: ['Asian', 'Italian', 'American', 'Mexican', 'Indian', 'Mediterranean', 'French', 'Thai'],
+        difficulties: ['Easy', 'Medium', 'Hard'],
+        dietaryOptions: [
+          'vegetarian',
+          'vegan',
+          'glutenFree',
+          'dairyFree',
+          'ketogenic',
+          'lowFodmap',
+          'whole30'
+        ]
+      });
+    }
+
     const [categories, cuisines, difficulties] = await Promise.all([
       Recipe.distinct('dishTypes'),
       Recipe.distinct('cuisines'),
@@ -518,6 +550,11 @@ router.get('/meta/filters', async (req, res) => {
 // GET daily featured recipe
 router.get('/daily/featured', async (req, res) => {
   try {
+        // Check if we're in mock mode first
+    if (global.MOCK_MODE) {
+      return res.json(mockData.getDailyRecipe());
+    }
+
     const dailyRecipe = await recipeService.getRecipeOfTheDay();
     
     if (!dailyRecipe) {
