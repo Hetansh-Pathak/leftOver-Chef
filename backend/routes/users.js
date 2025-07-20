@@ -146,11 +146,20 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Handle mock mode
+        // Handle mock mode
     if (global.MOCK_MODE) {
       const user = mockUsers.find(u => u.email === email);
-      if (!user || user.password !== password) {
-        return res.status(401).json({ message: 'Invalid credentials' });
+      if (!user) {
+        return res.status(401).json({
+          message: 'No account found with this email. Please sign up first.',
+          userNotFound: true
+        });
+      }
+      if (user.password !== password) {
+        return res.status(401).json({
+          message: 'Invalid password. Please try again.',
+          invalidPassword: true
+        });
       }
 
       // Update last login
