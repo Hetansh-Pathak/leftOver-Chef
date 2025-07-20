@@ -82,6 +82,7 @@ const initializeMockUsers = () => {
 // Helper function to check if user exists by email
 const findUserByEmail = async (email) => {
   if (global.MOCK_MODE) {
+    initializeMockUsers(); // Ensure mock users are initialized
     return mockUsers.find(user => user.email === email);
   } else {
     return await User.findOne({ email });
