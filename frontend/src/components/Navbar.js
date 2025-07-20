@@ -10,8 +10,11 @@ import {
   FaBars, 
   FaTimes,
   FaUtensils,
-  FaHome
+  FaHome,
+  FaSignOutAlt,
+  FaUser
 } from 'react-icons/fa';
+import { useAuth } from '../contexts/AuthContext';
 
 const NavbarContainer = styled(motion.nav)`
   background: rgba(255, 255, 255, 0.95);
@@ -115,6 +118,56 @@ const NavLink = styled(Link)`
   }
 `;
 
+const RightSection = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+`;
+
+const UserMenu = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  @media (max-width: ${props => props.theme.breakpoints.mobile}) {
+    display: none;
+  }
+`;
+
+const UserButton = styled(motion.div)`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(102, 126, 234, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.2);
+  color: ${props => props.theme.colors.primary};
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  font-weight: 500;
+  font-size: 0.9rem;
+`;
+
+const LogoutButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: none;
+  border: 1px solid ${props => props.theme.colors.accent};
+  color: ${props => props.theme.colors.accent};
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9rem;
+  transition: ${props => props.theme.transitions.default};
+
+  &:hover {
+    background: ${props => props.theme.colors.accent};
+    color: white;
+    transform: translateY(-1px);
+  }
+`;
+
 const MobileMenuButton = styled(motion.button)`
   display: none;
   background: none;
@@ -183,6 +236,34 @@ const MobileNavLink = styled(Link)`
   }
 `;
 
+const MobileLogoutButton = styled(motion.button)`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 2rem;
+  border-radius: 25px;
+  border: none;
+  font-weight: 600;
+  font-size: 1.2rem;
+  background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
+  color: white;
+  width: 80%;
+  max-width: 300px;
+  text-align: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: ${props => props.theme.transitions.default};
+
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
+  }
+
+  .nav-icon {
+    font-size: 1.3rem;
+  }
+`;
+
 const CloseButton = styled(motion.button)`
   position: absolute;
   top: 2rem;
@@ -214,6 +295,7 @@ const Navbar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -230,6 +312,11 @@ const Navbar = () => {
 
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
+  };
+
+  const handleLogout = () => {
+    logout();
+    setIsMobileMenuOpen(false);
   };
 
   return (
@@ -282,12 +369,29 @@ const Navbar = () => {
             })}
           </NavLinks>
 
-          <MobileMenuButton
-            onClick={toggleMobileMenu}
-            whileTap={{ scale: 0.9 }}
-          >
-            <FaBars />
-          </MobileMenuButton>
+          <RightSection>
+            <UserMenu>
+              <UserButton>
+                <FaUser />
+                {user?.name || 'User'}
+              </UserButton>
+              <LogoutButton
+                onClick={handleLogout}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FaSignOutAlt />
+                Logout
+              </LogoutButton>
+            </UserMenu>
+
+            <MobileMenuButton
+              onClick={toggleMobileMenu}
+              whileTap={{ scale: 0.9 }}
+            >
+              <FaBars />
+            </MobileMenuButton>
+          </RightSection>
         </NavContent>
       </NavbarContainer>
 
@@ -326,6 +430,21 @@ const Navbar = () => {
                 </motion.div>
               );
             })}
+            
+            <motion.div
+              initial={{ opacity: 0, x: -50 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: navItems.length * 0.1, duration: 0.3 }}
+            >
+              <MobileLogoutButton
+                onClick={handleLogout}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <FaSignOutAlt className="nav-icon" />
+                Logout
+              </MobileLogoutButton>
+            </motion.div>
           </MobileMenu>
         )}
       </AnimatePresence>
