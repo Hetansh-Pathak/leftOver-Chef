@@ -331,21 +331,21 @@ const Navbar = () => {
         }}
       >
         <NavContent>
-          <Logo
-            as={Link}
-            to="/"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <motion.div
-              className="logo-icon"
-              whileHover={{ rotate: 360 }}
-              transition={{ duration: 0.6 }}
+                    <Link to="/" style={{ textDecoration: 'none' }}>
+            <Logo
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
-              🍳
-            </motion.div>
-            <span className="logo-text">Leftover Chef</span>
-          </Logo>
+              <motion.div
+                className="logo-icon"
+                whileHover={{ rotate: 360 }}
+                transition={{ duration: 0.6 }}
+              >
+                🍳
+              </motion.div>
+              <span className="logo-text">Leftover Chef</span>
+            </Logo>
+          </Link>
 
           <NavLinks>
             {navItems.map((item, index) => {
