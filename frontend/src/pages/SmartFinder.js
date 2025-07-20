@@ -13,9 +13,17 @@ import {
   FaClock,
   FaFire,
   FaUsers,
-  FaLeaf,
+    FaLeaf,
   FaCheckCircle,
-  FaShoppingCart
+  FaShoppingCart,
+  FaSeedling,
+  FaWheat,
+  FaCow,
+  FaExclamationTriangle,
+  FaFish,
+  FaEgg,
+  FaChartPie,
+  FaCarrot
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
