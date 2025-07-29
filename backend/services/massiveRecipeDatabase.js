@@ -100,8 +100,15 @@ class MassiveRecipeDatabase {
     };
   }
 
-  getRandomImage(cuisine = 'general') {
-    const images = this.imageCategories[cuisine] || this.imageCategories.general;
+  getRandomImage(cuisine = 'general', dishType = 'main course') {
+    // Try to match by dish type first, then cuisine, then general
+    let images = this.imageCategories[dishType] || this.imageCategories[cuisine] || this.imageCategories.general;
+
+    // Ensure we have a fallback
+    if (!images || images.length === 0) {
+      images = this.imageCategories.general;
+    }
+
     return images[Math.floor(Math.random() * images.length)];
   }
 
