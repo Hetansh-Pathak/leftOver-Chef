@@ -3,6 +3,7 @@ const Recipe = require('../models/Recipe');
 const User = require('../models/User');
 const recipeService = require('../services/recipeService');
 const aiService = require('../services/aiService');
+const nlpService = require('../services/nlpService');
 const mockData = require('../mockData');
 const router = express.Router();
 
