@@ -518,6 +518,101 @@ class MassiveRecipeDatabase {
     return bulkRecipes;
   }
 
+  // Generate additional specific recipe categories
+  generateAdditionalRecipeCategories() {
+    const additionalRecipes = [];
+
+    // Breakfast recipes
+    const breakfastRecipes = [
+      { name: 'Masala Omelette', ingredients: ['eggs', 'onion', 'tomato', 'green chilies', 'coriander', 'turmeric'], cuisine: 'indian' },
+      { name: 'Poha', ingredients: ['flattened rice', 'onion', 'potato', 'peanuts', 'curry leaves', 'turmeric'], cuisine: 'gujarati' },
+      { name: 'Upma', ingredients: ['semolina', 'onion', 'ginger', 'curry leaves', 'mustard seeds', 'vegetables'], cuisine: 'south indian' },
+      { name: 'Pancakes', ingredients: ['flour', 'milk', 'eggs', 'sugar', 'baking powder', 'butter'], cuisine: 'american' },
+      { name: 'French Toast', ingredients: ['bread', 'eggs', 'milk', 'cinnamon', 'vanilla', 'butter'], cuisine: 'french' }
+    ];
+
+    // Snack recipes
+    const snackRecipes = [
+      { name: 'Bhel Puri', ingredients: ['puffed rice', 'sev', 'chutney', 'onion', 'tomato', 'coriander'], cuisine: 'gujarati' },
+      { name: 'Samosa', ingredients: ['pastry', 'potato', 'peas', 'spices', 'oil'], cuisine: 'indian' },
+      { name: 'Spring Rolls', ingredients: ['wrapper', 'cabbage', 'carrot', 'mushroom', 'soy sauce'], cuisine: 'chinese' },
+      { name: 'Bruschetta', ingredients: ['bread', 'tomato', 'basil', 'garlic', 'olive oil'], cuisine: 'italian' },
+      { name: 'Nachos', ingredients: ['tortilla chips', 'cheese', 'salsa', 'guacamole', 'jalapeños'], cuisine: 'mexican' }
+    ];
+
+    // Dessert recipes
+    const dessertRecipes = [
+      { name: 'Gulab Jamun', ingredients: ['milk powder', 'flour', 'ghee', 'sugar', 'cardamom'], cuisine: 'indian' },
+      { name: 'Tiramisu', ingredients: ['mascarpone', 'coffee', 'ladyfingers', 'cocoa', 'sugar'], cuisine: 'italian' },
+      { name: 'Chocolate Cake', ingredients: ['flour', 'cocoa', 'sugar', 'eggs', 'butter', 'baking powder'], cuisine: 'american' },
+      { name: 'Mango Kulfi', ingredients: ['mango', 'milk', 'sugar', 'cardamom', 'pistachios'], cuisine: 'indian' },
+      { name: 'Churros', ingredients: ['flour', 'water', 'sugar', 'cinnamon', 'oil'], cuisine: 'spanish' }
+    ];
+
+    // Soup recipes
+    const soupRecipes = [
+      { name: 'Tomato Soup', ingredients: ['tomato', 'onion', 'garlic', 'cream', 'basil', 'vegetable broth'], cuisine: 'american' },
+      { name: 'Minestrone', ingredients: ['vegetables', 'beans', 'pasta', 'tomato', 'vegetable broth'], cuisine: 'italian' },
+      { name: 'Miso Soup', ingredients: ['miso paste', 'tofu', 'seaweed', 'scallions', 'dashi'], cuisine: 'japanese' },
+      { name: 'Dal Soup', ingredients: ['lentils', 'turmeric', 'ginger', 'garlic', 'cumin'], cuisine: 'indian' },
+      { name: 'Hot and Sour Soup', ingredients: ['mushroom', 'tofu', 'vinegar', 'soy sauce', 'pepper'], cuisine: 'chinese' }
+    ];
+
+    // Combine all categories
+    const allCategories = [
+      ...breakfastRecipes.map(r => ({ ...r, type: 'breakfast' })),
+      ...snackRecipes.map(r => ({ ...r, type: 'snack' })),
+      ...dessertRecipes.map(r => ({ ...r, type: 'dessert' })),
+      ...soupRecipes.map(r => ({ ...r, type: 'soup' }))
+    ];
+
+    allCategories.forEach(recipe => {
+      additionalRecipes.push(this.createRecipe(
+        recipe.name,
+        recipe.ingredients,
+        recipe.cuisine,
+        recipe.type,
+        Math.floor(Math.random() * 45) + 15, // 15-60 minutes
+        ['easy', 'medium', 'hard'][Math.floor(Math.random() * 3)],
+        `Delicious ${recipe.cuisine} ${recipe.type} recipe`,
+        this.generateInstructions(recipe.name, recipe.ingredients)
+      ));
+    });
+
+    return additionalRecipes;
+  }
+
+  // Generate realistic cooking instructions
+  generateInstructions(recipeName, ingredients) {
+    const instructions = [];
+
+    // Prep instruction
+    instructions.push(`Gather and prepare all ingredients: ${ingredients.slice(0, 3).join(', ')}`);
+
+    // Cooking method based on recipe name
+    if (recipeName.toLowerCase().includes('fried') || recipeName.toLowerCase().includes('fry')) {
+      instructions.push('Heat oil in a pan over medium-high heat');
+      instructions.push('Add ingredients and fry until golden and cooked through');
+    } else if (recipeName.toLowerCase().includes('soup')) {
+      instructions.push('Heat a pot over medium heat');
+      instructions.push('Add ingredients and simmer until vegetables are tender');
+      instructions.push('Blend if desired for smooth consistency');
+    } else if (recipeName.toLowerCase().includes('cake') || recipeName.toLowerCase().includes('dessert')) {
+      instructions.push('Preheat oven to 350°F (175°C)');
+      instructions.push('Mix dry and wet ingredients separately, then combine');
+      instructions.push('Bake until golden and a toothpick comes out clean');
+    } else {
+      instructions.push('Heat oil in a pan and add aromatics');
+      instructions.push('Add main ingredients and cook until done');
+      instructions.push('Season with spices and herbs');
+    }
+
+    // Final instruction
+    instructions.push(`Serve hot and enjoy your delicious ${recipeName}!`);
+
+    return instructions;
+  }
+
   // Create standardized recipe object
   createRecipe(title, ingredients, cuisine, dishType, time, difficulty, description, instructions = null) {
     const recipe = {
