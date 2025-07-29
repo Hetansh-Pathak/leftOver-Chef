@@ -2,29 +2,25 @@ import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import RecipeDetailModal from '../components/RecipeDetailModal';
-import { 
-  FaBrain, 
-  FaPlus, 
-  FaSearch, 
-  FaTimes, 
-  FaBroom, 
+import {
+  FaBrain,
+  FaPlus,
+  FaSearch,
+  FaTimes,
+  FaBroom,
   FaUtensils,
-  FaHeart,
-  FaStar,
   FaClock,
   FaFire,
   FaUsers,
-    FaLeaf,
+  FaLeaf,
   FaCheckCircle,
   FaShoppingCart,
-    FaSeedling,
-    FaBreadSlice,
+  FaSeedling,
+  FaBreadSlice,
   FaTint,
   FaExclamationTriangle,
   FaFish,
-  FaEgg,
-  FaChartPie,
-  FaCarrot
+  FaEgg
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
