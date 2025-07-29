@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import RecipeDetailModal from '../components/RecipeDetailModal';
 import { 
   FaBrain, 
   FaPlus, 
