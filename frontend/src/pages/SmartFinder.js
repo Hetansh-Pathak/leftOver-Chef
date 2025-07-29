@@ -1126,17 +1126,31 @@ const SmartFinder = () => {
             >
         <div className="controls-row">
           <MatchingOptions>
-            <label htmlFor="matchType">Ingredient Matching:</label>
+            <label htmlFor="searchMode">Search Mode:</label>
             <select
-              id="matchType"
-              value={matchType}
-              onChange={(e) => setMatchType(e.target.value)}
+              id="searchMode"
+              value={searchMode}
+              onChange={(e) => setSearchMode(e.target.value)}
             >
-              <option value="any">Match ANY ingredient (more results)</option>
-              <option value="all">Match ALL ingredients (exact matches)</option>
-              <option value="most">Match MOST ingredients (recommended)</option>
+              <option value="local">Smart Local Search (AI + Local + Spoonacular)</option>
+              <option value="global">Global Worldwide Search (Spoonacular API)</option>
             </select>
           </MatchingOptions>
+
+          {searchMode === 'local' && (
+            <MatchingOptions>
+              <label htmlFor="matchType">Ingredient Matching:</label>
+              <select
+                id="matchType"
+                value={matchType}
+                onChange={(e) => setMatchType(e.target.value)}
+              >
+                <option value="any">Match ANY ingredient (more results)</option>
+                <option value="all">Match ALL ingredients (exact matches)</option>
+                <option value="most">Match MOST ingredients (recommended)</option>
+              </select>
+            </MatchingOptions>
+          )}
 
           <div className="search-buttons">
             <SearchButton
