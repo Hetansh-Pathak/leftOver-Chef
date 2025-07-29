@@ -430,16 +430,43 @@ class MassiveRecipeDatabase {
   // Generate thousands more recipes programmatically
   generateVariationsAndBulkRecipes() {
     const bulkRecipes = [];
-    
-    // Base ingredients for variations
-    const proteins = ['chicken', 'beef', 'pork', 'fish', 'tofu', 'paneer', 'eggs', 'lentils', 'chickpeas'];
-    const vegetables = ['potato', 'onion', 'tomato', 'carrot', 'peas', 'beans', 'spinach', 'broccoli', 'bell pepper'];
-    const grains = ['rice', 'pasta', 'quinoa', 'bread', 'noodles'];
-    const cuisines = ['indian', 'italian', 'chinese', 'mexican', 'thai', 'gujarati', 'american', 'mediterranean'];
-    const cookingMethods = ['fried', 'grilled', 'baked', 'steamed', 'roasted', 'curried', 'stir-fried'];
 
-    // Generate combinations
-    for (let i = 0; i < 1000; i++) {
+    // Expanded base ingredients for more variations
+    const proteins = [
+      'chicken', 'beef', 'pork', 'fish', 'salmon', 'tuna', 'shrimp', 'crab', 'lobster',
+      'tofu', 'paneer', 'eggs', 'lentils', 'chickpeas', 'black beans', 'kidney beans',
+      'turkey', 'duck', 'lamb', 'tempeh', 'cheese', 'cottage cheese'
+    ];
+
+    const vegetables = [
+      'potato', 'sweet potato', 'onion', 'red onion', 'tomato', 'cherry tomato',
+      'carrot', 'peas', 'green beans', 'spinach', 'kale', 'broccoli', 'cauliflower',
+      'bell pepper', 'mushroom', 'zucchini', 'eggplant', 'cucumber', 'lettuce',
+      'cabbage', 'corn', 'asparagus', 'okra', 'beetroot', 'radish', 'celery'
+    ];
+
+    const grains = [
+      'rice', 'basmati rice', 'brown rice', 'pasta', 'spaghetti', 'penne', 'quinoa',
+      'bread', 'naan', 'roti', 'noodles', 'udon', 'ramen', 'couscous', 'bulgur',
+      'oats', 'barley', 'millet', 'wheat', 'flour'
+    ];
+
+    const cuisines = [
+      'indian', 'gujarati', 'punjabi', 'south indian', 'bengali',
+      'italian', 'french', 'spanish', 'greek', 'mediterranean',
+      'chinese', 'japanese', 'korean', 'thai', 'vietnamese',
+      'mexican', 'american', 'british', 'german', 'moroccan',
+      'middle eastern', 'brazilian', 'caribbean', 'african'
+    ];
+
+    const cookingMethods = [
+      'fried', 'grilled', 'baked', 'steamed', 'roasted', 'curried', 'stir-fried',
+      'braised', 'sautéed', 'poached', 'broiled', 'smoked', 'barbecued',
+      'slow-cooked', 'pressure-cooked', 'pan-seared', 'deep-fried'
+    ];
+
+    // Generate more combinations (increased from 1000 to 5000)
+    for (let i = 0; i < 5000; i++) {
       const protein = proteins[Math.floor(Math.random() * proteins.length)];
       const vegetable = vegetables[Math.floor(Math.random() * vegetables.length)];
       const grain = grains[Math.floor(Math.random() * grains.length)];
