@@ -731,15 +731,23 @@ const SmartFinder = () => {
     },
     {
       title: 'Proteins',
-      items: ['beef', 'pork', 'fish', 'eggs', 'tofu', 'beans']
+      items: ['beef', 'pork', 'fish', 'eggs', 'tofu', 'beans', 'paneer', 'dal']
     },
     {
       title: 'Vegetables',
-      items: ['onions', 'tomatoes', 'carrots', 'broccoli', 'spinach', 'peppers']
+      items: ['onions', 'tomatoes', 'carrots', 'broccoli', 'spinach', 'peppers', 'okra', 'potato']
+    },
+    {
+      title: 'Gujarati Favorites',
+      items: ['dhokla', 'khaman', 'fafda', 'toor dal', 'besan', 'jaggery', 'curry leaves', 'mustard seeds']
+    },
+    {
+      title: 'Italian Essentials',
+      items: ['basil', 'mozzarella', 'parmesan', 'olive oil', 'spaghetti', 'risotto']
     },
     {
       title: 'Pantry Staples',
-      items: ['garlic', 'oil', 'salt', 'pepper', 'herbs', 'spices']
+      items: ['garlic', 'ginger', 'turmeric', 'cumin', 'oil', 'salt', 'pepper', 'herbs']
     }
   ];
 
