@@ -476,7 +476,6 @@ const CookingTimer = styled.div`
 `;
 
 const RecipeDetailModal = ({ recipe, isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState('overview');
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [checkedIngredients, setCheckedIngredients] = useState(new Set());
   const [isFavorited, setIsFavorited] = useState(false);
