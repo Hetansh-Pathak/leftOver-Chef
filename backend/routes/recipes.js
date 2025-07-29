@@ -205,7 +205,7 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     // Try Spoonacular API first for global recipe search
     if (useSpoonacular) {
       try {
-        spoonacularResults = await recipeService.searchByIngredients(ingredients, {
+        spoonacularResults = await recipeService.searchByIngredients(searchIngredients, {
           number: Math.min(limit, 10), // Get some from Spoonacular
           ranking: matchType === 'all' ? 2 : 1, // 1 = maximize used, 2 = minimize missing
           ignorePantry: true
