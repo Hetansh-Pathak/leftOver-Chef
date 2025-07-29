@@ -1167,12 +1167,12 @@ const SmartFinder = () => {
                   >
                     <FaSearch />
                   </motion.div>
-                  Searching...
+                  {searchMode === 'global' ? 'Searching Worldwide...' : 'Searching...'}
                 </>
               ) : (
                 <>
                   <FaSearch />
-                  Find Recipes
+                  {searchMode === 'global' ? 'Search Worldwide 🌍' : 'Find Recipes 🤖'}
                 </>
               )}
             </SearchButton>
