@@ -152,31 +152,43 @@ const getRecipeById = (id) => {
 
 const searchRecipes = (filters = {}) => {
   let results = [...mockRecipes];
-  
+
   if (filters.search) {
     const searchTerm = filters.search.toLowerCase();
-    results = results.filter(recipe => 
+    results = results.filter(recipe =>
       recipe.title.toLowerCase().includes(searchTerm) ||
-      recipe.summary.toLowerCase().includes(searchTerm)
+      recipe.summary.toLowerCase().includes(searchTerm) ||
+      (recipe.ingredientNames && recipe.ingredientNames.some(ing =>
+        ing.toLowerCase().includes(searchTerm)
+      )) ||
+      (recipe.extendedIngredients && recipe.extendedIngredients.some(ing =>
+        ing.name.toLowerCase().includes(searchTerm)
+      )) ||
+      (recipe.cuisines && recipe.cuisines.some(cuisine =>
+        cuisine.toLowerCase().includes(searchTerm)
+      )) ||
+      (recipe.dishTypes && recipe.dishTypes.some(type =>
+        type.toLowerCase().includes(searchTerm)
+      ))
     );
   }
-  
+
   if (filters.leftoverFriendly) {
     results = results.filter(recipe => recipe.leftoverFriendly);
   }
-  
+
   if (filters.quickMeal) {
     results = results.filter(recipe => recipe.quickMeal);
   }
-  
+
   if (filters.vegetarian) {
     results = results.filter(recipe => recipe.vegetarian);
   }
-  
+
   if (filters.maxTime) {
     results = results.filter(recipe => recipe.readyInMinutes <= filters.maxTime);
   }
-  
+
   return {
     recipes: results,
     pagination: {
@@ -186,6 +198,86 @@ const searchRecipes = (filters = {}) => {
       limit: results.length
     }
   };
+};
+
+// Enhanced ingredient-based search for mock mode
+const searchByIngredients = (ingredients = [], options = {}) => {
+  const { matchType = 'any', limit = 20 } = options;
+  let results = [...mockRecipes];
+
+  if (ingredients && ingredients.length > 0) {
+    const searchIngredients = ingredients.map(ing => ing.toLowerCase());
+
+    results = results.filter(recipe => {
+      if (!recipe.ingredientNames && !recipe.extendedIngredients) return false;
+
+      const recipeIngredients = [
+        ...(recipe.ingredientNames || []),
+        ...(recipe.extendedIngredients || []).map(ing => ing.name.toLowerCase())
+      ];
+
+      if (matchType === 'all') {
+        // Must have ALL ingredients
+        return searchIngredients.every(searchIng =>
+          recipeIngredients.some(recipeIng =>
+            recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+          )
+        );
+      } else if (matchType === 'most') {
+        // Must have at least 60% of ingredients
+        const matchCount = searchIngredients.filter(searchIng =>
+          recipeIngredients.some(recipeIng =>
+            recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+          )
+        ).length;
+        return matchCount / searchIngredients.length >= 0.6;
+      } else {
+        // Default 'any' - must have at least one ingredient
+        return searchIngredients.some(searchIng =>
+          recipeIngredients.some(recipeIng =>
+            recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+          )
+        );
+      }
+    });
+
+    // Calculate match scores and add matched/missing ingredients
+    results = results.map(recipe => {
+      const recipeIngredients = [
+        ...(recipe.ingredientNames || []),
+        ...(recipe.extendedIngredients || []).map(ing => ing.name.toLowerCase())
+      ];
+
+      const matchedIngredients = searchIngredients.filter(searchIng =>
+        recipeIngredients.some(recipeIng =>
+          recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+        )
+      );
+
+      const missingIngredients = recipeIngredients.filter(recipeIng =>
+        !searchIngredients.some(searchIng =>
+          recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+        )
+      );
+
+      const matchScore = matchedIngredients.length / Math.max(searchIngredients.length, 1);
+
+      return {
+        ...recipe,
+        matchScore,
+        matchedIngredients,
+        missingIngredients: missingIngredients.slice(0, 5) // Limit to 5 missing ingredients
+      };
+    });
+
+    // Sort by match score (highest first)
+    results.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+  }
+
+  // Limit results
+  results = results.slice(0, limit);
+
+  return results;
 };
 
 module.exports = {
