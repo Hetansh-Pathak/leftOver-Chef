@@ -1390,6 +1390,15 @@ const SmartFinder = () => {
               <FaBroom />
               Clear All
             </ClearButton>
+
+            <ClearButton
+              onClick={testDatabase}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              style={{ background: '#4caf50', marginLeft: '0.5rem' }}
+            >
+              🧪 Test Database
+            </ClearButton>
           </div>
         </div>
       </SearchControls>
