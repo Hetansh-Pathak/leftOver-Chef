@@ -168,51 +168,98 @@ router.get('/', authenticateUser, async (req, res) => {
 // POST smart recipe search by ingredients (Enhanced)
 router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
   try {
-    const { 
-      ingredients, 
+    const {
+      ingredients,
       matchType = 'any',
       preferences = {},
       nutrition = {},
       maxReadyTime,
       useAI = false,
-      limit = 20 
+      useSpoonacular = true,
+      limit = 20
     } = req.body;
-    
+
     if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
-      return res.status(400).json({ 
-        message: 'Please provide at least one ingredient' 
+      return res.status(400).json({
+        message: 'Please provide at least one ingredient'
       });
     }
-    
-    let recipes;
-    
+
+    let recipes = [];
+    let spoonacularResults = [];
+
+    // Try Spoonacular API first for global recipe search
+    if (useSpoonacular) {
+      try {
+        spoonacularResults = await recipeService.searchByIngredients(ingredients, {
+          number: Math.min(limit, 10), // Get some from Spoonacular
+          ranking: matchType === 'all' ? 2 : 1, // 1 = maximize used, 2 = minimize missing
+          ignorePantry: true
+        });
+
+        if (spoonacularResults && spoonacularResults.length > 0) {
+          recipes = recipes.concat(spoonacularResults);
+        }
+      } catch (spoonacularError) {
+        console.error('Spoonacular search failed:', spoonacularError.message);
+      }
+    }
+
     // Use AI-enhanced search if requested and user preferences available
     if (useAI && req.userId) {
       try {
         const user = await User.findById(req.userId);
         if (user) {
-          recipes = await aiService.generatePersonalizedRecommendations(user, ingredients);
+          const aiRecipes = await aiService.generatePersonalizedRecommendations(user, ingredients);
+          if (aiRecipes && aiRecipes.length > 0) {
+            recipes = recipes.concat(aiRecipes);
+          }
         }
       } catch (aiError) {
         console.error('AI search failed, falling back to standard search:', aiError);
       }
     }
-    
-    // Fallback to standard search or if AI search wasn't used
-    if (!recipes || recipes.length === 0) {
-      recipes = await Recipe.findByIngredients({
-        ingredients,
-        matchType,
-        preferences,
-        nutrition: {
-          maxCalories: nutrition.maxCalories,
-          minProtein: nutrition.minProtein,
-          maxCarbs: nutrition.maxCarbs
-        },
-        maxReadyTime,
-        limit
-      });
+
+    // Always search local database and merge results
+    const localRecipes = await Recipe.findByIngredients({
+      ingredients,
+      matchType,
+      preferences,
+      nutrition: {
+        maxCalories: nutrition.maxCalories,
+        minProtein: nutrition.minProtein,
+        maxCarbs: nutrition.maxCarbs
+      },
+      maxReadyTime,
+      limit: limit - recipes.length
+    });
+
+    if (localRecipes && localRecipes.length > 0) {
+      recipes = recipes.concat(localRecipes);
     }
+
+    // Remove duplicates and sort by relevance
+    const uniqueRecipes = recipes.filter((recipe, index, self) => {
+      return index === self.findIndex(r =>
+        (r._id && r._id.toString()) === (recipe._id && recipe._id.toString()) ||
+        (r.spoonacularId && recipe.spoonacularId && r.spoonacularId === recipe.spoonacularId) ||
+        (r.title && recipe.title && r.title.toLowerCase() === recipe.title.toLowerCase())
+      );
+    });
+
+    // Sort by match score and relevance
+    uniqueRecipes.sort((a, b) => {
+      const scoreA = a.matchScore || 0;
+      const scoreB = b.matchScore || 0;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+
+      const ratingA = a.rating || 0;
+      const ratingB = b.rating || 0;
+      return ratingB - ratingA;
+    });
+
+    // Limit results
+    recipes = uniqueRecipes.slice(0, limit);
     
     // Track search for analytics and Recipe of the Day
     if (req.userId) {
