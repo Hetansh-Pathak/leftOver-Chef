@@ -591,6 +591,22 @@ const Login = () => {
             Facebook
           </SocialButton>
         </SocialButtons>
+
+        {isLogin && (
+          <DemoCredentials
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+          >
+            <DemoTitle>🧪 Demo Credentials</DemoTitle>
+            <DemoItem onClick={() => handleDemoFill('demo@example.com', 'password123')}>
+              📧 demo@example.com / password123
+            </DemoItem>
+            <DemoItem onClick={() => handleDemoFill('chef@test.com', 'chef123')}>
+              👨‍🍳 chef@test.com / chef123
+            </DemoItem>
+          </DemoCredentials>
+        )}
       </LoginCard>
     </LoginContainer>
   );
