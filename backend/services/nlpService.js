@@ -315,6 +315,46 @@ class NLPService {
 
     return normalized;
   }
+
+  // Auto-correct ingredient spelling with spell checking
+  correctIngredientSpelling(ingredient) {
+    const correctionResult = spellCorrectionService.autoCorrect(ingredient);
+    return correctionResult;
+  }
+
+  // Get ingredient suggestions for autocomplete
+  getIngredientSuggestions(partialInput) {
+    return spellCorrectionService.suggestIngredients(partialInput);
+  }
+
+  // Process and correct multiple ingredients
+  processIngredientsWithCorrection(ingredients) {
+    return spellCorrectionService.correctIngredients(ingredients);
+  }
+
+  // Enhanced ingredient processing with spell correction
+  processIngredientInput(input) {
+    if (!input || typeof input !== 'string') return null;
+
+    // First try spell correction
+    const correctionResult = this.correctIngredientSpelling(input);
+
+    // If high confidence correction, use corrected version
+    const processedInput = correctionResult.autoChanged ? correctionResult.corrected : input;
+
+    // Then normalize
+    const normalized = this.normalizeIngredient(processedInput);
+
+    return {
+      original: input,
+      corrected: correctionResult.corrected,
+      normalized: normalized,
+      autoChanged: correctionResult.autoChanged,
+      suggestion: correctionResult.suggestion,
+      suggestions: correctionResult.suggestions,
+      confidence: correctionResult.confidence
+    };
+  }
 }
 
 module.exports = new NLPService();
