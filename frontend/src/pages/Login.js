@@ -352,6 +352,15 @@ const Login = () => {
     });
   };
 
+  const handleDemoFill = (email, password) => {
+    setFormData({
+      ...formData,
+      email,
+      password
+    });
+    toast.success('Demo credentials filled! Click Sign In to login.');
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
