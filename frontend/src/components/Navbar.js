@@ -55,10 +55,17 @@ const Logo = styled(motion.div)`
   }
 
   .logo-text {
+    color: ${props => props.theme.colors.primary}; /* Fallback color */
     background: ${props => props.theme.colors.gradient};
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+
+    /* Fallback for browsers that don't support background-clip */
+    @supports not (-webkit-background-clip: text) {
+      color: ${props => props.theme.colors.primary};
+      background: none;
+    }
   }
 
   @media (max-width: ${props => props.theme.breakpoints.mobile}) {
