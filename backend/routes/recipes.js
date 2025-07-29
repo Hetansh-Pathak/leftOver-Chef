@@ -547,32 +547,33 @@ router.get('/meta/filters', async (req, res) => {
   }
 });
 
-// GET daily featured recipe
+// GET daily featured recipe (based on popular searches and trends)
 router.get('/daily/featured', async (req, res) => {
   try {
-        // Check if we're in mock mode first
+    // Check if we're in mock mode first
     if (global.MOCK_MODE) {
       return res.json(mockData.getDailyRecipe());
     }
 
-    const dailyRecipe = await recipeService.getRecipeOfTheDay();
-    
+    // Get the most frequently searched and highly rated recipe
+    const dailyRecipe = await recipeService.getFeaturedRecipeOfTheDay();
+
     if (!dailyRecipe) {
       // Fallback to a highly rated recipe
-      const fallbackRecipe = await Recipe.findOne({ 
-        rating: { $gte: 4.0 } 
+      const fallbackRecipe = await Recipe.findOne({
+        rating: { $gte: 4.0 }
       }).sort({ aggregateLikes: -1 });
-      
+
       return res.json(fallbackRecipe);
     }
-    
+
     res.json(dailyRecipe);
-    
+
   } catch (error) {
     console.error('Error fetching daily recipe:', error);
-    res.status(500).json({ 
-      message: 'Error fetching daily recipe', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Error fetching daily recipe',
+      error: error.message
     });
   }
 });
