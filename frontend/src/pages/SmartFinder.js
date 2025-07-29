@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
+import RecipeDetailModal from '../components/RecipeDetailModal';
 import { 
   FaBrain, 
   FaPlus, 
@@ -41,6 +42,7 @@ const PageHeader = styled(motion.div)`
   .page-title {
     font-size: 3rem;
     font-weight: 700;
+    color: ${props => props.theme.colors.primary}; /* Fallback color */
     background: ${props => props.theme.colors.gradient};
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -50,7 +52,13 @@ const PageHeader = styled(motion.div)`
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    
+
+    /* Fallback for browsers that don't support background-clip */
+    @supports not (-webkit-background-clip: text) {
+      color: ${props => props.theme.colors.primary};
+      background: none;
+    }
+
     .title-icon {
       color: #9c27b0;
       animation: pulse 2s ease-in-out infinite;
@@ -91,6 +99,7 @@ const SectionTitle = styled.h3`
 const IngredientInputContainer = styled.div`
   max-width: 600px;
   margin: 0 auto 2rem;
+  position: relative;
 `;
 
 const IngredientInputRow = styled.div`
@@ -219,11 +228,45 @@ const SuggestionTag = styled(motion.button)`
   cursor: pointer;
   transition: ${props => props.theme.transitions.default};
   font-size: 0.85rem;
-  
+
   &:hover {
     background: ${props => props.theme.colors.primary};
     color: white;
     transform: translateY(-2px);
+  }
+`;
+
+const SuggestionsDropdown = styled(motion.div)`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+
+  .suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+
+    &:hover {
+      background: ${props => props.theme.colors.backgroundLight};
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-text {
+      font-size: 0.9rem;
+      color: ${props => props.theme.colors.textDark};
+    }
   }
 `;
 
@@ -515,24 +558,24 @@ const RecipeCard = styled(motion.div)`
   overflow: hidden;
   box-shadow: ${props => props.theme.shadows.card};
   border: 2px solid ${props => {
-    if (props.matchScore >= 0.8) return props.theme.colors.success;
-    if (props.matchScore >= 0.6) return props.theme.colors.warning;
+    if (props.$matchScore >= 0.8) return props.theme.colors.success;
+    if (props.$matchScore >= 0.6) return props.theme.colors.warning;
     return props.theme.colors.accent;
   }};
   position: relative;
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: ${props => props.theme.shadows.cardHover};
   }
-  
+
   .match-indicator {
     position: absolute;
     top: 1rem;
     right: 1rem;
     background: ${props => {
-      if (props.matchScore >= 0.8) return props.theme.colors.success;
-      if (props.matchScore >= 0.6) return props.theme.colors.warning;
+      if (props.$matchScore >= 0.8) return props.theme.colors.success;
+      if (props.$matchScore >= 0.6) return props.theme.colors.warning;
       return props.theme.colors.accent;
     }};
     color: white;
@@ -652,6 +695,11 @@ const SmartFinder = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [matchType, setMatchType] = useState('any');
+  const [searchMode, setSearchMode] = useState('local'); // 'local' or 'global'
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Dietary Preferences
   const [dietaryPreferences, setDietaryPreferences] = useState({
@@ -683,24 +731,69 @@ const SmartFinder = () => {
     },
     {
       title: 'Proteins',
-      items: ['beef', 'pork', 'fish', 'eggs', 'tofu', 'beans']
+      items: ['beef', 'pork', 'fish', 'eggs', 'tofu', 'beans', 'paneer', 'dal']
     },
     {
       title: 'Vegetables',
-      items: ['onions', 'tomatoes', 'carrots', 'broccoli', 'spinach', 'peppers']
+      items: ['onions', 'tomatoes', 'carrots', 'broccoli', 'spinach', 'peppers', 'okra', 'potato']
+    },
+    {
+      title: 'Gujarati Favorites',
+      items: ['dhokla', 'khaman', 'fafda', 'toor dal', 'besan', 'jaggery', 'curry leaves', 'mustard seeds']
+    },
+    {
+      title: 'Italian Essentials',
+      items: ['basil', 'mozzarella', 'parmesan', 'olive oil', 'spaghetti', 'risotto']
     },
     {
       title: 'Pantry Staples',
-      items: ['garlic', 'oil', 'salt', 'pepper', 'herbs', 'spices']
+      items: ['garlic', 'ginger', 'turmeric', 'cumin', 'oil', 'salt', 'pepper', 'herbs']
     }
   ];
 
-  const addIngredient = () => {
-    const ingredient = currentInput.trim().toLowerCase();
-    if (ingredient && !ingredients.includes(ingredient)) {
-      setIngredients(prev => [...prev, ingredient]);
-      setCurrentInput('');
-      toast.success(`Added "${ingredient}" to your ingredients!`);
+  const addIngredient = async () => {
+    const ingredient = currentInput.trim();
+    if (!ingredient) return;
+
+    try {
+      // Check for spell correction
+      const spellCheckResponse = await axios.post('/api/recipes/spell-check', {
+        ingredient: ingredient
+      });
+
+      const { corrected, autoChanged, suggestion, confidence } = spellCheckResponse.data;
+
+      let finalIngredient = ingredient.toLowerCase();
+
+      if (autoChanged) {
+        finalIngredient = corrected.toLowerCase();
+        toast.success(`Auto-corrected "${ingredient}" to "${corrected}"`);
+      } else if (suggestion && confidence > 0.7) {
+        // Ask user for confirmation
+        const confirmed = window.confirm(`Did you mean "${suggestion}"? Click OK to use "${suggestion}" or Cancel to use "${ingredient}"`);
+        if (confirmed) {
+          finalIngredient = suggestion.toLowerCase();
+          toast.success(`Using "${suggestion}" instead of "${ingredient}"`);
+        }
+      }
+
+      if (!ingredients.includes(finalIngredient)) {
+        setIngredients(prev => [...prev, finalIngredient]);
+        setCurrentInput('');
+        setSuggestions([]);
+        setShowSuggestions(false);
+        toast.success(`Added "${finalIngredient}" to your ingredients!`);
+      } else {
+        toast.error(`"${finalIngredient}" is already in your list!`);
+      }
+    } catch (error) {
+      // Fallback to original functionality
+      const finalIngredient = ingredient.toLowerCase();
+      if (!ingredients.includes(finalIngredient)) {
+        setIngredients(prev => [...prev, finalIngredient]);
+        setCurrentInput('');
+        toast.success(`Added "${finalIngredient}" to your ingredients!`);
+      }
     }
   };
 
@@ -725,26 +818,70 @@ const SmartFinder = () => {
     setIsSearching(true);
     setHasSearched(true);
 
-            try {
-      const response = await axios.post('/api/recipes/search-by-ingredients', {
-        ingredients,
-        matchType,
-        preferences: {
-          dietary: dietaryPreferences,
-          allergens: allergenRestrictions
-        },
-        nutrition: nutritionGoals,
-        useAI: true, // Enable AI-enhanced search
-        limit: 20
-      });
+    try {
+      let response;
 
-      setResults(response.data.recipes);
-      toast.success(`Found ${response.data.totalFound} recipes!`);
+      // Always use enhanced search that searches ALL cuisines
+      console.log('🔍 Searching across ALL cuisines with enhanced API integration...');
 
-      // Show AI enhancement message if applicable
-      if (response.data.aiEnhanced) {
-        toast.success('🤖 AI-enhanced results based on your preferences!');
+      if (searchMode === 'global') {
+        // Enhanced SpaCy + Spoonacular search (searches all cuisines globally)
+        response = await axios.post('/api/recipes/search/enhanced', {
+          ingredients,
+          maxReadyTime: nutritionGoals.maxTime || undefined,
+          maxCalories: nutritionGoals.maxCalories || undefined,
+          diet: getDietString(),
+          intolerances: getAllergenString(),
+          number: 30 // Increased to get more diverse results
+        });
+
+        toast.success(`🌍 Found ${response.data.totalFound} recipes from ALL cuisines with enhanced API search!`);
+
+        // Show NLP processing results
+        if (response.data.nlpProcessing?.corrections?.length > 0) {
+          toast.success(`🔧 Auto-corrected ${response.data.nlpProcessing.corrections.length} ingredient spellings!`);
+        }
+        if (response.data.nlpProcessing?.suggestions?.length > 0) {
+          toast.info(`💡 Found ${response.data.nlpProcessing.suggestions.length} ingredient suggestions!`);
+        }
+      } else {
+        // Enhanced local search with API integration (searches all cuisines)
+        response = await axios.post('/api/recipes/search-by-ingredients', {
+          ingredients,
+          matchType,
+          preferences: {
+            dietary: dietaryPreferences,
+            allergens: allergenRestrictions
+          },
+          nutrition: nutritionGoals,
+          useAI: true,
+          useSpoonacular: true,
+          searchAllCuisines: true, // Ensure we search ALL cuisines
+          limit: 30 // Increased for more diverse results
+        });
+
+        toast.success(`🍽️ Found ${response.data.totalFound} recipes from ALL cuisines!`);
+
+        // Show enhancement messages
+        if (response.data.aiEnhanced) {
+          toast.success('🤖 AI-enhanced results based on your preferences!');
+        }
+        if (response.data.globalSearch) {
+          toast.success('🌐 Including recipes from Spoonacular API!');
+        }
       }
+
+      const recipes = response.data.recipes || [];
+
+      // Log cuisine diversity
+      const cuisines = [...new Set(recipes.map(r => r.cuisines || []).flat())];
+      console.log(`📊 Found recipes from ${cuisines.length} different cuisines:`, cuisines);
+
+      if (cuisines.length > 1) {
+        toast.info(`🌍 Results include ${cuisines.length} different cuisines: ${cuisines.slice(0, 4).join(', ')}${cuisines.length > 4 ? '...' : ''}`);
+      }
+
+      setResults(recipes);
     } catch (error) {
       console.error('Search error:', error);
       toast.error('Error searching recipes. Please try again.');
@@ -752,6 +889,35 @@ const SmartFinder = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleRecipeClick = (recipe) => {
+    setSelectedRecipe(recipe);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedRecipe(null);
+  };
+
+
+
+  const getDietString = () => {
+    const diets = [];
+    if (dietaryPreferences.vegetarian) diets.push('vegetarian');
+    if (dietaryPreferences.vegan) diets.push('vegan');
+    if (dietaryPreferences.glutenFree) diets.push('gluten free');
+    return diets.join(',');
+  };
+
+  const getAllergenString = () => {
+    const allergens = [];
+    if (allergenRestrictions.noNuts) allergens.push('tree nut');
+    if (allergenRestrictions.noShellfish) allergens.push('shellfish');
+    if (allergenRestrictions.noEggs) allergens.push('egg');
+    if (allergenRestrictions.noSoy) allergens.push('soy');
+    return allergens.join(',');
   };
 
     const clearAll = () => {
@@ -777,6 +943,7 @@ const SmartFinder = () => {
       maxCarbs: 60
     });
     setMatchType('any');
+    setSearchMode('local');
     toast.success('Cleared all preferences!');
   };
 
@@ -801,9 +968,36 @@ const SmartFinder = () => {
     }));
   };
 
+  const handleInputChange = async (e) => {
+    const value = e.target.value;
+    setCurrentInput(value);
+
+    if (value.length >= 2) {
+      try {
+        const response = await axios.get(`/api/recipes/ingredient-suggestions?q=${value}`);
+        setSuggestions(response.data.suggestions || []);
+        setShowSuggestions(true);
+      } catch (error) {
+        setSuggestions([]);
+      }
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setCurrentInput(suggestion);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       addIngredient();
+    } else if (e.key === 'Escape') {
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
@@ -852,10 +1046,30 @@ const SmartFinder = () => {
             <IngredientInput
               type="text"
               value={currentInput}
-              onChange={(e) => setCurrentInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyPress={handleKeyPress}
+              onFocus={() => currentInput.length >= 2 && setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               placeholder="Type an ingredient (e.g., chicken, rice, tomatoes)..."
             />
+
+            {showSuggestions && suggestions.length > 0 && (
+              <SuggestionsDropdown
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="suggestion-item"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    <div className="suggestion-text">{suggestion}</div>
+                  </div>
+                ))}
+              </SuggestionsDropdown>
+            )}
             <AddButton
               onClick={addIngredient}
               disabled={!currentInput.trim()}
@@ -920,6 +1134,8 @@ const SmartFinder = () => {
               </motion.div>
             ))}
           </div>
+
+
         </QuickSuggestions>
             </IngredientsSection>
 
@@ -1085,17 +1301,31 @@ const SmartFinder = () => {
             >
         <div className="controls-row">
           <MatchingOptions>
-            <label htmlFor="matchType">Ingredient Matching:</label>
+            <label htmlFor="searchMode">Search Mode:</label>
             <select
-              id="matchType"
-              value={matchType}
-              onChange={(e) => setMatchType(e.target.value)}
+              id="searchMode"
+              value={searchMode}
+              onChange={(e) => setSearchMode(e.target.value)}
             >
-              <option value="any">Match ANY ingredient (more results)</option>
-              <option value="all">Match ALL ingredients (exact matches)</option>
-              <option value="most">Match MOST ingredients (recommended)</option>
+              <option value="local">Smart Local Search (AI + Local + Spoonacular)</option>
+              <option value="global">Global Worldwide Search (Spoonacular API)</option>
             </select>
           </MatchingOptions>
+
+          {searchMode === 'local' && (
+            <MatchingOptions>
+              <label htmlFor="matchType">Ingredient Matching:</label>
+              <select
+                id="matchType"
+                value={matchType}
+                onChange={(e) => setMatchType(e.target.value)}
+              >
+                <option value="any">Match ANY ingredient (more results)</option>
+                <option value="all">Match ALL ingredients (exact matches)</option>
+                <option value="most">Match MOST ingredients (recommended)</option>
+              </select>
+            </MatchingOptions>
+          )}
 
           <div className="search-buttons">
             <SearchButton
@@ -1112,12 +1342,12 @@ const SmartFinder = () => {
                   >
                     <FaSearch />
                   </motion.div>
-                  Searching...
+                  {searchMode === 'global' ? 'Searching Worldwide...' : 'Searching...'}
                 </>
               ) : (
                 <>
                   <FaSearch />
-                  Find Recipes
+                  {searchMode === 'global' ? 'Search Worldwide 🌍' : 'Find Recipes 🤖'}
                 </>
               )}
             </SearchButton>
@@ -1153,12 +1383,14 @@ const SmartFinder = () => {
               <RecipeGrid>
                 {results.map((recipe, index) => (
                   <RecipeCard
-                    key={recipe._id}
-                    matchScore={recipe.matchScore}
+                    key={recipe._id || recipe.id}
+                    $matchScore={recipe.matchScore}
                     initial={{ opacity: 0, y: 50 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1, duration: 0.5 }}
                     whileHover={{ scale: 1.02 }}
+                    onClick={() => handleRecipeClick(recipe)}
+                    style={{ cursor: 'pointer' }}
                   >
                     <div className="match-indicator">
                       {getMatchText(recipe.matchScore)}
@@ -1236,6 +1468,13 @@ const SmartFinder = () => {
           </ResultsSection>
         )}
       </AnimatePresence>
+
+      {/* Recipe Detail Modal */}
+      <RecipeDetailModal
+        recipe={selectedRecipe}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </FinderContainer>
   );
 };

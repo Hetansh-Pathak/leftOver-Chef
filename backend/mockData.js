@@ -1,4 +1,8 @@
 // Mock data for development when database is not available
+const { generateComprehensiveRecipes } = require('./comprehensiveRecipes');
+
+// Generate comprehensive recipe database
+const comprehensiveRecipes = generateComprehensiveRecipes();
 
 const mockRecipes = [
   {
@@ -22,6 +26,7 @@ const mockRecipes = [
       { name: 'Garlic', amount: 2, unit: 'cloves', originalString: '2 cloves garlic, minced' },
       { name: 'Vegetable oil', amount: 2, unit: 'tablespoons', originalString: '2 tablespoons vegetable oil' }
     ],
+    ingredientNames: ['mixed vegetables', 'vegetables', 'soy sauce', 'garlic', 'vegetable oil', 'oil'],
     analyzedInstructions: [
       { number: 1, step: 'Heat oil in a large pan or wok over medium-high heat.' },
       { number: 2, step: 'Add minced garlic and stir-fry for 30 seconds until fragrant.' },
@@ -36,7 +41,10 @@ const mockRecipes = [
       fat: 8,
       fiber: 4
     },
-    source: 'mock'
+    source: 'mock',
+    searchCount: 45,
+    ingredientSearchCount: 23,
+    popularityScore: 234
   },
   {
     _id: 'recipe-2',
@@ -58,6 +66,7 @@ const mockRecipes = [
       { name: 'Olive oil', amount: 2, unit: 'tablespoons', originalString: '2 tablespoons olive oil' },
       { name: 'Parmesan cheese', amount: 1/4, unit: 'cup', originalString: '1/4 cup grated Parmesan cheese' }
     ],
+    ingredientNames: ['leftover pasta', 'pasta', 'olive oil', 'oil', 'parmesan cheese', 'cheese'],
     analyzedInstructions: [
       { number: 1, step: 'Heat olive oil in a pan over medium heat.' },
       { number: 2, step: 'Add leftover pasta and toss to heat through.' },
@@ -71,7 +80,10 @@ const mockRecipes = [
       fat: 10,
       fiber: 2
     },
-    source: 'mock'
+    source: 'mock',
+    searchCount: 67,
+    ingredientSearchCount: 89,
+    popularityScore: 456
   },
   {
     _id: 'recipe-3',
@@ -95,6 +107,7 @@ const mockRecipes = [
       { name: 'Soy sauce', amount: 1, unit: 'tablespoon', originalString: '1 tablespoon soy sauce' },
       { name: 'Sesame oil', amount: 1, unit: 'teaspoon', originalString: '1 teaspoon sesame oil' }
     ],
+    ingredientNames: ['leftover rice', 'rice', 'mixed vegetables', 'vegetables', 'soy sauce', 'sesame oil', 'oil'],
     analyzedInstructions: [
       { number: 1, step: 'Heat sesame oil in a pan over medium heat.' },
       { number: 2, step: 'Add leftover rice and break up any clumps.' },
@@ -109,8 +122,13 @@ const mockRecipes = [
       fat: 4,
       fiber: 3
     },
-    source: 'mock'
-  }
+    source: 'mock',
+    searchCount: 34,
+    ingredientSearchCount: 56,
+    popularityScore: 123
+  },
+  // Add all comprehensive recipes
+  ...comprehensiveRecipes
 ];
 
 const getDailyRecipe = () => {
@@ -134,31 +152,43 @@ const getRecipeById = (id) => {
 
 const searchRecipes = (filters = {}) => {
   let results = [...mockRecipes];
-  
+
   if (filters.search) {
     const searchTerm = filters.search.toLowerCase();
-    results = results.filter(recipe => 
+    results = results.filter(recipe =>
       recipe.title.toLowerCase().includes(searchTerm) ||
-      recipe.summary.toLowerCase().includes(searchTerm)
+      recipe.summary.toLowerCase().includes(searchTerm) ||
+      (recipe.ingredientNames && recipe.ingredientNames.some(ing =>
+        ing.toLowerCase().includes(searchTerm)
+      )) ||
+      (recipe.extendedIngredients && recipe.extendedIngredients.some(ing =>
+        ing.name.toLowerCase().includes(searchTerm)
+      )) ||
+      (recipe.cuisines && recipe.cuisines.some(cuisine =>
+        cuisine.toLowerCase().includes(searchTerm)
+      )) ||
+      (recipe.dishTypes && recipe.dishTypes.some(type =>
+        type.toLowerCase().includes(searchTerm)
+      ))
     );
   }
-  
+
   if (filters.leftoverFriendly) {
     results = results.filter(recipe => recipe.leftoverFriendly);
   }
-  
+
   if (filters.quickMeal) {
     results = results.filter(recipe => recipe.quickMeal);
   }
-  
+
   if (filters.vegetarian) {
     results = results.filter(recipe => recipe.vegetarian);
   }
-  
+
   if (filters.maxTime) {
     results = results.filter(recipe => recipe.readyInMinutes <= filters.maxTime);
   }
-  
+
   return {
     recipes: results,
     pagination: {
@@ -170,10 +200,143 @@ const searchRecipes = (filters = {}) => {
   };
 };
 
+// Enhanced ingredient-based search for mock mode
+const searchByIngredients = (ingredients = [], options = {}) => {
+  const { matchType = 'any', limit = 20 } = options;
+  let results = [...mockRecipes];
+
+  if (ingredients && ingredients.length > 0) {
+    const searchIngredients = ingredients.map(ing => ing.toLowerCase());
+
+    results = results.filter(recipe => {
+      if (!recipe.ingredientNames && !recipe.extendedIngredients) return false;
+
+      const recipeIngredients = [
+        ...(recipe.ingredientNames || []),
+        ...(recipe.extendedIngredients || []).map(ing => ing.name.toLowerCase())
+      ];
+
+      if (matchType === 'all') {
+        // Must have ALL ingredients
+        return searchIngredients.every(searchIng =>
+          recipeIngredients.some(recipeIng =>
+            recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+          )
+        );
+      } else if (matchType === 'most') {
+        // Must have at least 60% of ingredients
+        const matchCount = searchIngredients.filter(searchIng =>
+          recipeIngredients.some(recipeIng =>
+            recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+          )
+        ).length;
+        return matchCount / searchIngredients.length >= 0.6;
+      } else {
+        // Default 'any' - must have at least one ingredient
+        return searchIngredients.some(searchIng =>
+          recipeIngredients.some(recipeIng =>
+            recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+          )
+        );
+      }
+    });
+
+    // Calculate match scores and add matched/missing ingredients
+    results = results.map(recipe => {
+      const recipeIngredients = [
+        ...(recipe.ingredientNames || []),
+        ...(recipe.extendedIngredients || []).map(ing => ing.name.toLowerCase())
+      ];
+
+      const matchedIngredients = searchIngredients.filter(searchIng =>
+        recipeIngredients.some(recipeIng =>
+          recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+        )
+      );
+
+      const missingIngredients = recipeIngredients.filter(recipeIng =>
+        !searchIngredients.some(searchIng =>
+          recipeIng.includes(searchIng) || searchIng.includes(recipeIng)
+        )
+      );
+
+      const matchScore = matchedIngredients.length / Math.max(searchIngredients.length, 1);
+
+      return {
+        ...recipe,
+        matchScore,
+        matchedIngredients,
+        missingIngredients: missingIngredients.slice(0, 5) // Limit to 5 missing ingredients
+      };
+    });
+
+    // Sort by match score (highest first)
+    results.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+  }
+
+  // Limit results
+  results = results.slice(0, limit);
+
+  return results;
+};
+
+// Get all recipes (including comprehensive database)
+const getAllRecipes = () => {
+  return mockRecipes;
+};
+
+// Enhanced search specifically for cuisines
+const searchByCuisine = (cuisine, limit = 50) => {
+  const normalizedCuisine = cuisine.toLowerCase();
+
+  let results = mockRecipes.filter(recipe =>
+    (recipe.cuisines && recipe.cuisines.some(c => c.toLowerCase().includes(normalizedCuisine))) ||
+    recipe.title.toLowerCase().includes(normalizedCuisine) ||
+    recipe.summary.toLowerCase().includes(normalizedCuisine)
+  );
+
+  // Sort by popularity and rating
+  results.sort((a, b) => {
+    const scoreA = (a.popularityScore || 0) + (a.rating || 0) * 100;
+    const scoreB = (b.popularityScore || 0) + (b.rating || 0) * 100;
+    return scoreB - scoreA;
+  });
+
+  return results.slice(0, limit);
+};
+
+// Test function to check recipe database
+const testRecipeDatabase = () => {
+  const totalRecipes = mockRecipes.length;
+  const gujaratiRecipes = searchByCuisine('gujarati');
+  const italianRecipes = searchByCuisine('italian');
+  const indianRecipes = searchByCuisine('indian');
+  const chineseRecipes = searchByCuisine('chinese');
+
+  console.log(`📊 Recipe Database Status:`);
+  console.log(`   Total Recipes: ${totalRecipes}`);
+  console.log(`   Gujarati Recipes: ${gujaratiRecipes.length}`);
+  console.log(`   Italian Recipes: ${italianRecipes.length}`);
+  console.log(`   Indian Recipes: ${indianRecipes.length}`);
+  console.log(`   Chinese Recipes: ${chineseRecipes.length}`);
+
+  return {
+    total: totalRecipes,
+    gujarati: gujaratiRecipes.length,
+    italian: italianRecipes.length,
+    indian: indianRecipes.length,
+    chinese: chineseRecipes.length
+  };
+};
+
 module.exports = {
   mockRecipes,
   getDailyRecipe,
   getRandomRecipes,
   getRecipeById,
-  searchRecipes
+  searchRecipes,
+  searchByIngredients,
+  getAllRecipes,
+  searchByCuisine,
+  testRecipeDatabase
 };

@@ -224,18 +224,25 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-        // Handle mock mode
+    // Handle mock mode
     if (global.MOCK_MODE) {
       // Initialize mock users if not already done
       initializeMockUsers();
+
+      console.log(`🔍 Mock login attempt for: ${email}`);
+      console.log(`📊 Available mock users:`, mockUsers.map(u => ({ email: u.email, password: u.password })));
+
       const user = mockUsers.find(u => u.email === email);
       if (!user) {
+        console.log(`❌ User not found: ${email}`);
         return res.status(401).json({
           message: 'No account found with this email. Please sign up first.',
           userNotFound: true
         });
       }
+
       if (user.password !== password) {
+        console.log(`❌ Invalid password for ${email}. Expected: ${user.password}, Got: ${password}`);
         return res.status(401).json({
           message: 'Invalid password. Please try again.',
           invalidPassword: true
@@ -247,6 +254,8 @@ router.post('/login', async (req, res) => {
 
       // Generate JWT
       const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '7d' });
+
+      console.log(`✅ Mock login successful for: ${email}`);
 
       return res.json({
         message: 'Login successful',

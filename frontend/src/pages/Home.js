@@ -31,11 +31,18 @@ const HeroTitle = styled(motion.h1)`
   font-size: 4rem;
   font-weight: 800;
   margin-bottom: 1rem;
+  color: ${props => props.theme.colors.primary}; /* Fallback color */
   background: ${props => props.theme.colors.gradient};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1.2;
+
+  /* Fallback for browsers that don't support background-clip */
+  @supports not (-webkit-background-clip: text) {
+    color: ${props => props.theme.colors.primary};
+    background: none;
+  }
 
   @media (max-width: ${props => props.theme.breakpoints.mobile}) {
     font-size: 2.5rem;

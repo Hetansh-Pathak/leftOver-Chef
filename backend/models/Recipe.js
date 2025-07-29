@@ -165,7 +165,10 @@ const recipeSchema = new mongoose.Schema({
   // Performance Metrics
   viewCount: { type: Number, default: 0 },
   favoriteCount: { type: Number, default: 0 },
-  cookCount: { type: Number, default: 0 } // How many times users marked as "cooked"
+  cookCount: { type: Number, default: 0 }, // How many times users marked as "cooked"
+  searchCount: { type: Number, default: 0 }, // How many times recipe appeared in search results
+  ingredientSearchCount: { type: Number, default: 0 }, // How many times ingredients were searched
+  popularityScore: { type: Number, default: 0 } // Combined popularity metric
 }, {
   timestamps: true
 });
@@ -190,10 +193,27 @@ recipeSchema.virtual('totalTime').get(function() {
 recipeSchema.virtual('calculatedDifficulty').get(function() {
   const ingredientCount = this.extendedIngredients?.length || 0;
   const totalTime = this.totalTime;
-  
+
   if (ingredientCount <= 5 && totalTime <= 30) return 'Easy';
   if (ingredientCount <= 10 && totalTime <= 60) return 'Medium';
   return 'Hard';
+});
+
+// Virtual for calculated popularity score
+recipeSchema.virtual('calculatedPopularityScore').get(function() {
+  const viewWeight = 1;
+  const searchWeight = 3;
+  const favoriteWeight = 5;
+  const ratingWeight = 2;
+  const ingredientSearchWeight = 2;
+
+  return (
+    (this.viewCount || 0) * viewWeight +
+    (this.searchCount || 0) * searchWeight +
+    (this.favoriteCount || 0) * favoriteWeight +
+    (this.rating || 0) * (this.ratingCount || 0) * ratingWeight +
+    (this.ingredientSearchCount || 0) * ingredientSearchWeight
+  );
 });
 
 // Method to add rating
@@ -275,7 +295,10 @@ recipeSchema.pre('save', function(next) {
   if (!this.difficulty) {
     this.difficulty = this.calculatedDifficulty;
   }
-  
+
+  // Calculate popularity score
+  this.popularityScore = this.calculatedPopularityScore;
+
   this.lastUpdated = new Date();
   next();
 });

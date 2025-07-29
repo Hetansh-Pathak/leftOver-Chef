@@ -3,6 +3,9 @@ const Recipe = require('../models/Recipe');
 const User = require('../models/User');
 const recipeService = require('../services/recipeService');
 const aiService = require('../services/aiService');
+const nlpService = require('../services/nlpService');
+const spellCorrectionService = require('../services/spellCorrectionService');
+const spacySpoonacularService = require('../services/spacySpoonacularService');
 const mockData = require('../mockData');
 const router = express.Router();
 
@@ -168,54 +171,144 @@ router.get('/', authenticateUser, async (req, res) => {
 // POST smart recipe search by ingredients (Enhanced)
 router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
   try {
-    const { 
-      ingredients, 
+    const {
+      ingredients,
       matchType = 'any',
       preferences = {},
       nutrition = {},
       maxReadyTime,
       useAI = false,
-      limit = 20 
+      useSpoonacular = true,
+      limit = 20
     } = req.body;
-    
+
     if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
-      return res.status(400).json({ 
-        message: 'Please provide at least one ingredient' 
+      return res.status(400).json({
+        message: 'Please provide at least one ingredient'
       });
     }
-    
-    let recipes;
-    
+
+    // Process ingredients through NLP service for better recognition
+    const processedIngredients = ingredients.map(ingredient => {
+      const normalized = nlpService.normalizeIngredient(ingredient);
+      const extracted = nlpService.extractIngredients(ingredient);
+      return extracted.length > 0 ? extracted : [normalized || ingredient];
+    }).flat();
+
+    console.log(`🔍 Original ingredients: [${ingredients.join(', ')}]`);
+    console.log(`🧠 NLP processed ingredients: [${processedIngredients.join(', ')}]`);
+
+    // Use processed ingredients for search
+    const searchIngredients = [...new Set([...ingredients, ...processedIngredients])]; // Combine original and processed
+
+    let recipes = [];
+    let spoonacularResults = [];
+
+    // Try Spoonacular API first for global recipe search
+    if (useSpoonacular) {
+      try {
+        spoonacularResults = await recipeService.searchByIngredients(searchIngredients, {
+          number: Math.min(limit, 10), // Get some from Spoonacular
+          ranking: matchType === 'all' ? 2 : 1, // 1 = maximize used, 2 = minimize missing
+          ignorePantry: true
+        });
+
+        if (spoonacularResults && spoonacularResults.length > 0) {
+          recipes = recipes.concat(spoonacularResults);
+        }
+      } catch (spoonacularError) {
+        console.error('Spoonacular search failed:', spoonacularError.message);
+      }
+    }
+
     // Use AI-enhanced search if requested and user preferences available
-    if (useAI && req.userId) {
+    if (useAI && req.userId && !global.MOCK_MODE) {
       try {
         const user = await User.findById(req.userId);
         if (user) {
-          recipes = await aiService.generatePersonalizedRecommendations(user, ingredients);
+          const aiRecipes = await aiService.generatePersonalizedRecommendations(user, searchIngredients);
+          if (aiRecipes && aiRecipes.length > 0) {
+            recipes = recipes.concat(aiRecipes);
+          }
         }
       } catch (aiError) {
         console.error('AI search failed, falling back to standard search:', aiError);
       }
     }
-    
-    // Fallback to standard search or if AI search wasn't used
-    if (!recipes || recipes.length === 0) {
-      recipes = await Recipe.findByIngredients({
-        ingredients,
+
+    // Always search local database and merge results (use mock search in mock mode)
+    let localRecipes = [];
+    if (global.MOCK_MODE) {
+      // Use enhanced mock search with processed ingredients
+      const mockData = require('../mockData');
+
+      // Debug: Check database size
+      const totalAvailable = mockData.getAllRecipes().length;
+      console.log(`📊 Total recipes available in database: ${totalAvailable}`);
+
+      localRecipes = mockData.searchByIngredients(searchIngredients, {
         matchType,
-        preferences,
-        nutrition: {
-          maxCalories: nutrition.maxCalories,
-          minProtein: nutrition.minProtein,
-          maxCarbs: nutrition.maxCarbs
-        },
-        maxReadyTime,
-        limit
+        limit: Math.max(limit - recipes.length, 20) // Ensure we get enough local results
       });
+      console.log(`🔍 Mock search for [${searchIngredients.join(', ')}] found ${localRecipes.length} recipes`);
+
+      // Debug: Show sample of found recipes with cuisine diversity
+      if (localRecipes.length > 0) {
+        const sample = localRecipes.slice(0, 5).map(r => `${r.title} (${r.cuisines?.join(', ') || 'general'})`);
+        console.log(`📝 Sample recipes found: ${sample.join(', ')}`);
+
+        const cuisines = [...new Set(localRecipes.map(r => r.cuisines || []).flat())];
+        console.log(`🌍 Cuisines represented: ${cuisines.join(', ')}`);
+      }
+    } else {
+      try {
+        localRecipes = await Recipe.findByIngredients({
+          ingredients: searchIngredients,
+          matchType,
+          preferences,
+          nutrition: {
+            maxCalories: nutrition.maxCalories,
+            minProtein: nutrition.minProtein,
+            maxCarbs: nutrition.maxCarbs
+          },
+          maxReadyTime,
+          limit: limit - recipes.length
+        });
+      } catch (dbError) {
+        console.error('Local database search failed:', dbError.message);
+        localRecipes = [];
+      }
     }
+
+    if (localRecipes && localRecipes.length > 0) {
+      recipes = recipes.concat(localRecipes);
+    }
+
+    // Remove duplicates and sort by relevance
+    const uniqueRecipes = recipes.filter((recipe, index, self) => {
+      return index === self.findIndex(r =>
+        (r._id && r._id.toString()) === (recipe._id && recipe._id.toString()) ||
+        (r.spoonacularId && recipe.spoonacularId && r.spoonacularId === recipe.spoonacularId) ||
+        (r.title && recipe.title && r.title.toLowerCase() === recipe.title.toLowerCase())
+      );
+    });
+
+    // Sort by match score and relevance
+    uniqueRecipes.sort((a, b) => {
+      const scoreA = a.matchScore || 0;
+      const scoreB = b.matchScore || 0;
+      if (scoreA !== scoreB) return scoreB - scoreA;
+
+      const ratingA = a.rating || 0;
+      const ratingB = b.rating || 0;
+      return ratingB - ratingA;
+    });
+
+    // Limit results
+    recipes = uniqueRecipes.slice(0, limit);
     
-    // Track search for analytics
-    if (req.userId) {
+    // Track search for analytics and Recipe of the Day (skip in mock mode)
+    if (req.userId && !global.MOCK_MODE) {
       try {
         await User.findByIdAndUpdate(req.userId, {
           $push: {
@@ -234,13 +327,73 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
         console.error('Error tracking search:', trackingError);
       }
     }
+
+    // Track search popularity for Recipe of the Day (skip in mock mode)
+    if (!global.MOCK_MODE) {
+      try {
+        // Update search count for returned recipes
+        const recipeIds = recipes.map(r => r._id).filter(Boolean);
+        if (recipeIds.length > 0) {
+          await Recipe.updateMany(
+            { _id: { $in: recipeIds } },
+            { $inc: { searchCount: 1 } }
+          );
+        }
+
+        // Track ingredient searches globally
+        await Promise.all(ingredients.map(async (ingredient) => {
+          await Recipe.updateMany(
+            { ingredientNames: new RegExp(ingredient, 'i') },
+            { $inc: { ingredientSearchCount: 1 } }
+          );
+        }));
+      } catch (trackingError) {
+        console.error('Error tracking recipe popularity:', trackingError);
+      }
+    }
     
+    // Enhance recipes with ingredient display information
+    const enhancedRecipes = recipes.map((recipe, index) => ({
+      ...recipe,
+      searchRank: index + 1,
+      displayIngredients: recipe.extendedIngredients || recipe.ingredientNames || [],
+      apiEnhanced: spoonacularResults.includes(recipe),
+      // Ensure image is always present
+      image: recipe.image || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop',
+      // Ensure cuisine information
+      cuisines: recipe.cuisines && recipe.cuisines.length > 0 ? recipe.cuisines : ['international']
+    }));
+
+    // Log cuisine diversity for debugging
+    const allCuisines = [...new Set(enhancedRecipes.map(r => r.cuisines || []).flat())];
+    console.log(`🌍 Search results include ${allCuisines.length} cuisines: ${allCuisines.join(', ')}`);
+
     res.json({
-      recipes,
-      totalFound: recipes.length,
+      recipes: enhancedRecipes,
+      totalFound: enhancedRecipes.length,
       searchedIngredients: ingredients,
+      processedIngredients: processedIngredients,
       matchType,
-      aiEnhanced: useAI && recipes.some(r => r.aiRecommended)
+      sources: {
+        spoonacular: spoonacularResults.length,
+        local: localRecipes ? localRecipes.length : 0,
+        ai: useAI && recipes.some(r => r.aiRecommended) ? recipes.filter(r => r.aiRecommended).length : 0
+      },
+      searchMetadata: {
+        totalCuisines: allCuisines.length,
+        cuisineList: allCuisines,
+        averageIngredients: Math.round(enhancedRecipes.reduce((acc, r) => acc + (r.displayIngredients?.length || 0), 0) / enhancedRecipes.length),
+        searchMode: 'all-cuisines',
+        ingredientProcessing: {
+          original: ingredients,
+          processed: processedIngredients,
+          corrections: processedIngredients.filter(p => !ingredients.map(i => i.toLowerCase()).includes(p.toLowerCase()))
+        }
+      },
+      aiEnhanced: useAI && recipes.some(r => r.aiRecommended),
+      globalSearch: useSpoonacular && spoonacularResults.length > 0,
+      allCuisinesSearched: true,
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
@@ -547,32 +700,33 @@ router.get('/meta/filters', async (req, res) => {
   }
 });
 
-// GET daily featured recipe
+// GET daily featured recipe (based on popular searches and trends)
 router.get('/daily/featured', async (req, res) => {
   try {
-        // Check if we're in mock mode first
+    // Check if we're in mock mode first
     if (global.MOCK_MODE) {
       return res.json(mockData.getDailyRecipe());
     }
 
-    const dailyRecipe = await recipeService.getRecipeOfTheDay();
-    
+    // Get the most frequently searched and highly rated recipe
+    const dailyRecipe = await recipeService.getFeaturedRecipeOfTheDay();
+
     if (!dailyRecipe) {
       // Fallback to a highly rated recipe
-      const fallbackRecipe = await Recipe.findOne({ 
-        rating: { $gte: 4.0 } 
+      const fallbackRecipe = await Recipe.findOne({
+        rating: { $gte: 4.0 }
       }).sort({ aggregateLikes: -1 });
-      
+
       return res.json(fallbackRecipe);
     }
-    
+
     res.json(dailyRecipe);
-    
+
   } catch (error) {
     console.error('Error fetching daily recipe:', error);
-    res.status(500).json({ 
-      message: 'Error fetching daily recipe', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Error fetching daily recipe',
+      error: error.message
     });
   }
 });
@@ -741,6 +895,146 @@ router.get('/trending/popular', async (req, res) => {
   }
 });
 
+// POST global recipe search (worldwide ingredients search via Spoonacular)
+router.post('/search/global', authenticateUser, async (req, res) => {
+  try {
+    const {
+      query,
+      ingredients = [],
+      cuisine,
+      diet,
+      intolerances,
+      maxReadyTime,
+      minCalories,
+      maxCalories,
+      number = 20
+    } = req.body;
+
+    if (!query && (!ingredients || ingredients.length === 0)) {
+      return res.status(400).json({
+        message: 'Please provide a search query or ingredients'
+      });
+    }
+
+    let spoonacularResults = [];
+    let localResults = [];
+
+    try {
+      // Search Spoonacular API for global recipes
+      if (ingredients && ingredients.length > 0) {
+        // Search by ingredients
+        spoonacularResults = await recipeService.searchByIngredients(ingredients, {
+          number: Math.floor(number / 2),
+          ranking: 1,
+          ignorePantry: true
+        });
+      } else if (query) {
+        // Search by recipe name/query using complexSearch
+        const axios = require('axios');
+        const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
+
+        if (SPOONACULAR_API_KEY) {
+          const searchParams = {
+            query,
+            number: Math.floor(number / 2),
+            addRecipeInformation: true,
+            fillIngredients: true,
+            apiKey: SPOONACULAR_API_KEY
+          };
+
+          if (cuisine) searchParams.cuisine = cuisine;
+          if (diet) searchParams.diet = diet;
+          if (intolerances) searchParams.intolerances = intolerances;
+          if (maxReadyTime) searchParams.maxReadyTime = maxReadyTime;
+          if (minCalories) searchParams.minCalories = minCalories;
+          if (maxCalories) searchParams.maxCalories = maxCalories;
+
+          const response = await axios.get('https://api.spoonacular.com/recipes/complexSearch', {
+            params: searchParams
+          });
+
+          if (response.data.results && response.data.results.length > 0) {
+            // Format and save the recipes
+            const formattedRecipes = response.data.results.map(recipe =>
+              recipeService.formatSpoonacularRecipe(recipe)
+            );
+            spoonacularResults = await recipeService.saveRecipesToDatabase(formattedRecipes);
+          }
+        }
+      }
+    } catch (spoonacularError) {
+      console.error('Spoonacular global search error:', spoonacularError.message);
+    }
+
+    // Also search local database
+    try {
+      const searchQuery = {};
+
+      if (query) {
+        searchQuery.$text = { $search: query };
+      }
+
+      if (ingredients && ingredients.length > 0) {
+        const ingredientRegexes = ingredients.map(ing => new RegExp(ing, 'i'));
+        searchQuery.ingredientNames = { $in: ingredientRegexes };
+      }
+
+      if (cuisine) searchQuery.cuisines = cuisine;
+      if (diet) {
+        if (diet.includes('vegetarian')) searchQuery.vegetarian = true;
+        if (diet.includes('vegan')) searchQuery.vegan = true;
+        if (diet.includes('gluten free')) searchQuery.glutenFree = true;
+      }
+      if (maxReadyTime) searchQuery.readyInMinutes = { $lte: maxReadyTime };
+
+      localResults = await Recipe.find(searchQuery)
+        .limit(Math.floor(number / 2))
+        .sort({ rating: -1, popularityScore: -1 })
+        .lean();
+    } catch (localError) {
+      console.error('Local search error:', localError.message);
+    }
+
+    // Combine and deduplicate results
+    const allResults = [...(spoonacularResults || []), ...(localResults || [])];
+    const uniqueResults = allResults.filter((recipe, index, self) => {
+      return index === self.findIndex(r =>
+        (r._id && r._id.toString()) === (recipe._id && recipe._id.toString()) ||
+        (r.spoonacularId && recipe.spoonacularId && r.spoonacularId === recipe.spoonacularId) ||
+        (r.title && recipe.title && r.title.toLowerCase() === recipe.title.toLowerCase())
+      );
+    });
+
+    // Sort by relevance
+    uniqueResults.sort((a, b) => {
+      const scoreA = (a.rating || 0) * (a.ratingCount || 1) + (a.healthScore || 0) / 10;
+      const scoreB = (b.rating || 0) * (b.ratingCount || 1) + (b.healthScore || 0) / 10;
+      return scoreB - scoreA;
+    });
+
+    const finalResults = uniqueResults.slice(0, number);
+
+    res.json({
+      recipes: finalResults,
+      totalFound: finalResults.length,
+      sources: {
+        spoonacular: spoonacularResults ? spoonacularResults.length : 0,
+        local: localResults ? localResults.length : 0
+      },
+      searchQuery: query,
+      searchIngredients: ingredients,
+      isGlobalSearch: true
+    });
+
+  } catch (error) {
+    console.error('Error in global search:', error);
+    res.status(500).json({
+      message: 'Error performing global search',
+      error: error.message
+    });
+  }
+});
+
 // GET recipe statistics
 router.get('/stats/overview', async (req, res) => {
   try {
@@ -754,7 +1048,7 @@ router.get('/stats/overview', async (req, res) => {
       Recipe.distinct('cuisines').then(cuisines => cuisines.length),
       Recipe.distinct('dishTypes').then(types => types.length)
     ]);
-    
+
     res.json({
       totalRecipes: stats[0],
       leftoverFriendlyRecipes: stats[1],
@@ -764,12 +1058,384 @@ router.get('/stats/overview', async (req, res) => {
       dishTypeCount: stats[5],
       generatedAt: new Date()
     });
-    
+
   } catch (error) {
     console.error('Error fetching recipe stats:', error);
-    res.status(500).json({ 
-      message: 'Error fetching stats', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Error fetching stats',
+      error: error.message
+    });
+  }
+});
+
+// Spell correction endpoint
+router.post('/spell-check', async (req, res) => {
+  try {
+    const { ingredient } = req.body;
+
+    if (!ingredient) {
+      return res.status(400).json({
+        message: 'Ingredient is required'
+      });
+    }
+
+    const correctionResult = spellCorrectionService.autoCorrect(ingredient);
+
+    res.json({
+      original: ingredient,
+      ...correctionResult
+    });
+
+  } catch (error) {
+    console.error('Error in spell checking:', error);
+    res.status(500).json({
+      message: 'Error checking spelling',
+      error: error.message
+    });
+  }
+});
+
+// Ingredient suggestions endpoint
+router.get('/ingredient-suggestions', async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({ suggestions: [] });
+    }
+
+    const suggestions = spellCorrectionService.suggestIngredients(q);
+
+    res.json({
+      query: q,
+      suggestions: suggestions
+    });
+
+  } catch (error) {
+    console.error('Error getting ingredient suggestions:', error);
+    res.status(500).json({
+      message: 'Error getting suggestions',
+      error: error.message
+    });
+  }
+});
+
+// Enhanced ingredient processing endpoint
+router.post('/process-ingredients', async (req, res) => {
+  try {
+    const { ingredients } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients)) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    const processedIngredients = ingredients.map(ingredient => {
+      return nlpService.processIngredientInput(ingredient);
+    });
+
+    res.json({
+      originalIngredients: ingredients,
+      processedIngredients: processedIngredients,
+      corrections: processedIngredients.filter(p => p.autoChanged || p.suggestion),
+      totalProcessed: processedIngredients.length
+    });
+
+  } catch (error) {
+    console.error('Error processing ingredients:', error);
+    res.status(500).json({
+      message: 'Error processing ingredients',
+      error: error.message
+    });
+  }
+});
+
+// Enhanced SpaCy + Spoonacular search endpoint
+router.post('/search/enhanced', async (req, res) => {
+  try {
+    const {
+      ingredients,
+      cuisine,
+      diet,
+      intolerances,
+      maxReadyTime,
+      maxCalories,
+      number = 20
+    } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    console.log('🔍 Enhanced search request:', { ingredients, cuisine, diet });
+
+    const searchOptions = {
+      cuisine,
+      diet,
+      intolerances,
+      maxReadyTime,
+      maxCalories,
+      number
+    };
+
+    const result = await spacySpoonacularService.enhancedRecipeSearch(ingredients, searchOptions);
+
+    res.json({
+      success: true,
+      totalFound: result.totalResults,
+      recipes: result.recipes,
+      nlpProcessing: result.nlpProcessing,
+      searchMetadata: result.searchMetadata,
+      apiUsed: 'spacy-spoonacular-enhanced',
+      message: `Found ${result.recipes.length} enhanced recipes with NLP processing`
+    });
+
+  } catch (error) {
+    console.error('Error in enhanced search:', error);
+    res.status(500).json({
+      message: 'Error in enhanced search',
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Get detailed recipe with full instructions
+router.get('/details/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        message: 'Recipe ID is required'
+      });
+    }
+
+    // Check if it's a Spoonacular recipe (numeric ID)
+    if (/^\d+$/.test(id)) {
+      const recipeDetails = await spacySpoonacularService.getRecipeDetails(id);
+
+      res.json({
+        success: true,
+        recipe: recipeDetails,
+        source: 'spoonacular-api',
+        enhanced: true
+      });
+    } else {
+      // Handle local recipe details (from our database)
+      let recipe = null;
+
+      if (global.MOCK_MODE) {
+        // Search in mock data
+        const allRecipes = mockData.getAllRecipes();
+        recipe = allRecipes.find(r => r._id === id || r.id === id);
+      } else {
+        // Search in actual database
+        recipe = await Recipe.findById(id);
+      }
+
+      if (!recipe) {
+        return res.status(404).json({
+          message: 'Recipe not found',
+          success: false
+        });
+      }
+
+      res.json({
+        success: true,
+        recipe: recipe,
+        source: 'local-database',
+        enhanced: false
+      });
+    }
+
+  } catch (error) {
+    console.error('Error getting recipe details:', error);
+    res.status(500).json({
+      message: 'Error getting recipe details',
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Advanced ingredient processing with NLP
+router.post('/ingredients/analyze', async (req, res) => {
+  try {
+    const { ingredients } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients)) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    const nlpResult = await spacySpoonacularService.processIngredientsWithNLP(ingredients);
+
+    res.json({
+      success: true,
+      originalIngredients: ingredients,
+      processedIngredients: nlpResult.processedIngredients,
+      corrections: nlpResult.corrections,
+      suggestions: nlpResult.suggestions,
+      enhancedIngredientList: nlpResult.enhancedIngredientList,
+      analysisMetadata: {
+        totalProcessed: ingredients.length,
+        correctionsMade: nlpResult.corrections.length,
+        suggestionsAvailable: nlpResult.suggestions.length,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error analyzing ingredients:', error);
+    res.status(500).json({
+      message: 'Error analyzing ingredients',
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Cuisine-specific recipe search
+router.post('/search/cuisine/:cuisine', async (req, res) => {
+  try {
+    const { cuisine } = req.params;
+    const { ingredients, options = {} } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients)) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    const searchOptions = {
+      ...options,
+      cuisine: cuisine.toLowerCase(),
+      number: options.number || 15
+    };
+
+    const result = await spacySpoonacularService.enhancedRecipeSearch(ingredients, searchOptions);
+
+    res.json({
+      success: true,
+      cuisine: cuisine,
+      totalFound: result.totalResults,
+      recipes: result.recipes,
+      nlpProcessing: result.nlpProcessing,
+      searchMetadata: result.searchMetadata,
+      message: `Found ${result.recipes.length} ${cuisine} recipes`
+    });
+
+  } catch (error) {
+    console.error(`Error searching ${req.params.cuisine} recipes:`, error);
+    res.status(500).json({
+      message: `Error searching ${req.params.cuisine} recipes`,
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Browse recipes by cuisine (without ingredients)
+router.get('/browse/:cuisine', async (req, res) => {
+  try {
+    const { cuisine } = req.params;
+    const { limit = 50 } = req.query;
+
+    let recipes = [];
+
+    if (global.MOCK_MODE) {
+      recipes = mockData.searchByCuisine(cuisine, parseInt(limit));
+    } else {
+      // Database search for cuisine
+      recipes = await Recipe.find({
+        $or: [
+          { cuisines: { $regex: cuisine, $options: 'i' } },
+          { title: { $regex: cuisine, $options: 'i' } },
+          { summary: { $regex: cuisine, $options: 'i' } }
+        ]
+      }).limit(parseInt(limit)).sort({ popularityScore: -1, rating: -1 });
+    }
+
+    res.json({
+      success: true,
+      cuisine: cuisine,
+      totalFound: recipes.length,
+      recipes: recipes,
+      message: `Found ${recipes.length} ${cuisine} recipes`
+    });
+
+  } catch (error) {
+    console.error(`Error browsing ${cuisine} recipes:`, error);
+    res.status(500).json({
+      message: `Error browsing ${cuisine} recipes`,
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Test database and get statistics
+router.get('/test/database', async (req, res) => {
+  try {
+    let stats = {};
+
+    if (global.MOCK_MODE) {
+      stats = mockData.testRecipeDatabase();
+
+      // Get sample recipes for each cuisine
+      const sampleRecipes = {
+        gujarati: mockData.searchByCuisine('gujarati', 3),
+        italian: mockData.searchByCuisine('italian', 3),
+        indian: mockData.searchByCuisine('indian', 3),
+        chinese: mockData.searchByCuisine('chinese', 3)
+      };
+
+      res.json({
+        success: true,
+        databaseStats: stats,
+        sampleRecipes: sampleRecipes,
+        message: `Database contains ${stats.total} recipes across multiple cuisines`,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Database statistics
+      const totalCount = await Recipe.countDocuments();
+      const gujaratiCount = await Recipe.countDocuments({
+        cuisines: { $regex: 'gujarati', $options: 'i' }
+      });
+      const italianCount = await Recipe.countDocuments({
+        cuisines: { $regex: 'italian', $options: 'i' }
+      });
+      const indianCount = await Recipe.countDocuments({
+        cuisines: { $regex: 'indian', $options: 'i' }
+      });
+
+      stats = {
+        total: totalCount,
+        gujarati: gujaratiCount,
+        italian: italianCount,
+        indian: indianCount
+      };
+
+      res.json({
+        success: true,
+        databaseStats: stats,
+        message: `Database contains ${stats.total} recipes`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+  } catch (error) {
+    console.error('Error testing database:', error);
+    res.status(500).json({
+      message: 'Error testing database',
+      error: error.message,
+      success: false
     });
   }
 });
