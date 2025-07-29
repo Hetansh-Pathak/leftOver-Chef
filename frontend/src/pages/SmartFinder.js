@@ -1185,27 +1185,7 @@ const SmartFinder = () => {
             ))}
           </div>
 
-          {/* Cuisine Browse Section */}
-          <div className="suggestion-category" style={{ marginTop: '2rem' }}>
-            <h4>🌍 Browse by Cuisine (Test All Recipes)</h4>
-            <div className="suggestion-tags">
-              {['Gujarati', 'Italian', 'Indian', 'Chinese', 'Mexican', 'Thai'].map((cuisine) => (
-                <SuggestionTag
-                  key={cuisine}
-                  onClick={() => browseCuisine(cuisine)}
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                  style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: 'white',
-                    fontWeight: '600'
-                  }}
-                >
-                  {cuisine} Recipes
-                </SuggestionTag>
-              ))}
-            </div>
-          </div>
+
         </QuickSuggestions>
             </IngredientsSection>
 
