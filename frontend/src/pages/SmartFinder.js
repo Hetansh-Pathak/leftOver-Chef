@@ -661,6 +661,10 @@ const SmartFinder = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [matchType, setMatchType] = useState('any');
   const [searchMode, setSearchMode] = useState('local'); // 'local' or 'global'
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
 
   // Dietary Preferences
   const [dietaryPreferences, setDietaryPreferences] = useState({
