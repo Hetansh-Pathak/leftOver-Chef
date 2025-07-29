@@ -299,6 +299,40 @@ const ForgotPassword = styled(motion.button)`
   }
 `;
 
+const DemoCredentials = styled(motion.div)`
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+`;
+
+const DemoTitle = styled.div`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.textDark};
+  text-align: center;
+  margin-bottom: 0.75rem;
+`;
+
+const DemoItem = styled.div`
+  font-size: 0.8rem;
+  color: ${props => props.theme.colors.textLight};
+  text-align: center;
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Courier New', monospace;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: ${props => props.theme.colors.primary};
+    transform: translateX(2px);
+  }
+`;
+
 const Login = () => {
   const navigate = useNavigate();
   const { loginUser, registerUser } = useAuth();
