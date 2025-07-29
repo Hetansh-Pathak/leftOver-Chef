@@ -248,14 +248,17 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
 
       localRecipes = mockData.searchByIngredients(searchIngredients, {
         matchType,
-        limit: limit - recipes.length
+        limit: Math.max(limit - recipes.length, 20) // Ensure we get enough local results
       });
       console.log(`🔍 Mock search for [${searchIngredients.join(', ')}] found ${localRecipes.length} recipes`);
 
-      // Debug: Show sample of found recipes
+      // Debug: Show sample of found recipes with cuisine diversity
       if (localRecipes.length > 0) {
-        const sample = localRecipes.slice(0, 3).map(r => `${r.title} (${r.cuisines?.join(', ') || 'no cuisine'})`);
+        const sample = localRecipes.slice(0, 5).map(r => `${r.title} (${r.cuisines?.join(', ') || 'general'})`);
         console.log(`📝 Sample recipes found: ${sample.join(', ')}`);
+
+        const cuisines = [...new Set(localRecipes.map(r => r.cuisines || []).flat())];
+        console.log(`🌍 Cuisines represented: ${cuisines.join(', ')}`);
       }
     } else {
       try {
