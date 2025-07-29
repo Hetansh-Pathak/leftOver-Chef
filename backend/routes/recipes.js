@@ -352,18 +352,48 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       }
     }
     
+    // Enhance recipes with ingredient display information
+    const enhancedRecipes = recipes.map((recipe, index) => ({
+      ...recipe,
+      searchRank: index + 1,
+      displayIngredients: recipe.extendedIngredients || recipe.ingredientNames || [],
+      apiEnhanced: spoonacularResults.includes(recipe),
+      // Ensure image is always present
+      image: recipe.image || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop',
+      // Ensure cuisine information
+      cuisines: recipe.cuisines && recipe.cuisines.length > 0 ? recipe.cuisines : ['international']
+    }));
+
+    // Log cuisine diversity for debugging
+    const allCuisines = [...new Set(enhancedRecipes.map(r => r.cuisines || []).flat())];
+    console.log(`🌍 Search results include ${allCuisines.length} cuisines: ${allCuisines.join(', ')}`);
+
     res.json({
-      recipes,
-      totalFound: recipes.length,
+      recipes: enhancedRecipes,
+      totalFound: enhancedRecipes.length,
       searchedIngredients: ingredients,
+      processedIngredients: processedIngredients,
       matchType,
       sources: {
         spoonacular: spoonacularResults.length,
         local: localRecipes ? localRecipes.length : 0,
         ai: useAI && recipes.some(r => r.aiRecommended) ? recipes.filter(r => r.aiRecommended).length : 0
       },
+      searchMetadata: {
+        totalCuisines: allCuisines.length,
+        cuisineList: allCuisines,
+        averageIngredients: Math.round(enhancedRecipes.reduce((acc, r) => acc + (r.displayIngredients?.length || 0), 0) / enhancedRecipes.length),
+        searchMode: 'all-cuisines',
+        ingredientProcessing: {
+          original: ingredients,
+          processed: processedIngredients,
+          corrections: processedIngredients.filter(p => !ingredients.map(i => i.toLowerCase()).includes(p.toLowerCase()))
+        }
+      },
       aiEnhanced: useAI && recipes.some(r => r.aiRecommended),
-      globalSearch: useSpoonacular && spoonacularResults.length > 0
+      globalSearch: useSpoonacular && spoonacularResults.length > 0,
+      allCuisinesSearched: true,
+      timestamp: new Date().toISOString()
     });
     
   } catch (error) {
