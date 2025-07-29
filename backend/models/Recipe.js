@@ -193,10 +193,27 @@ recipeSchema.virtual('totalTime').get(function() {
 recipeSchema.virtual('calculatedDifficulty').get(function() {
   const ingredientCount = this.extendedIngredients?.length || 0;
   const totalTime = this.totalTime;
-  
+
   if (ingredientCount <= 5 && totalTime <= 30) return 'Easy';
   if (ingredientCount <= 10 && totalTime <= 60) return 'Medium';
   return 'Hard';
+});
+
+// Virtual for calculated popularity score
+recipeSchema.virtual('calculatedPopularityScore').get(function() {
+  const viewWeight = 1;
+  const searchWeight = 3;
+  const favoriteWeight = 5;
+  const ratingWeight = 2;
+  const ingredientSearchWeight = 2;
+
+  return (
+    (this.viewCount || 0) * viewWeight +
+    (this.searchCount || 0) * searchWeight +
+    (this.favoriteCount || 0) * favoriteWeight +
+    (this.rating || 0) * (this.ratingCount || 0) * ratingWeight +
+    (this.ingredientSearchCount || 0) * ingredientSearchWeight
+  );
 });
 
 // Method to add rating
