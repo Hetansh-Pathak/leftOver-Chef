@@ -1439,6 +1439,13 @@ const SmartFinder = () => {
           </ResultsSection>
         )}
       </AnimatePresence>
+
+      {/* Recipe Detail Modal */}
+      <RecipeDetailModal
+        recipe={selectedRecipe}
+        isOpen={isModalOpen}
+        onClose={closeModal}
+      />
     </FinderContainer>
   );
 };
