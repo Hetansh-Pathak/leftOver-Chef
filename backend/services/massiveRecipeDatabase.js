@@ -674,7 +674,7 @@ class MassiveRecipeDatabase {
       title,
       name: title, // Alias for compatibility
       summary: description,
-      image: this.getRandomImage(cuisine),
+      image: this.getRandomImage(cuisine, dishType),
       readyInMinutes: time,
       prepTime: Math.floor(time * 0.3),
       cookTime: Math.floor(time * 0.7),
