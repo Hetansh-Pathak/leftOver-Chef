@@ -1,12 +1,12 @@
 // Comprehensive recipe database with thousands of recipes for better search results
-const massiveRecipeDatabase = require('./services/massiveRecipeDatabase');
+const enhancedGlobalRecipeDatabase = require('./services/enhancedGlobalRecipeDatabase');
 
 const generateComprehensiveRecipes = () => {
-  // Use the massive recipe database for 10,000+ recipes
-  const massiveRecipes = massiveRecipeDatabase.generateAllRecipes();
+  // Use the enhanced global recipe database for 15,000+ recipes from 80+ world cuisines
+  const globalRecipes = enhancedGlobalRecipeDatabase.generateAllRecipes();
 
-  const recipes = [...massiveRecipes];
-  let idCounter = massiveRecipes.length + 1;
+  const recipes = [...globalRecipes];
+  let idCounter = globalRecipes.length + 1;
 
   // Helper function to create recipe
   const createRecipe = (title, ingredients, cuisine, dishType, time, difficulty, description) => {

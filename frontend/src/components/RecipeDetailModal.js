@@ -1,25 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  FaTimes, 
-  FaClock, 
-  FaUsers, 
-  FaFire, 
-  FaStar, 
-  FaHeart, 
+import {
+  FaTimes,
+  FaClock,
+  FaUsers,
+  FaFire,
+  FaStar,
+  FaHeart,
   FaShare,
   FaBookmark,
-  FaChevronDown,
-  FaChevronUp,
   FaUtensils,
-  FaLeaf,
-  FaExclamationTriangle,
   FaPrint,
   FaShoppingCart,
   FaPlay,
-  FaPause,
-  FaCheck
+  FaPause
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -481,7 +476,6 @@ const CookingTimer = styled.div`
 `;
 
 const RecipeDetailModal = ({ recipe, isOpen, onClose }) => {
-  const [activeTab, setActiveTab] = useState('overview');
   const [completedSteps, setCompletedSteps] = useState(new Set());
   const [checkedIngredients, setCheckedIngredients] = useState(new Set());
   const [isFavorited, setIsFavorited] = useState(false);

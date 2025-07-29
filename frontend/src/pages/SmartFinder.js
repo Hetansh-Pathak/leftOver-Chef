@@ -1,30 +1,26 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import RecipeDetailModal from '../components/RecipeDetailModal';
-import { 
-  FaBrain, 
-  FaPlus, 
-  FaSearch, 
-  FaTimes, 
-  FaBroom, 
+import {
+  FaBrain,
+  FaPlus,
+  FaSearch,
+  FaTimes,
+  FaBroom,
   FaUtensils,
-  FaHeart,
-  FaStar,
   FaClock,
   FaFire,
   FaUsers,
-    FaLeaf,
+  FaLeaf,
   FaCheckCircle,
   FaShoppingCart,
-    FaSeedling,
-    FaBreadSlice,
+  FaSeedling,
+  FaBreadSlice,
   FaTint,
   FaExclamationTriangle,
   FaFish,
-  FaEgg,
-  FaChartPie,
-  FaCarrot
+  FaEgg
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -842,7 +838,14 @@ const SmartFinder = () => {
           toast.success(`🔧 Auto-corrected ${response.data.nlpProcessing.corrections.length} ingredient spellings!`);
         }
         if (response.data.nlpProcessing?.suggestions?.length > 0) {
-          toast.info(`💡 Found ${response.data.nlpProcessing.suggestions.length} ingredient suggestions!`);
+          toast(`💡 Found ${response.data.nlpProcessing.suggestions.length} ingredient suggestions!`, {
+            icon: 'ℹ️',
+            style: {
+              borderRadius: '10px',
+              background: '#e3f2fd',
+              color: '#1976d2',
+            },
+          });
         }
       } else {
         // Enhanced local search with API integration (searches all cuisines)
@@ -878,7 +881,14 @@ const SmartFinder = () => {
       console.log(`📊 Found recipes from ${cuisines.length} different cuisines:`, cuisines);
 
       if (cuisines.length > 1) {
-        toast.info(`🌍 Results include ${cuisines.length} different cuisines: ${cuisines.slice(0, 4).join(', ')}${cuisines.length > 4 ? '...' : ''}`);
+        toast(`🌍 Results include ${cuisines.length} different cuisines: ${cuisines.slice(0, 4).join(', ')}${cuisines.length > 4 ? '...' : ''}`, {
+          icon: '🌍',
+          style: {
+            borderRadius: '10px',
+            background: '#e8f5e8',
+            color: '#2e7d32',
+          },
+        });
       }
 
       setResults(recipes);

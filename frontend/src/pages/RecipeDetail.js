@@ -2,21 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { 
-  FaClock, 
-  FaUsers, 
-  FaFire, 
-  FaStar, 
-  FaHeart, 
-  FaUtensils, 
+import {
+  FaClock,
+  FaUsers,
+  FaFire,
+  FaStar,
+  FaHeart,
+  FaUtensils,
   FaInfoCircle,
-  FaBreadSlice,
-  FaAppleAlt,
-  FaLeaf,
   FaChartPie,
-  FaThumbsUp,
   FaShoppingCart,
-  FaBookmark,
   FaShare,
   FaPrint
 } from 'react-icons/fa';

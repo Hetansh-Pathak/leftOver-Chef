@@ -299,6 +299,40 @@ const ForgotPassword = styled(motion.button)`
   }
 `;
 
+const DemoCredentials = styled(motion.div)`
+  margin-top: 1.5rem;
+  padding: 1rem;
+  background: rgba(102, 126, 234, 0.05);
+  border-radius: 12px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+`;
+
+const DemoTitle = styled.div`
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: ${props => props.theme.colors.textDark};
+  text-align: center;
+  margin-bottom: 0.75rem;
+`;
+
+const DemoItem = styled.div`
+  font-size: 0.8rem;
+  color: ${props => props.theme.colors.textLight};
+  text-align: center;
+  padding: 0.5rem;
+  margin: 0.25rem 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Courier New', monospace;
+
+  &:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: ${props => props.theme.colors.primary};
+    transform: translateX(2px);
+  }
+`;
+
 const Login = () => {
   const navigate = useNavigate();
   const { loginUser, registerUser } = useAuth();
@@ -316,6 +350,15 @@ const Login = () => {
       ...formData,
       [e.target.name]: e.target.value
     });
+  };
+
+  const handleDemoFill = (email, password) => {
+    setFormData({
+      ...formData,
+      email,
+      password
+    });
+    toast.success('Demo credentials filled! Click Sign In to login.');
   };
 
   const handleSubmit = async (e) => {
@@ -348,7 +391,7 @@ const Login = () => {
       } else {
         // Handle specific error types
         if (result.userNotFound) {
-          toast.error('No account found. Please sign up first!');
+          toast.error('No account found. Please create an account or use demo credentials!');
           setIsLogin(false); // Switch to signup mode
         } else if (result.invalidPassword) {
           toast.error('Invalid password. Please try again.');
@@ -591,6 +634,22 @@ const Login = () => {
             Facebook
           </SocialButton>
         </SocialButtons>
+
+        {isLogin && (
+          <DemoCredentials
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+          >
+            <DemoTitle>🧪 Demo Credentials</DemoTitle>
+            <DemoItem onClick={() => handleDemoFill('demo@example.com', 'password123')}>
+              📧 demo@example.com / password123
+            </DemoItem>
+            <DemoItem onClick={() => handleDemoFill('chef@test.com', 'chef123')}>
+              👨‍🍳 chef@test.com / chef123
+            </DemoItem>
+          </DemoCredentials>
+        )}
       </LoginCard>
     </LoginContainer>
   );

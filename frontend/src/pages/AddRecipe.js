@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaPlus, FaUtensils, FaClock, FaUsers } from 'react-icons/fa';
+import { FaPlus, FaUtensils } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
 const AddRecipeContainer = styled(motion.div)`
