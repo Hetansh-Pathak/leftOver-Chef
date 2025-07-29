@@ -779,8 +779,8 @@ const SmartFinder = () => {
       let response;
 
       if (searchMode === 'global') {
-        // Global search using Spoonacular
-        response = await axios.post('/api/recipes/search/global', {
+        // Enhanced SpaCy + Spoonacular search
+        response = await axios.post('/api/recipes/search/enhanced', {
           ingredients,
           maxReadyTime: nutritionGoals.maxTime || undefined,
           maxCalories: nutritionGoals.maxCalories || undefined,
@@ -789,7 +789,12 @@ const SmartFinder = () => {
           number: 20
         });
 
-        toast.success(`🌍 Found ${response.data.totalFound} recipes from around the world!`);
+        toast.success(`🌍 Found ${response.data.totalFound} recipes with enhanced SpaCy + Spoonacular search!`);
+
+        // Show NLP processing results
+        if (response.data.nlpProcessing?.corrections?.length > 0) {
+          toast.success(`🔧 Auto-corrected ${response.data.nlpProcessing.corrections.length} ingredient spellings!`);
+        }
       } else {
         // Local search with AI enhancement
         response = await axios.post('/api/recipes/search-by-ingredients', {
@@ -800,8 +805,8 @@ const SmartFinder = () => {
             allergens: allergenRestrictions
           },
           nutrition: nutritionGoals,
-          useAI: true, // Enable AI-enhanced search
-          useSpoonacular: true, // Also use Spoonacular for better results
+          useAI: true,
+          useSpoonacular: true,
           limit: 20
         });
 
@@ -816,7 +821,7 @@ const SmartFinder = () => {
         }
       }
 
-      setResults(response.data.recipes);
+      setResults(response.data.recipes || []);
     } catch (error) {
       console.error('Search error:', error);
       toast.error('Error searching recipes. Please try again.');
@@ -824,6 +829,16 @@ const SmartFinder = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const handleRecipeClick = (recipe) => {
+    setSelectedRecipe(recipe);
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setSelectedRecipe(null);
   };
 
   const getDietString = () => {
