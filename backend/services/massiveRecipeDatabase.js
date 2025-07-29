@@ -703,19 +703,21 @@ class MassiveRecipeDatabase {
   // Main method to generate all recipes
   generateAllRecipes() {
     console.log('🔄 Generating comprehensive recipe database...');
-    
+
     const allRecipes = [
       ...this.generateGujaratiRecipes(),
       ...this.generateItalianRecipes(),
       ...this.generateIndianRecipes(),
       ...this.generateChineseRecipes(),
+      ...this.generateAdditionalRecipeCategories(),
       ...this.generateVariationsAndBulkRecipes()
     ];
 
     console.log(`✅ Generated ${allRecipes.length} recipes across multiple cuisines`);
-    console.log(`📊 Cuisines: Gujarati, Italian, Indian, Chinese, Mexican, Thai, American, Mediterranean`);
+    console.log(`📊 Cuisines: Gujarati, Italian, Indian, Chinese, Mexican, Thai, American, Mediterranean, French, Spanish, Japanese, Korean`);
     console.log(`🎯 Features: High-quality images, detailed instructions, nutrition info, dietary tags`);
-    
+    console.log(`🍽️ Categories: Main dishes, breakfast, snacks, desserts, soups, and more`);
+
     return allRecipes;
   }
 }
