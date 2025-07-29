@@ -269,8 +269,8 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     // Limit results
     recipes = uniqueRecipes.slice(0, limit);
     
-    // Track search for analytics and Recipe of the Day
-    if (req.userId) {
+    // Track search for analytics and Recipe of the Day (skip in mock mode)
+    if (req.userId && !global.MOCK_MODE) {
       try {
         await User.findByIdAndUpdate(req.userId, {
           $push: {
@@ -290,26 +290,28 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       }
     }
 
-    // Track search popularity for Recipe of the Day
-    try {
-      // Update search count for returned recipes
-      const recipeIds = recipes.map(r => r._id).filter(Boolean);
-      if (recipeIds.length > 0) {
-        await Recipe.updateMany(
-          { _id: { $in: recipeIds } },
-          { $inc: { searchCount: 1 } }
-        );
-      }
+    // Track search popularity for Recipe of the Day (skip in mock mode)
+    if (!global.MOCK_MODE) {
+      try {
+        // Update search count for returned recipes
+        const recipeIds = recipes.map(r => r._id).filter(Boolean);
+        if (recipeIds.length > 0) {
+          await Recipe.updateMany(
+            { _id: { $in: recipeIds } },
+            { $inc: { searchCount: 1 } }
+          );
+        }
 
-      // Track ingredient searches globally
-      await Promise.all(ingredients.map(async (ingredient) => {
-        await Recipe.updateMany(
-          { ingredientNames: new RegExp(ingredient, 'i') },
-          { $inc: { ingredientSearchCount: 1 } }
-        );
-      }));
-    } catch (trackingError) {
-      console.error('Error tracking recipe popularity:', trackingError);
+        // Track ingredient searches globally
+        await Promise.all(ingredients.map(async (ingredient) => {
+          await Recipe.updateMany(
+            { ingredientNames: new RegExp(ingredient, 'i') },
+            { $inc: { ingredientSearchCount: 1 } }
+          );
+        }));
+      } catch (trackingError) {
+        console.error('Error tracking recipe popularity:', trackingError);
+      }
     }
     
     res.json({
