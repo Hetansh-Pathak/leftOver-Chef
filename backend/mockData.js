@@ -1,4 +1,8 @@
 // Mock data for development when database is not available
+const { generateComprehensiveRecipes } = require('./comprehensiveRecipes');
+
+// Generate comprehensive recipe database
+const comprehensiveRecipes = generateComprehensiveRecipes();
 
 const mockRecipes = [
   {
@@ -22,6 +26,7 @@ const mockRecipes = [
       { name: 'Garlic', amount: 2, unit: 'cloves', originalString: '2 cloves garlic, minced' },
       { name: 'Vegetable oil', amount: 2, unit: 'tablespoons', originalString: '2 tablespoons vegetable oil' }
     ],
+    ingredientNames: ['mixed vegetables', 'vegetables', 'soy sauce', 'garlic', 'vegetable oil', 'oil'],
     analyzedInstructions: [
       { number: 1, step: 'Heat oil in a large pan or wok over medium-high heat.' },
       { number: 2, step: 'Add minced garlic and stir-fry for 30 seconds until fragrant.' },
@@ -36,7 +41,10 @@ const mockRecipes = [
       fat: 8,
       fiber: 4
     },
-    source: 'mock'
+    source: 'mock',
+    searchCount: 45,
+    ingredientSearchCount: 23,
+    popularityScore: 234
   },
   {
     _id: 'recipe-2',
@@ -58,6 +66,7 @@ const mockRecipes = [
       { name: 'Olive oil', amount: 2, unit: 'tablespoons', originalString: '2 tablespoons olive oil' },
       { name: 'Parmesan cheese', amount: 1/4, unit: 'cup', originalString: '1/4 cup grated Parmesan cheese' }
     ],
+    ingredientNames: ['leftover pasta', 'pasta', 'olive oil', 'oil', 'parmesan cheese', 'cheese'],
     analyzedInstructions: [
       { number: 1, step: 'Heat olive oil in a pan over medium heat.' },
       { number: 2, step: 'Add leftover pasta and toss to heat through.' },
@@ -71,7 +80,10 @@ const mockRecipes = [
       fat: 10,
       fiber: 2
     },
-    source: 'mock'
+    source: 'mock',
+    searchCount: 67,
+    ingredientSearchCount: 89,
+    popularityScore: 456
   },
   {
     _id: 'recipe-3',
@@ -95,6 +107,7 @@ const mockRecipes = [
       { name: 'Soy sauce', amount: 1, unit: 'tablespoon', originalString: '1 tablespoon soy sauce' },
       { name: 'Sesame oil', amount: 1, unit: 'teaspoon', originalString: '1 teaspoon sesame oil' }
     ],
+    ingredientNames: ['leftover rice', 'rice', 'mixed vegetables', 'vegetables', 'soy sauce', 'sesame oil', 'oil'],
     analyzedInstructions: [
       { number: 1, step: 'Heat sesame oil in a pan over medium heat.' },
       { number: 2, step: 'Add leftover rice and break up any clumps.' },
@@ -109,8 +122,13 @@ const mockRecipes = [
       fat: 4,
       fiber: 3
     },
-    source: 'mock'
-  }
+    source: 'mock',
+    searchCount: 34,
+    ingredientSearchCount: 56,
+    popularityScore: 123
+  },
+  // Add all comprehensive recipes
+  ...comprehensiveRecipes
 ];
 
 const getDailyRecipe = () => {
