@@ -228,11 +228,45 @@ const SuggestionTag = styled(motion.button)`
   cursor: pointer;
   transition: ${props => props.theme.transitions.default};
   font-size: 0.85rem;
-  
+
   &:hover {
     background: ${props => props.theme.colors.primary};
     color: white;
     transform: translateY(-2px);
+  }
+`;
+
+const SuggestionsDropdown = styled(motion.div)`
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 100;
+  max-height: 200px;
+  overflow-y: auto;
+
+  .suggestion-item {
+    padding: 0.75rem 1rem;
+    cursor: pointer;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background 0.2s;
+
+    &:hover {
+      background: ${props => props.theme.colors.backgroundLight};
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-text {
+      font-size: 0.9rem;
+      color: ${props => props.theme.colors.textDark};
+    }
   }
 `;
 
