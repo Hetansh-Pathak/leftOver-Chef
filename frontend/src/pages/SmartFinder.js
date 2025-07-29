@@ -891,9 +891,36 @@ const SmartFinder = () => {
     }));
   };
 
+  const handleInputChange = async (e) => {
+    const value = e.target.value;
+    setCurrentInput(value);
+
+    if (value.length >= 2) {
+      try {
+        const response = await axios.get(`/api/recipes/ingredient-suggestions?q=${value}`);
+        setSuggestions(response.data.suggestions || []);
+        setShowSuggestions(true);
+      } catch (error) {
+        setSuggestions([]);
+      }
+    } else {
+      setSuggestions([]);
+      setShowSuggestions(false);
+    }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    setCurrentInput(suggestion);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  };
+
   const handleKeyPress = (e) => {
     if (e.key === 'Enter') {
       addIngredient();
+    } else if (e.key === 'Escape') {
+      setSuggestions([]);
+      setShowSuggestions(false);
     }
   };
 
