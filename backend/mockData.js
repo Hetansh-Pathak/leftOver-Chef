@@ -285,5 +285,6 @@ module.exports = {
   getDailyRecipe,
   getRandomRecipes,
   getRecipeById,
-  searchRecipes
+  searchRecipes,
+  searchByIngredients
 };
