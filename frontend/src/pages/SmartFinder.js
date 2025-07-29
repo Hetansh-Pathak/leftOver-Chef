@@ -817,6 +817,7 @@ const SmartFinder = () => {
       maxCarbs: 60
     });
     setMatchType('any');
+    setSearchMode('local');
     toast.success('Cleared all preferences!');
   };
 
