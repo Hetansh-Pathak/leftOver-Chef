@@ -821,25 +821,31 @@ const SmartFinder = () => {
     try {
       let response;
 
+      // Always use enhanced search that searches ALL cuisines
+      console.log('🔍 Searching across ALL cuisines with enhanced API integration...');
+
       if (searchMode === 'global') {
-        // Enhanced SpaCy + Spoonacular search
+        // Enhanced SpaCy + Spoonacular search (searches all cuisines globally)
         response = await axios.post('/api/recipes/search/enhanced', {
           ingredients,
           maxReadyTime: nutritionGoals.maxTime || undefined,
           maxCalories: nutritionGoals.maxCalories || undefined,
           diet: getDietString(),
           intolerances: getAllergenString(),
-          number: 20
+          number: 30 // Increased to get more diverse results
         });
 
-        toast.success(`🌍 Found ${response.data.totalFound} recipes with enhanced SpaCy + Spoonacular search!`);
+        toast.success(`🌍 Found ${response.data.totalFound} recipes from ALL cuisines with enhanced API search!`);
 
         // Show NLP processing results
         if (response.data.nlpProcessing?.corrections?.length > 0) {
           toast.success(`🔧 Auto-corrected ${response.data.nlpProcessing.corrections.length} ingredient spellings!`);
         }
+        if (response.data.nlpProcessing?.suggestions?.length > 0) {
+          toast.info(`💡 Found ${response.data.nlpProcessing.suggestions.length} ingredient suggestions!`);
+        }
       } else {
-        // Local search with AI enhancement
+        // Enhanced local search with API integration (searches all cuisines)
         response = await axios.post('/api/recipes/search-by-ingredients', {
           ingredients,
           matchType,
@@ -850,21 +856,32 @@ const SmartFinder = () => {
           nutrition: nutritionGoals,
           useAI: true,
           useSpoonacular: true,
-          limit: 20
+          searchAllCuisines: true, // Ensure we search ALL cuisines
+          limit: 30 // Increased for more diverse results
         });
 
-        toast.success(`Found ${response.data.totalFound} recipes!`);
+        toast.success(`🍽️ Found ${response.data.totalFound} recipes from ALL cuisines!`);
 
         // Show enhancement messages
         if (response.data.aiEnhanced) {
           toast.success('🤖 AI-enhanced results based on your preferences!');
         }
         if (response.data.globalSearch) {
-          toast.success('🌐 Including global recipes from Spoonacular!');
+          toast.success('🌐 Including recipes from Spoonacular API!');
         }
       }
 
-      setResults(response.data.recipes || []);
+      const recipes = response.data.recipes || [];
+
+      // Log cuisine diversity
+      const cuisines = [...new Set(recipes.map(r => r.cuisines || []).flat())];
+      console.log(`📊 Found recipes from ${cuisines.length} different cuisines:`, cuisines);
+
+      if (cuisines.length > 1) {
+        toast.info(`🌍 Results include ${cuisines.length} different cuisines: ${cuisines.slice(0, 4).join(', ')}${cuisines.length > 4 ? '...' : ''}`);
+      }
+
+      setResults(recipes);
     } catch (error) {
       console.error('Search error:', error);
       toast.error('Error searching recipes. Please try again.');
