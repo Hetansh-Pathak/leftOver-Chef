@@ -876,6 +876,35 @@ const SmartFinder = () => {
     setSelectedRecipe(null);
   };
 
+  const browseCuisine = async (cuisine) => {
+    setIsSearching(true);
+    setHasSearched(true);
+
+    try {
+      console.log(`🌍 Browsing ${cuisine} recipes...`);
+
+      const response = await axios.get(`/api/recipes/browse/${cuisine.toLowerCase()}`);
+
+      if (response.data.success) {
+        setResults(response.data.recipes);
+        toast.success(`🍽️ Found ${response.data.recipes.length} ${cuisine} recipes!`);
+
+        // Clear ingredients to show this is a cuisine browse
+        setIngredients([]);
+        setCurrentInput('');
+      } else {
+        toast.error(`No ${cuisine} recipes found`);
+        setResults([]);
+      }
+    } catch (error) {
+      console.error(`Error browsing ${cuisine} recipes:`, error);
+      toast.error(`Error loading ${cuisine} recipes`);
+      setResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
   const getDietString = () => {
     const diets = [];
     if (dietaryPreferences.vegetarian) diets.push('vegetarian');
