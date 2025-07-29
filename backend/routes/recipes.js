@@ -224,7 +224,7 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       try {
         const user = await User.findById(req.userId);
         if (user) {
-          const aiRecipes = await aiService.generatePersonalizedRecommendations(user, ingredients);
+          const aiRecipes = await aiService.generatePersonalizedRecommendations(user, searchIngredients);
           if (aiRecipes && aiRecipes.length > 0) {
             recipes = recipes.concat(aiRecipes);
           }
@@ -237,17 +237,17 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     // Always search local database and merge results (use mock search in mock mode)
     let localRecipes = [];
     if (global.MOCK_MODE) {
-      // Use enhanced mock search
+      // Use enhanced mock search with processed ingredients
       const mockData = require('../mockData');
-      localRecipes = mockData.searchByIngredients(ingredients, {
+      localRecipes = mockData.searchByIngredients(searchIngredients, {
         matchType,
         limit: limit - recipes.length
       });
-      console.log(`🔍 Mock search for [${ingredients.join(', ')}] found ${localRecipes.length} recipes`);
+      console.log(`🔍 Mock search for [${searchIngredients.join(', ')}] found ${localRecipes.length} recipes`);
     } else {
       try {
         localRecipes = await Recipe.findByIngredients({
-          ingredients,
+          ingredients: searchIngredients,
           matchType,
           preferences,
           nutrition: {
