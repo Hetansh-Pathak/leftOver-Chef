@@ -708,12 +708,49 @@ const SmartFinder = () => {
     }
   ];
 
-  const addIngredient = () => {
-    const ingredient = currentInput.trim().toLowerCase();
-    if (ingredient && !ingredients.includes(ingredient)) {
-      setIngredients(prev => [...prev, ingredient]);
-      setCurrentInput('');
-      toast.success(`Added "${ingredient}" to your ingredients!`);
+  const addIngredient = async () => {
+    const ingredient = currentInput.trim();
+    if (!ingredient) return;
+
+    try {
+      // Check for spell correction
+      const spellCheckResponse = await axios.post('/api/recipes/spell-check', {
+        ingredient: ingredient
+      });
+
+      const { corrected, autoChanged, suggestion, confidence } = spellCheckResponse.data;
+
+      let finalIngredient = ingredient.toLowerCase();
+
+      if (autoChanged) {
+        finalIngredient = corrected.toLowerCase();
+        toast.success(`Auto-corrected "${ingredient}" to "${corrected}"`);
+      } else if (suggestion && confidence > 0.7) {
+        // Ask user for confirmation
+        const confirmed = window.confirm(`Did you mean "${suggestion}"? Click OK to use "${suggestion}" or Cancel to use "${ingredient}"`);
+        if (confirmed) {
+          finalIngredient = suggestion.toLowerCase();
+          toast.success(`Using "${suggestion}" instead of "${ingredient}"`);
+        }
+      }
+
+      if (!ingredients.includes(finalIngredient)) {
+        setIngredients(prev => [...prev, finalIngredient]);
+        setCurrentInput('');
+        setSuggestions([]);
+        setShowSuggestions(false);
+        toast.success(`Added "${finalIngredient}" to your ingredients!`);
+      } else {
+        toast.error(`"${finalIngredient}" is already in your list!`);
+      }
+    } catch (error) {
+      // Fallback to original functionality
+      const finalIngredient = ingredient.toLowerCase();
+      if (!ingredients.includes(finalIngredient)) {
+        setIngredients(prev => [...prev, finalIngredient]);
+        setCurrentInput('');
+        toast.success(`Added "${finalIngredient}" to your ingredients!`);
+      }
     }
   };
 
