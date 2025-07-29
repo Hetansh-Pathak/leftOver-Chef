@@ -5,6 +5,7 @@ const recipeService = require('../services/recipeService');
 const aiService = require('../services/aiService');
 const nlpService = require('../services/nlpService');
 const spellCorrectionService = require('../services/spellCorrectionService');
+const spacySpoonacularService = require('../services/spacySpoonacularService');
 const mockData = require('../mockData');
 const router = express.Router();
 
