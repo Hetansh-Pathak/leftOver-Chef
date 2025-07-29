@@ -165,7 +165,10 @@ const recipeSchema = new mongoose.Schema({
   // Performance Metrics
   viewCount: { type: Number, default: 0 },
   favoriteCount: { type: Number, default: 0 },
-  cookCount: { type: Number, default: 0 } // How many times users marked as "cooked"
+  cookCount: { type: Number, default: 0 }, // How many times users marked as "cooked"
+  searchCount: { type: Number, default: 0 }, // How many times recipe appeared in search results
+  ingredientSearchCount: { type: Number, default: 0 }, // How many times ingredients were searched
+  popularityScore: { type: Number, default: 0 } // Combined popularity metric
 }, {
   timestamps: true
 });
