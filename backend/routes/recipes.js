@@ -186,6 +186,19 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       });
     }
 
+    // Process ingredients through NLP service for better recognition
+    const processedIngredients = ingredients.map(ingredient => {
+      const normalized = nlpService.normalizeIngredient(ingredient);
+      const extracted = nlpService.extractIngredients(ingredient);
+      return extracted.length > 0 ? extracted : [normalized || ingredient];
+    }).flat();
+
+    console.log(`🔍 Original ingredients: [${ingredients.join(', ')}]`);
+    console.log(`🧠 NLP processed ingredients: [${processedIngredients.join(', ')}]`);
+
+    // Use processed ingredients for search
+    const searchIngredients = [...new Set([...ingredients, ...processedIngredients])]; // Combine original and processed
+
     let recipes = [];
     let spoonacularResults = [];
 
