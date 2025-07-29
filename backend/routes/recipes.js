@@ -1107,4 +1107,193 @@ router.post('/process-ingredients', async (req, res) => {
   }
 });
 
+// Enhanced SpaCy + Spoonacular search endpoint
+router.post('/search/enhanced', async (req, res) => {
+  try {
+    const {
+      ingredients,
+      cuisine,
+      diet,
+      intolerances,
+      maxReadyTime,
+      maxCalories,
+      number = 20
+    } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    console.log('🔍 Enhanced search request:', { ingredients, cuisine, diet });
+
+    const searchOptions = {
+      cuisine,
+      diet,
+      intolerances,
+      maxReadyTime,
+      maxCalories,
+      number
+    };
+
+    const result = await spacySpoonacularService.enhancedRecipeSearch(ingredients, searchOptions);
+
+    res.json({
+      success: true,
+      totalFound: result.totalResults,
+      recipes: result.recipes,
+      nlpProcessing: result.nlpProcessing,
+      searchMetadata: result.searchMetadata,
+      apiUsed: 'spacy-spoonacular-enhanced',
+      message: `Found ${result.recipes.length} enhanced recipes with NLP processing`
+    });
+
+  } catch (error) {
+    console.error('Error in enhanced search:', error);
+    res.status(500).json({
+      message: 'Error in enhanced search',
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Get detailed recipe with full instructions
+router.get('/details/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    if (!id) {
+      return res.status(400).json({
+        message: 'Recipe ID is required'
+      });
+    }
+
+    // Check if it's a Spoonacular recipe (numeric ID)
+    if (/^\d+$/.test(id)) {
+      const recipeDetails = await spacySpoonacularService.getRecipeDetails(id);
+
+      res.json({
+        success: true,
+        recipe: recipeDetails,
+        source: 'spoonacular-api',
+        enhanced: true
+      });
+    } else {
+      // Handle local recipe details (from our database)
+      let recipe = null;
+
+      if (global.MOCK_MODE) {
+        // Search in mock data
+        const allRecipes = mockData.getAllRecipes();
+        recipe = allRecipes.find(r => r._id === id || r.id === id);
+      } else {
+        // Search in actual database
+        recipe = await Recipe.findById(id);
+      }
+
+      if (!recipe) {
+        return res.status(404).json({
+          message: 'Recipe not found',
+          success: false
+        });
+      }
+
+      res.json({
+        success: true,
+        recipe: recipe,
+        source: 'local-database',
+        enhanced: false
+      });
+    }
+
+  } catch (error) {
+    console.error('Error getting recipe details:', error);
+    res.status(500).json({
+      message: 'Error getting recipe details',
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Advanced ingredient processing with NLP
+router.post('/ingredients/analyze', async (req, res) => {
+  try {
+    const { ingredients } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients)) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    const nlpResult = await spacySpoonacularService.processIngredientsWithNLP(ingredients);
+
+    res.json({
+      success: true,
+      originalIngredients: ingredients,
+      processedIngredients: nlpResult.processedIngredients,
+      corrections: nlpResult.corrections,
+      suggestions: nlpResult.suggestions,
+      enhancedIngredientList: nlpResult.enhancedIngredientList,
+      analysisMetadata: {
+        totalProcessed: ingredients.length,
+        correctionsMade: nlpResult.corrections.length,
+        suggestionsAvailable: nlpResult.suggestions.length,
+        timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('Error analyzing ingredients:', error);
+    res.status(500).json({
+      message: 'Error analyzing ingredients',
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Cuisine-specific recipe search
+router.post('/search/cuisine/:cuisine', async (req, res) => {
+  try {
+    const { cuisine } = req.params;
+    const { ingredients, options = {} } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients)) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    const searchOptions = {
+      ...options,
+      cuisine: cuisine.toLowerCase(),
+      number: options.number || 15
+    };
+
+    const result = await spacySpoonacularService.enhancedRecipeSearch(ingredients, searchOptions);
+
+    res.json({
+      success: true,
+      cuisine: cuisine,
+      totalFound: result.totalResults,
+      recipes: result.recipes,
+      nlpProcessing: result.nlpProcessing,
+      searchMetadata: result.searchMetadata,
+      message: `Found ${result.recipes.length} ${cuisine} recipes`
+    });
+
+  } catch (error) {
+    console.error(`Error searching ${req.params.cuisine} recipes:`, error);
+    res.status(500).json({
+      message: `Error searching ${req.params.cuisine} recipes`,
+      error: error.message,
+      success: false
+    });
+  }
+});
+
 module.exports = router;
