@@ -817,6 +817,146 @@ router.get('/trending/popular', async (req, res) => {
   }
 });
 
+// POST global recipe search (worldwide ingredients search via Spoonacular)
+router.post('/search/global', authenticateUser, async (req, res) => {
+  try {
+    const {
+      query,
+      ingredients = [],
+      cuisine,
+      diet,
+      intolerances,
+      maxReadyTime,
+      minCalories,
+      maxCalories,
+      number = 20
+    } = req.body;
+
+    if (!query && (!ingredients || ingredients.length === 0)) {
+      return res.status(400).json({
+        message: 'Please provide a search query or ingredients'
+      });
+    }
+
+    let spoonacularResults = [];
+    let localResults = [];
+
+    try {
+      // Search Spoonacular API for global recipes
+      if (ingredients && ingredients.length > 0) {
+        // Search by ingredients
+        spoonacularResults = await recipeService.searchByIngredients(ingredients, {
+          number: Math.floor(number / 2),
+          ranking: 1,
+          ignorePantry: true
+        });
+      } else if (query) {
+        // Search by recipe name/query using complexSearch
+        const axios = require('axios');
+        const SPOONACULAR_API_KEY = process.env.SPOONACULAR_API_KEY;
+
+        if (SPOONACULAR_API_KEY) {
+          const searchParams = {
+            query,
+            number: Math.floor(number / 2),
+            addRecipeInformation: true,
+            fillIngredients: true,
+            apiKey: SPOONACULAR_API_KEY
+          };
+
+          if (cuisine) searchParams.cuisine = cuisine;
+          if (diet) searchParams.diet = diet;
+          if (intolerances) searchParams.intolerances = intolerances;
+          if (maxReadyTime) searchParams.maxReadyTime = maxReadyTime;
+          if (minCalories) searchParams.minCalories = minCalories;
+          if (maxCalories) searchParams.maxCalories = maxCalories;
+
+          const response = await axios.get('https://api.spoonacular.com/recipes/complexSearch', {
+            params: searchParams
+          });
+
+          if (response.data.results && response.data.results.length > 0) {
+            // Format and save the recipes
+            const formattedRecipes = response.data.results.map(recipe =>
+              recipeService.formatSpoonacularRecipe(recipe)
+            );
+            spoonacularResults = await recipeService.saveRecipesToDatabase(formattedRecipes);
+          }
+        }
+      }
+    } catch (spoonacularError) {
+      console.error('Spoonacular global search error:', spoonacularError.message);
+    }
+
+    // Also search local database
+    try {
+      const searchQuery = {};
+
+      if (query) {
+        searchQuery.$text = { $search: query };
+      }
+
+      if (ingredients && ingredients.length > 0) {
+        const ingredientRegexes = ingredients.map(ing => new RegExp(ing, 'i'));
+        searchQuery.ingredientNames = { $in: ingredientRegexes };
+      }
+
+      if (cuisine) searchQuery.cuisines = cuisine;
+      if (diet) {
+        if (diet.includes('vegetarian')) searchQuery.vegetarian = true;
+        if (diet.includes('vegan')) searchQuery.vegan = true;
+        if (diet.includes('gluten free')) searchQuery.glutenFree = true;
+      }
+      if (maxReadyTime) searchQuery.readyInMinutes = { $lte: maxReadyTime };
+
+      localResults = await Recipe.find(searchQuery)
+        .limit(Math.floor(number / 2))
+        .sort({ rating: -1, popularityScore: -1 })
+        .lean();
+    } catch (localError) {
+      console.error('Local search error:', localError.message);
+    }
+
+    // Combine and deduplicate results
+    const allResults = [...(spoonacularResults || []), ...(localResults || [])];
+    const uniqueResults = allResults.filter((recipe, index, self) => {
+      return index === self.findIndex(r =>
+        (r._id && r._id.toString()) === (recipe._id && recipe._id.toString()) ||
+        (r.spoonacularId && recipe.spoonacularId && r.spoonacularId === recipe.spoonacularId) ||
+        (r.title && recipe.title && r.title.toLowerCase() === recipe.title.toLowerCase())
+      );
+    });
+
+    // Sort by relevance
+    uniqueResults.sort((a, b) => {
+      const scoreA = (a.rating || 0) * (a.ratingCount || 1) + (a.healthScore || 0) / 10;
+      const scoreB = (b.rating || 0) * (b.ratingCount || 1) + (b.healthScore || 0) / 10;
+      return scoreB - scoreA;
+    });
+
+    const finalResults = uniqueResults.slice(0, number);
+
+    res.json({
+      recipes: finalResults,
+      totalFound: finalResults.length,
+      sources: {
+        spoonacular: spoonacularResults ? spoonacularResults.length : 0,
+        local: localResults ? localResults.length : 0
+      },
+      searchQuery: query,
+      searchIngredients: ingredients,
+      isGlobalSearch: true
+    });
+
+  } catch (error) {
+    console.error('Error in global search:', error);
+    res.status(500).json({
+      message: 'Error performing global search',
+      error: error.message
+    });
+  }
+});
+
 // GET recipe statistics
 router.get('/stats/overview', async (req, res) => {
   try {
@@ -830,7 +970,7 @@ router.get('/stats/overview', async (req, res) => {
       Recipe.distinct('cuisines').then(cuisines => cuisines.length),
       Recipe.distinct('dishTypes').then(types => types.length)
     ]);
-    
+
     res.json({
       totalRecipes: stats[0],
       leftoverFriendlyRecipes: stats[1],
@@ -840,12 +980,12 @@ router.get('/stats/overview', async (req, res) => {
       dishTypeCount: stats[5],
       generatedAt: new Date()
     });
-    
+
   } catch (error) {
     console.error('Error fetching recipe stats:', error);
-    res.status(500).json({ 
-      message: 'Error fetching stats', 
-      error: error.message 
+    res.status(500).json({
+      message: 'Error fetching stats',
+      error: error.message
     });
   }
 });
