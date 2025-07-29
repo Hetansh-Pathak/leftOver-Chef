@@ -295,7 +295,10 @@ recipeSchema.pre('save', function(next) {
   if (!this.difficulty) {
     this.difficulty = this.calculatedDifficulty;
   }
-  
+
+  // Calculate popularity score
+  this.popularityScore = this.calculatedPopularityScore;
+
   this.lastUpdated = new Date();
   next();
 });
