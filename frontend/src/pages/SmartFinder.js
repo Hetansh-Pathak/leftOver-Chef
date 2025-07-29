@@ -726,26 +726,48 @@ const SmartFinder = () => {
     setIsSearching(true);
     setHasSearched(true);
 
-            try {
-      const response = await axios.post('/api/recipes/search-by-ingredients', {
-        ingredients,
-        matchType,
-        preferences: {
-          dietary: dietaryPreferences,
-          allergens: allergenRestrictions
-        },
-        nutrition: nutritionGoals,
-        useAI: true, // Enable AI-enhanced search
-        limit: 20
-      });
+    try {
+      let response;
+
+      if (searchMode === 'global') {
+        // Global search using Spoonacular
+        response = await axios.post('/api/recipes/search/global', {
+          ingredients,
+          maxReadyTime: nutritionGoals.maxTime || undefined,
+          maxCalories: nutritionGoals.maxCalories || undefined,
+          diet: getDietString(),
+          intolerances: getAllergenString(),
+          number: 20
+        });
+
+        toast.success(`🌍 Found ${response.data.totalFound} recipes from around the world!`);
+      } else {
+        // Local search with AI enhancement
+        response = await axios.post('/api/recipes/search-by-ingredients', {
+          ingredients,
+          matchType,
+          preferences: {
+            dietary: dietaryPreferences,
+            allergens: allergenRestrictions
+          },
+          nutrition: nutritionGoals,
+          useAI: true, // Enable AI-enhanced search
+          useSpoonacular: true, // Also use Spoonacular for better results
+          limit: 20
+        });
+
+        toast.success(`Found ${response.data.totalFound} recipes!`);
+
+        // Show enhancement messages
+        if (response.data.aiEnhanced) {
+          toast.success('🤖 AI-enhanced results based on your preferences!');
+        }
+        if (response.data.globalSearch) {
+          toast.success('🌐 Including global recipes from Spoonacular!');
+        }
+      }
 
       setResults(response.data.recipes);
-      toast.success(`Found ${response.data.totalFound} recipes!`);
-
-      // Show AI enhancement message if applicable
-      if (response.data.aiEnhanced) {
-        toast.success('🤖 AI-enhanced results based on your preferences!');
-      }
     } catch (error) {
       console.error('Search error:', error);
       toast.error('Error searching recipes. Please try again.');
@@ -753,6 +775,23 @@ const SmartFinder = () => {
     } finally {
       setIsSearching(false);
     }
+  };
+
+  const getDietString = () => {
+    const diets = [];
+    if (dietaryPreferences.vegetarian) diets.push('vegetarian');
+    if (dietaryPreferences.vegan) diets.push('vegan');
+    if (dietaryPreferences.glutenFree) diets.push('gluten free');
+    return diets.join(',');
+  };
+
+  const getAllergenString = () => {
+    const allergens = [];
+    if (allergenRestrictions.noNuts) allergens.push('tree nut');
+    if (allergenRestrictions.noShellfish) allergens.push('shellfish');
+    if (allergenRestrictions.noEggs) allergens.push('egg');
+    if (allergenRestrictions.noSoy) allergens.push('soy');
+    return allergens.join(',');
   };
 
     const clearAll = () => {
