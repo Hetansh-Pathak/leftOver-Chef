@@ -1023,4 +1023,87 @@ router.get('/stats/overview', async (req, res) => {
   }
 });
 
+// Spell correction endpoint
+router.post('/spell-check', async (req, res) => {
+  try {
+    const { ingredient } = req.body;
+
+    if (!ingredient) {
+      return res.status(400).json({
+        message: 'Ingredient is required'
+      });
+    }
+
+    const correctionResult = spellCorrectionService.autoCorrect(ingredient);
+
+    res.json({
+      original: ingredient,
+      ...correctionResult
+    });
+
+  } catch (error) {
+    console.error('Error in spell checking:', error);
+    res.status(500).json({
+      message: 'Error checking spelling',
+      error: error.message
+    });
+  }
+});
+
+// Ingredient suggestions endpoint
+router.get('/ingredient-suggestions', async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q || q.length < 2) {
+      return res.json({ suggestions: [] });
+    }
+
+    const suggestions = spellCorrectionService.suggestIngredients(q);
+
+    res.json({
+      query: q,
+      suggestions: suggestions
+    });
+
+  } catch (error) {
+    console.error('Error getting ingredient suggestions:', error);
+    res.status(500).json({
+      message: 'Error getting suggestions',
+      error: error.message
+    });
+  }
+});
+
+// Enhanced ingredient processing endpoint
+router.post('/process-ingredients', async (req, res) => {
+  try {
+    const { ingredients } = req.body;
+
+    if (!ingredients || !Array.isArray(ingredients)) {
+      return res.status(400).json({
+        message: 'Ingredients array is required'
+      });
+    }
+
+    const processedIngredients = ingredients.map(ingredient => {
+      return nlpService.processIngredientInput(ingredient);
+    });
+
+    res.json({
+      originalIngredients: ingredients,
+      processedIngredients: processedIngredients,
+      corrections: processedIngredients.filter(p => p.autoChanged || p.suggestion),
+      totalProcessed: processedIngredients.length
+    });
+
+  } catch (error) {
+    console.error('Error processing ingredients:', error);
+    res.status(500).json({
+      message: 'Error processing ingredients',
+      error: error.message
+    });
+  }
+});
+
 module.exports = router;
