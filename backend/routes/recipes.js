@@ -214,7 +214,7 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       });
     }
     
-    // Track search for analytics
+    // Track search for analytics and Recipe of the Day
     if (req.userId) {
       try {
         await User.findByIdAndUpdate(req.userId, {
@@ -233,6 +233,28 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       } catch (trackingError) {
         console.error('Error tracking search:', trackingError);
       }
+    }
+
+    // Track search popularity for Recipe of the Day
+    try {
+      // Update search count for returned recipes
+      const recipeIds = recipes.map(r => r._id).filter(Boolean);
+      if (recipeIds.length > 0) {
+        await Recipe.updateMany(
+          { _id: { $in: recipeIds } },
+          { $inc: { searchCount: 1 } }
+        );
+      }
+
+      // Track ingredient searches globally
+      await Promise.all(ingredients.map(async (ingredient) => {
+        await Recipe.updateMany(
+          { ingredientNames: new RegExp(ingredient, 'i') },
+          { $inc: { ingredientSearchCount: 1 } }
+        );
+      }));
+    } catch (trackingError) {
+      console.error('Error tracking recipe popularity:', trackingError);
     }
     
     res.json({
