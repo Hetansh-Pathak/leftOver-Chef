@@ -309,7 +309,13 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       totalFound: recipes.length,
       searchedIngredients: ingredients,
       matchType,
-      aiEnhanced: useAI && recipes.some(r => r.aiRecommended)
+      sources: {
+        spoonacular: spoonacularResults.length,
+        local: localRecipes ? localRecipes.length : 0,
+        ai: useAI && recipes.some(r => r.aiRecommended) ? recipes.filter(r => r.aiRecommended).length : 0
+      },
+      aiEnhanced: useAI && recipes.some(r => r.aiRecommended),
+      globalSearch: useSpoonacular && spoonacularResults.length > 0
     });
     
   } catch (error) {
