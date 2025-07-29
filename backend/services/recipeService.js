@@ -662,6 +662,79 @@ class RecipeService {
       return await Recipe.findOne({ leftoverFriendly: true }).sort({ rating: -1 });
     }
   }
+
+  // Get featured recipe of the day based on popularity and trends
+  async getFeaturedRecipeOfTheDay() {
+    try {
+      // First, try to get the most popular/trending recipe from the last week
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+
+      // Look for recipes that have been searched for frequently in the last week
+      const trendingRecipe = await Recipe.findOne({
+        rating: { $gte: 4.0 },
+        $or: [
+          { searchCount: { $gte: 5 } },
+          { ingredientSearchCount: { $gte: 10 } },
+          { viewCount: { $gte: 20 } }
+        ]
+      })
+      .sort({
+        popularityScore: -1,
+        searchCount: -1,
+        ingredientSearchCount: -1,
+        rating: -1,
+        healthScore: -1
+      });
+
+      if (trendingRecipe) {
+        return trendingRecipe;
+      }
+
+      // If no trending recipe, get the highest rated leftover-friendly recipe
+      const featuredRecipe = await Recipe.findOne({
+        leftoverFriendly: true,
+        rating: { $gte: 4.0 }
+      })
+      .sort({
+        rating: -1,
+        favoriteCount: -1,
+        aggregateLikes: -1,
+        healthScore: -1
+      });
+
+      if (featuredRecipe) {
+        return featuredRecipe;
+      }
+
+      // Final fallback - try Spoonacular for a fresh recipe
+      if (SPOONACULAR_API_KEY) {
+        try {
+          const response = await axios.get(`${this.spoonacularBaseUrl}/random`, {
+            params: {
+              number: 1,
+              tags: 'healthy,quick,popular',
+              apiKey: SPOONACULAR_API_KEY
+            }
+          });
+
+          if (response.data.recipes && response.data.recipes.length > 0) {
+            const recipe = this.formatSpoonacularRecipe(response.data.recipes[0]);
+            const savedRecipes = await this.saveRecipesToDatabase([recipe]);
+            return savedRecipes[0];
+          }
+        } catch (apiError) {
+          console.error('Spoonacular API error for featured recipe:', apiError.message);
+        }
+      }
+
+      // Ultimate fallback
+      return await Recipe.findOne().sort({ rating: -1 });
+    } catch (error) {
+      console.error('Error getting featured recipe of the day:', error.message);
+      return await Recipe.findOne({ leftoverFriendly: true }).sort({ rating: -1 });
+    }
+  }
 }
 
 module.exports = new RecipeService();
