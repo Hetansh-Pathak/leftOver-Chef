@@ -6,49 +6,96 @@ class MassiveRecipeDatabase {
   constructor() {
     this.recipeCounter = 1;
     
-    // High-quality food image sources with variety
+    // High-quality food image sources with variety (expanded categories)
     this.imageCategories = {
       gujarati: [
         'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&h=300&fit=crop', // Indian thali
         'https://images.unsplash.com/photo-1574653355685-65d1e5dbcec6?w=400&h=300&fit=crop', // Dal curry
         'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop', // Indian bread
         'https://images.unsplash.com/photo-1628294896516-118cb5edf30a?w=400&h=300&fit=crop', // Gujarati snacks
-        'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=300&fit=crop'  // Indian curry
+        'https://images.unsplash.com/photo-1544947950-fa07a98d237f?w=400&h=300&fit=crop',  // Indian curry
+        'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop', // Samosas
+        'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop'  // Indian street food
       ],
       italian: [
         'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop', // Pasta
         'https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop', // Pizza
         'https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop', // Risotto
         'https://images.unsplash.com/photo-1598866594230-a7c12756260f?w=400&h=300&fit=crop', // Gnocchi
-        'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=400&h=300&fit=crop'  // Lasagna
+        'https://images.unsplash.com/photo-1570197788417-0e82375c9371?w=400&h=300&fit=crop', // Lasagna
+        'https://images.unsplash.com/photo-1621996346565-e3dbc353d2e5?w=400&h=300&fit=crop', // Italian cuisine
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop'  // Pasta salad
       ],
       indian: [
         'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=300&fit=crop', // Indian curry
         'https://images.unsplash.com/photo-1596797038530-2c107229654b?w=400&h=300&fit=crop', // Biryani
         'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop', // Samosas
         'https://images.unsplash.com/photo-1567188040759-fb8a883dc6d8?w=400&h=300&fit=crop', // Indian thali
-        'https://images.unsplash.com/photo-1574653355685-65d1e5dbcec6?w=400&h=300&fit=crop'  // Dal
+        'https://images.unsplash.com/photo-1574653355685-65d1e5dbcec6?w=400&h=300&fit=crop', // Dal
+        'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop', // Indian street food
+        'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop'  // Indian bread
       ],
       chinese: [
         'https://images.unsplash.com/photo-1559847844-d5f2a2c76ba1?w=400&h=300&fit=crop', // Fried rice
         'https://images.unsplash.com/photo-1582878826629-29b7ad1cdc43?w=400&h=300&fit=crop', // Dumplings
         'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop', // Stir fry
         'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop', // Noodles
-        'https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=400&h=300&fit=crop'  // Spring rolls
+        'https://images.unsplash.com/photo-1526318896980-cf78c088247c?w=400&h=300&fit=crop', // Spring rolls
+        'https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop', // Asian cuisine
+        'https://images.unsplash.com/photo-1588166524941-3bf61a9c41db?w=400&h=300&fit=crop'  // Chinese food
       ],
       mexican: [
         'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=400&h=300&fit=crop', // Tacos
         'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop', // Burrito bowl
         'https://images.unsplash.com/photo-1568471173214-b0da7fd4e2c0?w=400&h=300&fit=crop', // Quesadilla
         'https://images.unsplash.com/photo-1619187628089-84ecf6c2e7ee?w=400&h=300&fit=crop', // Nachos
-        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop'  // Mexican salad
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=400&h=300&fit=crop', // Mexican salad
+        'https://images.unsplash.com/photo-1599949104055-2d823888dc1e?w=400&h=300&fit=crop'  // Mexican cuisine
+      ],
+      thai: [
+        'https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=400&h=300&fit=crop', // Pad Thai
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop', // Thai curry
+        'https://images.unsplash.com/photo-1583231705127-5c88de0c1b6e?w=400&h=300&fit=crop', // Thai food
+        'https://images.unsplash.com/photo-1562565688-b8b8b2c8f3e2?w=400&h=300&fit=crop'   // Thai cuisine
+      ],
+      japanese: [
+        'https://images.unsplash.com/photo-1579952363873-27d3bfda9227?w=400&h=300&fit=crop', // Sushi
+        'https://images.unsplash.com/photo-1617196034796-73dfa7b1fd56?w=400&h=300&fit=crop', // Ramen
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop', // Japanese cuisine
+        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&h=300&fit=crop'   // Asian food
+      ],
+      breakfast: [
+        'https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?w=400&h=300&fit=crop', // Pancakes
+        'https://images.unsplash.com/photo-1573225342350-16731dd9bf3d?w=400&h=300&fit=crop', // Breakfast
+        'https://images.unsplash.com/photo-1551218808-94e220e084d2?w=400&h=300&fit=crop', // Eggs
+        'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=400&h=300&fit=crop'  // Morning food
+      ],
+      dessert: [
+        'https://images.unsplash.com/photo-1488477181946-6428a0291777?w=400&h=300&fit=crop', // Cake
+        'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?w=400&h=300&fit=crop', // Dessert
+        'https://images.unsplash.com/photo-1576618148400-f54bed99fcfd?w=400&h=300&fit=crop', // Sweet
+        'https://images.unsplash.com/photo-1551024601-bec78aea704b?w=400&h=300&fit=crop'   // Pastry
+      ],
+      soup: [
+        'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=300&fit=crop', // Soup
+        'https://images.unsplash.com/photo-1547592166-23ac45744acd?w=400&h=300&fit=crop', // Bowl soup
+        'https://images.unsplash.com/photo-1574653355685-65d1e5dbcec6?w=400&h=300&fit=crop', // Warm soup
+        'https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=300&fit=crop'  // Hot soup
+      ],
+      snack: [
+        'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=400&h=300&fit=crop', // Snacks
+        'https://images.unsplash.com/photo-1626082927389-6cd097cdc6ec?w=400&h=300&fit=crop', // Appetizer
+        'https://images.unsplash.com/photo-1619187628089-84ecf6c2e7ee?w=400&h=300&fit=crop', // Finger food
+        'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop'  // Street food
       ],
       general: [
         'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop', // Food platter
         'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=400&h=300&fit=crop', // Salad
         'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=400&h=300&fit=crop', // Soup
         'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=400&h=300&fit=crop', // Healthy bowl
-        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop'  // Food bowl
+        'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=400&h=300&fit=crop', // Food bowl
+        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=400&h=300&fit=crop', // Cuisine
+        'https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=400&h=300&fit=crop'   // Delicious food
       ]
     };
   }
