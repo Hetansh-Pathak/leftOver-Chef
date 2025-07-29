@@ -99,6 +99,7 @@ const SectionTitle = styled.h3`
 const IngredientInputContainer = styled.div`
   max-width: 600px;
   margin: 0 auto 2rem;
+  position: relative;
 `;
 
 const IngredientInputRow = styled.div`
