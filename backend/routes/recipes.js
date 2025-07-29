@@ -206,7 +206,7 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     }
 
     // Use AI-enhanced search if requested and user preferences available
-    if (useAI && req.userId) {
+    if (useAI && req.userId && !global.MOCK_MODE) {
       try {
         const user = await User.findById(req.userId);
         if (user) {
