@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
-import { FaHeart, FaStar, FaClock, FaUsers, FaFire } from 'react-icons/fa';
+import { FaHeart, FaStar } from 'react-icons/fa';
 
 const FavoritesContainer = styled(motion.div)`
   max-width: 1400px;
