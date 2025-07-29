@@ -280,11 +280,63 @@ const searchByIngredients = (ingredients = [], options = {}) => {
   return results;
 };
 
+// Get all recipes (including comprehensive database)
+const getAllRecipes = () => {
+  return mockRecipes;
+};
+
+// Enhanced search specifically for cuisines
+const searchByCuisine = (cuisine, limit = 50) => {
+  const normalizedCuisine = cuisine.toLowerCase();
+
+  let results = mockRecipes.filter(recipe =>
+    (recipe.cuisines && recipe.cuisines.some(c => c.toLowerCase().includes(normalizedCuisine))) ||
+    recipe.title.toLowerCase().includes(normalizedCuisine) ||
+    recipe.summary.toLowerCase().includes(normalizedCuisine)
+  );
+
+  // Sort by popularity and rating
+  results.sort((a, b) => {
+    const scoreA = (a.popularityScore || 0) + (a.rating || 0) * 100;
+    const scoreB = (b.popularityScore || 0) + (b.rating || 0) * 100;
+    return scoreB - scoreA;
+  });
+
+  return results.slice(0, limit);
+};
+
+// Test function to check recipe database
+const testRecipeDatabase = () => {
+  const totalRecipes = mockRecipes.length;
+  const gujaratiRecipes = searchByCuisine('gujarati');
+  const italianRecipes = searchByCuisine('italian');
+  const indianRecipes = searchByCuisine('indian');
+  const chineseRecipes = searchByCuisine('chinese');
+
+  console.log(`📊 Recipe Database Status:`);
+  console.log(`   Total Recipes: ${totalRecipes}`);
+  console.log(`   Gujarati Recipes: ${gujaratiRecipes.length}`);
+  console.log(`   Italian Recipes: ${italianRecipes.length}`);
+  console.log(`   Indian Recipes: ${indianRecipes.length}`);
+  console.log(`   Chinese Recipes: ${chineseRecipes.length}`);
+
+  return {
+    total: totalRecipes,
+    gujarati: gujaratiRecipes.length,
+    italian: italianRecipes.length,
+    indian: indianRecipes.length,
+    chinese: chineseRecipes.length
+  };
+};
+
 module.exports = {
   mockRecipes,
   getDailyRecipe,
   getRandomRecipes,
   getRecipeById,
   searchRecipes,
-  searchByIngredients
+  searchByIngredients,
+  getAllRecipes,
+  searchByCuisine,
+  testRecipeDatabase
 };
