@@ -241,11 +241,22 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     if (global.MOCK_MODE) {
       // Use enhanced mock search with processed ingredients
       const mockData = require('../mockData');
+
+      // Debug: Check database size
+      const totalAvailable = mockData.getAllRecipes().length;
+      console.log(`📊 Total recipes available in database: ${totalAvailable}`);
+
       localRecipes = mockData.searchByIngredients(searchIngredients, {
         matchType,
         limit: limit - recipes.length
       });
       console.log(`🔍 Mock search for [${searchIngredients.join(', ')}] found ${localRecipes.length} recipes`);
+
+      // Debug: Show sample of found recipes
+      if (localRecipes.length > 0) {
+        const sample = localRecipes.slice(0, 3).map(r => `${r.title} (${r.cuisines?.join(', ') || 'no cuisine'})`);
+        console.log(`📝 Sample recipes found: ${sample.join(', ')}`);
+      }
     } else {
       try {
         localRecipes = await Recipe.findByIngredients({
