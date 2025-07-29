@@ -1296,4 +1296,104 @@ router.post('/search/cuisine/:cuisine', async (req, res) => {
   }
 });
 
+// Browse recipes by cuisine (without ingredients)
+router.get('/browse/:cuisine', async (req, res) => {
+  try {
+    const { cuisine } = req.params;
+    const { limit = 50 } = req.query;
+
+    let recipes = [];
+
+    if (global.MOCK_MODE) {
+      recipes = mockData.searchByCuisine(cuisine, parseInt(limit));
+    } else {
+      // Database search for cuisine
+      recipes = await Recipe.find({
+        $or: [
+          { cuisines: { $regex: cuisine, $options: 'i' } },
+          { title: { $regex: cuisine, $options: 'i' } },
+          { summary: { $regex: cuisine, $options: 'i' } }
+        ]
+      }).limit(parseInt(limit)).sort({ popularityScore: -1, rating: -1 });
+    }
+
+    res.json({
+      success: true,
+      cuisine: cuisine,
+      totalFound: recipes.length,
+      recipes: recipes,
+      message: `Found ${recipes.length} ${cuisine} recipes`
+    });
+
+  } catch (error) {
+    console.error(`Error browsing ${cuisine} recipes:`, error);
+    res.status(500).json({
+      message: `Error browsing ${cuisine} recipes`,
+      error: error.message,
+      success: false
+    });
+  }
+});
+
+// Test database and get statistics
+router.get('/test/database', async (req, res) => {
+  try {
+    let stats = {};
+
+    if (global.MOCK_MODE) {
+      stats = mockData.testRecipeDatabase();
+
+      // Get sample recipes for each cuisine
+      const sampleRecipes = {
+        gujarati: mockData.searchByCuisine('gujarati', 3),
+        italian: mockData.searchByCuisine('italian', 3),
+        indian: mockData.searchByCuisine('indian', 3),
+        chinese: mockData.searchByCuisine('chinese', 3)
+      };
+
+      res.json({
+        success: true,
+        databaseStats: stats,
+        sampleRecipes: sampleRecipes,
+        message: `Database contains ${stats.total} recipes across multiple cuisines`,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      // Database statistics
+      const totalCount = await Recipe.countDocuments();
+      const gujaratiCount = await Recipe.countDocuments({
+        cuisines: { $regex: 'gujarati', $options: 'i' }
+      });
+      const italianCount = await Recipe.countDocuments({
+        cuisines: { $regex: 'italian', $options: 'i' }
+      });
+      const indianCount = await Recipe.countDocuments({
+        cuisines: { $regex: 'indian', $options: 'i' }
+      });
+
+      stats = {
+        total: totalCount,
+        gujarati: gujaratiCount,
+        italian: italianCount,
+        indian: indianCount
+      };
+
+      res.json({
+        success: true,
+        databaseStats: stats,
+        message: `Database contains ${stats.total} recipes`,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+  } catch (error) {
+    console.error('Error testing database:', error);
+    res.status(500).json({
+      message: 'Error testing database',
+      error: error.message,
+      success: false
+    });
+  }
+});
+
 module.exports = router;
