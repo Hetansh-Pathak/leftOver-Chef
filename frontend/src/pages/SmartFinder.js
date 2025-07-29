@@ -1019,10 +1019,30 @@ const SmartFinder = () => {
             <IngredientInput
               type="text"
               value={currentInput}
-              onChange={(e) => setCurrentInput(e.target.value)}
+              onChange={handleInputChange}
               onKeyPress={handleKeyPress}
+              onFocus={() => currentInput.length >= 2 && setShowSuggestions(true)}
+              onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
               placeholder="Type an ingredient (e.g., chicken, rice, tomatoes)..."
             />
+
+            {showSuggestions && suggestions.length > 0 && (
+              <SuggestionsDropdown
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+              >
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="suggestion-item"
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    <div className="suggestion-text">{suggestion}</div>
+                  </div>
+                ))}
+              </SuggestionsDropdown>
+            )}
             <AddButton
               onClick={addIngredient}
               disabled={!currentInput.trim()}
