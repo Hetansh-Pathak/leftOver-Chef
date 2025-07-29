@@ -220,19 +220,27 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       }
     }
 
-    // Always search local database and merge results
-    const localRecipes = await Recipe.findByIngredients({
-      ingredients,
-      matchType,
-      preferences,
-      nutrition: {
-        maxCalories: nutrition.maxCalories,
-        minProtein: nutrition.minProtein,
-        maxCarbs: nutrition.maxCarbs
-      },
-      maxReadyTime,
-      limit: limit - recipes.length
-    });
+    // Always search local database and merge results (skip in mock mode if no DB)
+    let localRecipes = [];
+    if (!global.MOCK_MODE) {
+      try {
+        localRecipes = await Recipe.findByIngredients({
+          ingredients,
+          matchType,
+          preferences,
+          nutrition: {
+            maxCalories: nutrition.maxCalories,
+            minProtein: nutrition.minProtein,
+            maxCarbs: nutrition.maxCarbs
+          },
+          maxReadyTime,
+          limit: limit - recipes.length
+        });
+      } catch (dbError) {
+        console.error('Local database search failed:', dbError.message);
+        localRecipes = [];
+      }
+    }
 
     if (localRecipes && localRecipes.length > 0) {
       recipes = recipes.concat(localRecipes);
