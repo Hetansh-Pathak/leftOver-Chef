@@ -522,24 +522,24 @@ const RecipeCard = styled(motion.div)`
   overflow: hidden;
   box-shadow: ${props => props.theme.shadows.card};
   border: 2px solid ${props => {
-    if (props.matchScore >= 0.8) return props.theme.colors.success;
-    if (props.matchScore >= 0.6) return props.theme.colors.warning;
+    if (props.$matchScore >= 0.8) return props.theme.colors.success;
+    if (props.$matchScore >= 0.6) return props.theme.colors.warning;
     return props.theme.colors.accent;
   }};
   position: relative;
-  
+
   &:hover {
     transform: translateY(-5px);
     box-shadow: ${props => props.theme.shadows.cardHover};
   }
-  
+
   .match-indicator {
     position: absolute;
     top: 1rem;
     right: 1rem;
     background: ${props => {
-      if (props.matchScore >= 0.8) return props.theme.colors.success;
-      if (props.matchScore >= 0.6) return props.theme.colors.warning;
+      if (props.$matchScore >= 0.8) return props.theme.colors.success;
+      if (props.$matchScore >= 0.6) return props.theme.colors.warning;
       return props.theme.colors.accent;
     }};
     color: white;
