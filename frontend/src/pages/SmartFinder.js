@@ -884,74 +884,7 @@ const SmartFinder = () => {
     setSelectedRecipe(null);
   };
 
-  const browseCuisine = async (cuisine) => {
-    setIsSearching(true);
-    setHasSearched(true);
 
-    try {
-      console.log(`🌍 Browsing ${cuisine} recipes...`);
-
-      const response = await axios.get(`/api/recipes/browse/${cuisine.toLowerCase()}`);
-
-      if (response.data.success) {
-        setResults(response.data.recipes);
-        toast.success(`🍽️ Found ${response.data.recipes.length} ${cuisine} recipes!`);
-
-        // Clear ingredients to show this is a cuisine browse
-        setIngredients([]);
-        setCurrentInput('');
-      } else {
-        toast.error(`No ${cuisine} recipes found`);
-        setResults([]);
-      }
-    } catch (error) {
-      console.error(`Error browsing ${cuisine} recipes:`, error);
-      toast.error(`Error loading ${cuisine} recipes`);
-      setResults([]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  const testDatabase = async () => {
-    try {
-      console.log('🧪 Testing recipe database...');
-
-      const response = await axios.get('/api/recipes/test/database');
-
-      if (response.data.success) {
-        const stats = response.data.databaseStats;
-        const samples = response.data.sampleRecipes;
-
-        toast.success(`Database Test Results:
-          📊 Total: ${stats.total} recipes
-          🇮🇳 Gujarati: ${stats.gujarati}
-          🇮🇹 Italian: ${stats.italian}
-          🇮🇳 Indian: ${stats.indian}
-          🇨🇳 Chinese: ${stats.chinese}`, {
-          duration: 5000
-        });
-
-        console.log('📊 Database Statistics:', stats);
-        console.log('📝 Sample Recipes:', samples);
-
-        // Show some sample recipes
-        if (samples && Object.keys(samples).length > 0) {
-          let sampleResults = [];
-          Object.values(samples).forEach(cuisineRecipes => {
-            sampleResults = sampleResults.concat(cuisineRecipes);
-          });
-          setResults(sampleResults);
-          setHasSearched(true);
-        }
-      } else {
-        toast.error('Database test failed');
-      }
-    } catch (error) {
-      console.error('Database test error:', error);
-      toast.error('Error testing database connection');
-    }
-  };
 
   const getDietString = () => {
     const diets = [];
