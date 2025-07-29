@@ -1,5 +1,6 @@
 // NLP Service for ingredient recognition and recipe text processing
 // This service uses spaCy-like functionality for ingredient extraction
+const spellCorrectionService = require('./spellCorrectionService');
 
 class NLPService {
   constructor() {
