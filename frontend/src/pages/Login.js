@@ -348,7 +348,7 @@ const Login = () => {
       } else {
         // Handle specific error types
         if (result.userNotFound) {
-          toast.error('No account found. Please sign up first!');
+          toast.error('No account found. Please create an account or use demo credentials!');
           setIsLogin(false); // Switch to signup mode
         } else if (result.invalidPassword) {
           toast.error('Invalid password. Please try again.');
