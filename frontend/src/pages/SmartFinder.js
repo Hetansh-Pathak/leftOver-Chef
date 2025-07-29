@@ -652,6 +652,7 @@ const SmartFinder = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [matchType, setMatchType] = useState('any');
+  const [searchMode, setSearchMode] = useState('local'); // 'local' or 'global'
 
   // Dietary Preferences
   const [dietaryPreferences, setDietaryPreferences] = useState({
