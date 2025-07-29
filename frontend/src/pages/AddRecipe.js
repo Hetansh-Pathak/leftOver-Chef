@@ -17,6 +17,7 @@ const PageHeader = styled(motion.div)`
   .page-title {
     font-size: 3rem;
     font-weight: 700;
+    color: ${props => props.theme.colors.primary}; /* Fallback color */
     background: ${props => props.theme.colors.gradient};
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -26,7 +27,13 @@ const PageHeader = styled(motion.div)`
     align-items: center;
     justify-content: center;
     gap: 1rem;
-    
+
+    /* Fallback for browsers that don't support background-clip */
+    @supports not (-webkit-background-clip: text) {
+      color: ${props => props.theme.colors.primary};
+      background: none;
+    }
+
     .title-icon {
       color: #4caf50;
       animation: pulse 2s ease-in-out infinite;
