@@ -4,6 +4,7 @@ const User = require('../models/User');
 const recipeService = require('../services/recipeService');
 const aiService = require('../services/aiService');
 const nlpService = require('../services/nlpService');
+const spellCorrectionService = require('../services/spellCorrectionService');
 const mockData = require('../mockData');
 const router = express.Router();
 
