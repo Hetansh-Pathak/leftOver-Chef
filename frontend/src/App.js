@@ -15,8 +15,6 @@ import Login from './pages/Login';
 import Home from './pages/Home';
 import SmartFinder from './pages/SmartFinder';
 import Favorites from './pages/Favorites';
-import AddRecipe from './pages/AddRecipe';
-import RecipeDetail from './pages/RecipeDetail';
 import DailyRecipe from './pages/DailyRecipe';
 
 // Create a client
@@ -98,45 +96,6 @@ const GlobalStyle = createGlobalStyle`
     50% { transform: scale(1.05); }
   }
 
-  @keyframes fadeInUp {
-    from {
-      opacity: 0;
-      transform: translateY(30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes slideInLeft {
-    from {
-      opacity: 0;
-      transform: translateX(-30px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-
-  .fade-in-up {
-    animation: fadeInUp 0.6s ease-out;
-  }
-
-  .slide-in-left {
-    animation: slideInLeft 0.6s ease-out;
-  }
-
-  .float {
-    animation: float 3s ease-in-out infinite;
-  }
-
-  .pulse {
-    animation: pulse 2s ease-in-out infinite;
-  }
-
-  /* Scrollbar Styles */
   ::-webkit-scrollbar {
     width: 8px;
   }
@@ -159,39 +118,6 @@ const GlobalStyle = createGlobalStyle`
 const AppContainer = styled(motion.div)`
   min-height: 100vh;
   position: relative;
-`;
-
-const BackgroundDecorations = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: 0;
-  overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: -50%;
-    left: -50%;
-    width: 200%;
-    height: 200%;
-    background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
-    animation: float 20s linear infinite;
-  }
-
-  &::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
-  }
 `;
 
 const ContentWrapper = styled.div`
@@ -252,16 +178,6 @@ const AppRoutes = () => {
           <Favorites />
         </ProtectedRoute>
       } />
-      <Route path="/add-recipe" element={
-        <ProtectedRoute>
-          <AddRecipe />
-        </ProtectedRoute>
-      } />
-      <Route path="/recipe/:id" element={
-        <ProtectedRoute>
-          <RecipeDetail />
-        </ProtectedRoute>
-      } />
       <Route path="/daily" element={
         <ProtectedRoute>
           <DailyRecipe />
@@ -288,7 +204,6 @@ function App() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
             >
-              <BackgroundDecorations />
               <ContentWrapper>
                 <AppLayout>
                   <AppRoutes />

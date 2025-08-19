@@ -3,13 +3,11 @@ import { Link, useLocation } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  FaBrain, 
+  FaSearch, 
   FaHeart, 
-  FaPlus, 
   FaStar, 
   FaBars, 
   FaTimes,
-  
   FaHome,
   FaSignOutAlt,
   FaUser
@@ -32,7 +30,7 @@ const NavbarContainer = styled(motion.nav)`
 `;
 
 const NavContent = styled.div`
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   display: flex;
   justify-content: space-between;
@@ -55,13 +53,12 @@ const Logo = styled(motion.div)`
   }
 
   .logo-text {
-    color: ${props => props.theme.colors.primary}; /* Fallback color */
+    color: ${props => props.theme.colors.primary};
     background: ${props => props.theme.colors.gradient};
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 
-    /* Fallback for browsers that don't support background-clip */
     @supports not (-webkit-background-clip: text) {
       color: ${props => props.theme.colors.primary};
       background: none;
@@ -243,34 +240,6 @@ const MobileNavLink = styled(Link)`
   }
 `;
 
-const MobileLogoutButton = styled(motion.button)`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem 2rem;
-  border-radius: 25px;
-  border: none;
-  font-weight: 600;
-  font-size: 1.2rem;
-  background: linear-gradient(45deg, #ff6b6b, #ff8e8e);
-  color: white;
-  width: 80%;
-  max-width: 300px;
-  text-align: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: ${props => props.theme.transitions.default};
-
-  &:hover {
-    transform: scale(1.05);
-    box-shadow: 0 8px 25px rgba(255, 107, 107, 0.3);
-  }
-
-  .nav-icon {
-    font-size: 1.3rem;
-  }
-`;
-
 const CloseButton = styled(motion.button)`
   position: absolute;
   top: 2rem;
@@ -292,9 +261,8 @@ const CloseButton = styled(motion.button)`
 
 const navItems = [
   { path: '/', label: 'Home', icon: FaHome },
-  { path: '/smart-finder', label: 'Smart Finder', icon: FaBrain },
+  { path: '/smart-finder', label: 'Find Recipes', icon: FaSearch },
   { path: '/favorites', label: 'Favorites', icon: FaHeart },
-  { path: '/add-recipe', label: 'Add Recipe', icon: FaPlus },
   { path: '/daily', label: 'Daily Recipe', icon: FaStar },
 ];
 
@@ -338,7 +306,7 @@ const Navbar = () => {
         }}
       >
         <NavContent>
-                    <Link to="/" style={{ textDecoration: 'none' }}>
+          <Link to="/" style={{ textDecoration: 'none' }}>
             <Logo
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -350,7 +318,7 @@ const Navbar = () => {
               >
                 🍳
               </motion.div>
-              <span className="logo-text">Leftover Chef</span>
+              <span className="logo-text">Recipe Finder</span>
             </Logo>
           </Link>
 
@@ -366,7 +334,7 @@ const Navbar = () => {
                 >
                   <NavLink
                     to={item.path}
-                                        $isActive={location.pathname === item.path}
+                    $isActive={location.pathname === item.path}
                   >
                     <IconComponent className="nav-icon" />
                     {item.label}
@@ -428,7 +396,7 @@ const Navbar = () => {
                 >
                   <MobileNavLink
                     to={item.path}
-                                        $isActive={location.pathname === item.path}
+                    $isActive={location.pathname === item.path}
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <IconComponent className="nav-icon" />
@@ -437,21 +405,6 @@ const Navbar = () => {
                 </motion.div>
               );
             })}
-            
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: navItems.length * 0.1, duration: 0.3 }}
-            >
-              <MobileLogoutButton
-                onClick={handleLogout}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <FaSignOutAlt className="nav-icon" />
-                Logout
-              </MobileLogoutButton>
-            </motion.div>
           </MobileMenu>
         )}
       </AnimatePresence>

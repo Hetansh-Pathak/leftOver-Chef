@@ -3,19 +3,19 @@ import { Link } from 'react-router-dom';
 import styled from 'styled-components';
 import { motion } from 'framer-motion';
 import { 
-  FaBrain, 
+  FaSearch, 
   FaHeart, 
-  FaPlus, 
   FaStar, 
   FaUtensils,
   FaClock,
   FaLeaf,
-  FaFire
+  FaFire,
+  FaGlobe
 } from 'react-icons/fa';
 import axios from 'axios';
 
 const HomeContainer = styled(motion.div)`
-  max-width: 1400px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 2rem;
   min-height: calc(100vh - 80px);
@@ -31,14 +31,13 @@ const HeroTitle = styled(motion.h1)`
   font-size: 4rem;
   font-weight: 800;
   margin-bottom: 1rem;
-  color: ${props => props.theme.colors.primary}; /* Fallback color */
+  color: ${props => props.theme.colors.primary};
   background: ${props => props.theme.colors.gradient};
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1.2;
 
-  /* Fallback for browsers that don't support background-clip */
   @supports not (-webkit-background-clip: text) {
     color: ${props => props.theme.colors.primary};
     background: none;
@@ -272,47 +271,6 @@ const RecipeCard = styled(motion.div)`
   }
 `;
 
-const FloatingElements = styled.div`
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none;
-  z-index: -1;
-
-  .floating-icon {
-    position: absolute;
-    font-size: 2rem;
-    color: rgba(255, 255, 255, 0.1);
-    animation: float 6s ease-in-out infinite;
-
-    &:nth-child(1) {
-      top: 20%;
-      left: 10%;
-      animation-delay: 0s;
-    }
-
-    &:nth-child(2) {
-      top: 60%;
-      right: 15%;
-      animation-delay: 1s;
-    }
-
-    &:nth-child(3) {
-      bottom: 30%;
-      left: 20%;
-      animation-delay: 2s;
-    }
-
-    &:nth-child(4) {
-      top: 40%;
-      right: 30%;
-      animation-delay: 3s;
-    }
-  }
-`;
-
 const Home = () => {
   const [dailyRecipe, setDailyRecipe] = useState(null);
   const [stats, setStats] = useState({
@@ -332,11 +290,10 @@ const Home = () => {
         // Set mock data
         setDailyRecipe({
           _id: '1',
-          name: 'Leftover Vegetable Stir Fry',
-          description: 'A quick and delicious way to use up leftover vegetables',
+          title: 'Leftover Vegetable Stir Fry',
+          summary: 'A quick and delicious way to use up leftover vegetables',
           image: 'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop',
-          prepTime: 10,
-          cookTime: 8,
+          readyInMinutes: 18,
           servings: 4,
           difficulty: 'Easy'
         });
@@ -347,9 +304,9 @@ const Home = () => {
 
     // Animate stats
     const animateStats = () => {
-      setTimeout(() => setStats(prev => ({ ...prev, totalRecipes: 1247 })), 500);
-      setTimeout(() => setStats(prev => ({ ...prev, totalUsers: 892 })), 1000);
-      setTimeout(() => setStats(prev => ({ ...prev, savedMeals: 5634 })), 1500);
+      setTimeout(() => setStats(prev => ({ ...prev, totalRecipes: 15000 })), 500);
+      setTimeout(() => setStats(prev => ({ ...prev, totalUsers: 2500 })), 1000);
+      setTimeout(() => setStats(prev => ({ ...prev, savedMeals: 8900 })), 1500);
     };
 
     animateStats();
@@ -357,10 +314,10 @@ const Home = () => {
 
   const actionCards = [
     {
-      icon: FaBrain,
-      title: 'Smart Recipe Finder',
-      description: 'Tell us what ingredients you have, and we\'ll find the perfect recipes to transform your leftovers into delicious meals.',
-      color: '#9c27b0',
+      icon: FaSearch,
+      title: 'Find Recipes',
+      description: 'Enter your available ingredients and discover amazing recipes from cuisines around the world.',
+      color: '#667eea',
       buttonColor: 'linear-gradient(45deg, #667eea, #764ba2)',
       gradient: 'linear-gradient(45deg, #667eea, #764ba2)',
       link: '/smart-finder'
@@ -368,25 +325,16 @@ const Home = () => {
     {
       icon: FaHeart,
       title: 'Your Favorites',
-      description: 'Keep track of your favorite leftover recipes and never lose that perfect combination again.',
+      description: 'Save and organize your favorite recipes for quick access anytime.',
       color: '#ff6b6b',
       buttonColor: '#ff6b6b',
       gradient: 'linear-gradient(45deg, #ff6b6b, #ff8e8e)',
       link: '/favorites'
     },
     {
-      icon: FaPlus,
-      title: 'Add Recipe',
-      description: 'Share your own creative leftover recipes with the community and help others reduce food waste.',
-      color: '#4caf50',
-      buttonColor: '#4caf50',
-      gradient: 'linear-gradient(45deg, #4caf50, #66bb6a)',
-      link: '/add-recipe'
-    },
-    {
       icon: FaStar,
       title: 'Daily Recipe',
-      description: 'Discover a new featured recipe every day, specially selected for using common leftover ingredients.',
+      description: 'Discover a new featured recipe every day, specially selected for you.',
       color: '#ffd700',
       buttonColor: '#ff9800',
       gradient: 'linear-gradient(45deg, #ffd700, #ffb300)',
@@ -400,27 +348,20 @@ const Home = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.6 }}
     >
-      <FloatingElements>
-        <FaUtensils className="floating-icon" />
-        <FaLeaf className="floating-icon" />
-        <FaFire className="floating-icon" />
-        <FaClock className="floating-icon" />
-      </FloatingElements>
-
       <HeroSection>
         <HeroTitle
           initial={{ opacity: 0, y: 50 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          Turn Leftovers Into Magic
+          Recipe Finder
         </HeroTitle>
         <HeroSubtitle
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4, duration: 0.8 }}
         >
-          Never waste food again! Our smart recipe finder transforms your leftover ingredients into delicious, creative meals.
+          Find perfect recipes using ingredients you already have at home
         </HeroSubtitle>
 
         <StatsContainer>
@@ -441,9 +382,9 @@ const Home = () => {
             transition={{ delay: 0.8, duration: 0.5 }}
             whileHover={{ scale: 1.05 }}
           >
-            <FaHeart className="stat-icon" />
+            <FaGlobe className="stat-icon" />
             <div className="stat-number">{stats.totalUsers.toLocaleString()}</div>
-            <div className="stat-label">Happy Cooks</div>
+            <div className="stat-label">Global Cuisines</div>
           </StatCard>
 
           <StatCard
@@ -454,13 +395,13 @@ const Home = () => {
           >
             <FaLeaf className="stat-icon" />
             <div className="stat-number">{stats.savedMeals.toLocaleString()}</div>
-            <div className="stat-label">Meals Saved</div>
+            <div className="stat-label">Recipes Found</div>
           </StatCard>
         </StatsContainer>
       </HeroSection>
 
       <QuickActionsGrid>
-                {actionCards.map((card, index) => {
+        {actionCards.map((card, index) => {
           const IconComponent = card.icon;
           return (
             <Link key={card.title} to={card.link} style={{ textDecoration: 'none' }}>
@@ -500,37 +441,39 @@ const Home = () => {
           <RecipeCard>
             <motion.img
               src={dailyRecipe.image}
-              alt={dailyRecipe.name}
+              alt={dailyRecipe.title || dailyRecipe.name}
               className="recipe-image"
               whileHover={{ scale: 1.05 }}
               transition={{ duration: 0.3 }}
             />
             
             <div className="recipe-content">
-              <div className="recipe-title">{dailyRecipe.name}</div>
-              <div className="recipe-description">{dailyRecipe.description}</div>
+              <div className="recipe-title">{dailyRecipe.title || dailyRecipe.name}</div>
+              <div className="recipe-description">
+                {dailyRecipe.summary || dailyRecipe.description || 'A delicious recipe perfect for today'}
+              </div>
               
               <div className="recipe-meta">
                 <div className="meta-item">
                   <FaClock className="meta-icon" />
-                  <span>{dailyRecipe.prepTime + dailyRecipe.cookTime} min</span>
+                  <span>{dailyRecipe.readyInMinutes || 30} min</span>
                 </div>
                 <div className="meta-item">
                   <FaUtensils className="meta-icon" />
-                  <span>{dailyRecipe.servings} servings</span>
+                  <span>{dailyRecipe.servings || 4} servings</span>
                 </div>
                 <div className="meta-item">
                   <FaFire className="meta-icon" />
-                  <span>{dailyRecipe.difficulty}</span>
+                  <span>{dailyRecipe.difficulty || 'Easy'}</span>
                 </div>
               </div>
               
               <Link
-                to={`/recipe/${dailyRecipe._id}`}
+                to="/smart-finder"
                 className="recipe-button"
               >
-                View Recipe
-                <FaStar />
+                Find Similar Recipes
+                <FaSearch />
               </Link>
             </div>
           </RecipeCard>
