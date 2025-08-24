@@ -298,6 +298,11 @@ Format as JSON with structure:
   ...
 }`;
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return await user.generateMealPlan(days);
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
