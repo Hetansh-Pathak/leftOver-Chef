@@ -119,35 +119,40 @@ class RecipeService {
     return {
       spoonacularId: spoonacularData.id,
       title: spoonacularData.title,
-      summary: spoonacularData.summary ? this.stripHtml(spoonacularData.summary) : '',
+      summary: spoonacularData.summary ? this.stripHtml(spoonacularData.summary) : this.generateDefaultSummary(spoonacularData),
       readyInMinutes: spoonacularData.readyInMinutes || 30,
       servings: spoonacularData.servings || 4,
       sourceUrl: spoonacularData.sourceUrl,
       spoonacularSourceUrl: spoonacularData.spoonacularSourceUrl,
-      image: spoonacularData.image,
-      
+      image: this.getOptimizedImageUrl(spoonacularData.image, spoonacularData.title),
+
       cuisines: spoonacularData.cuisines || [],
       dishTypes: spoonacularData.dishTypes || [],
-      
+
       vegetarian: spoonacularData.vegetarian || false,
       vegan: spoonacularData.vegan || false,
       glutenFree: spoonacularData.glutenFree || false,
       dairyFree: spoonacularData.dairyFree || false,
-      
+
       extendedIngredients: this.formatIngredients(spoonacularData.extendedIngredients || []),
       analyzedInstructions: this.formatInstructions(spoonacularData.analyzedInstructions || []),
       instructions: spoonacularData.instructions || '',
-      
+
       nutrition: this.formatNutrition(spoonacularData.nutrition),
-      
+
       rating: spoonacularData.spoonacularScore ? spoonacularData.spoonacularScore / 20 : 4.0,
       healthScore: spoonacularData.healthScore || 50,
       aggregateLikes: spoonacularData.aggregateLikes || 0,
-      
+
       source: 'spoonacular',
       difficulty: this.calculateDifficulty(spoonacularData),
       leftoverFriendly: true,
-      quickMeal: (spoonacularData.readyInMinutes || 30) <= 30
+      quickMeal: (spoonacularData.readyInMinutes || 30) <= 30,
+
+      // Enhanced metadata
+      matchScore: 0,
+      tags: this.generateTags(spoonacularData),
+      lastUpdated: new Date()
     };
   }
 
