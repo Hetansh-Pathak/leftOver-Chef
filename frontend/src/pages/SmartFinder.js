@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -16,7 +16,6 @@ import {
   FaBolt,
   FaFire,
   FaStar,
-  FaBookmark,
   FaShare,
   FaSpinner,
   FaMapMarkerAlt,
@@ -25,6 +24,7 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const FinderContainer = styled(motion.div)`
   max-width: 1400px;
@@ -288,9 +288,11 @@ const ActionButtons = styled.div`
   margin-bottom: 2rem;
 `;
 
-const ActionButton = styled(motion.button)`
-  background: ${props => props.primary ? 
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 
+const ActionButton = styled(motion.button).withConfig({
+  shouldForwardProp: (prop) => prop !== 'primary'
+})`
+  background: ${props => props.primary ?
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' :
     'linear-gradient(135deg, #718096 0%, #4A5568 100%)'
   };
   color: white;
@@ -309,18 +311,18 @@ const ActionButton = styled(motion.button)`
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  
+
   &:hover:not(:disabled) {
     transform: translateY(-3px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   }
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
   }
-  
+
   .button-icon {
     font-size: 1.2rem;
   }
@@ -828,12 +830,17 @@ const ModalOverlay = styled(motion.div)`
 const ModalContent = styled(motion.div)`
   background: white;
   border-radius: 24px;
-  max-width: 900px;
+  max-width: 1200px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 95vh;
   overflow-y: auto;
   box-shadow: 0 25px 100px rgba(0, 0, 0, 0.3);
   position: relative;
+
+  @media (max-width: 768px) {
+    max-width: 95%;
+    border-radius: 16px;
+  }
 `;
 
 const ModalHeader = styled.div`
@@ -889,26 +896,55 @@ const ModalHeader = styled.div`
 `;
 
 const ModalBody = styled.div`
-  padding: 2rem;
-  
+  padding: 0;
+
+  .recipe-content-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 2rem;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+  }
+
+  .recipe-sidebar {
+    background: #F8F9FA;
+    padding: 2rem;
+
+    @media (max-width: 768px) {
+      padding: 1.5rem;
+    }
+  }
+
+  .recipe-main {
+    padding: 2rem;
+
+    @media (max-width: 768px) {
+      padding: 1.5rem;
+    }
+  }
+
   .recipe-meta-detailed {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    grid-template-columns: repeat(2, 1fr);
     gap: 1rem;
     margin-bottom: 2rem;
-    
+
     .meta-card {
-      background: #F7FAFC;
+      background: white;
       padding: 1rem;
       border-radius: 12px;
       text-align: center;
-      
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
       .meta-icon {
         font-size: 1.5rem;
         color: #667eea;
         margin-bottom: 0.5rem;
       }
-      
+
       .meta-label {
         font-size: 0.8rem;
         color: #718096;
@@ -917,7 +953,7 @@ const ModalBody = styled.div`
         margin-bottom: 0.25rem;
         font-weight: 600;
       }
-      
+
       .meta-value {
         font-size: 1rem;
         font-weight: 700;
@@ -925,50 +961,154 @@ const ModalBody = styled.div`
       }
     }
   }
-  
+
+  .recipe-ingredients {
+    margin-bottom: 2rem;
+
+    h3 {
+      color: #2D3748;
+      font-size: 1.2rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ingredients-list {
+      list-style: none;
+      padding: 0;
+
+      .ingredient-item {
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background: white;
+        border-radius: 8px;
+        border-left: 3px solid #667eea;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+
+        .ingredient-icon {
+          color: #667eea;
+          font-size: 0.9rem;
+        }
+
+        .ingredient-text {
+          color: #4A5568;
+          font-size: 0.95rem;
+          font-weight: 500;
+          line-height: 1.4;
+        }
+
+        .ingredient-amount {
+          color: #2D3748;
+          font-weight: 600;
+          margin-left: auto;
+          font-size: 0.9rem;
+        }
+      }
+    }
+  }
+
+  .recipe-nutrition {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    h4 {
+      color: #2D3748;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+
+    .nutrition-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+
+      .nutrition-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem;
+        background: #F7FAFC;
+        border-radius: 6px;
+        font-size: 0.9rem;
+
+        .label {
+          color: #718096;
+          font-weight: 500;
+        }
+
+        .value {
+          color: #2D3748;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
   .recipe-description {
     margin-bottom: 2rem;
-    
+
     h3 {
       color: #2D3748;
       font-size: 1.3rem;
       margin-bottom: 1rem;
       font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    
+
     p {
       color: #4A5568;
       line-height: 1.6;
       font-size: 1rem;
     }
   }
-  
+
   .recipe-instructions {
+    margin-bottom: 2rem;
+
     h3 {
       color: #2D3748;
       font-size: 1.3rem;
       margin-bottom: 1rem;
       font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    
+
     .instructions-list {
       list-style: none;
       padding: 0;
-      
+
       .instruction-step {
         display: flex;
         gap: 1rem;
-        margin-bottom: 1rem;
-        padding: 1rem;
+        margin-bottom: 1.5rem;
+        padding: 1.25rem;
         background: #F7FAFC;
         border-radius: 12px;
         border-left: 4px solid #667eea;
-        
+        transition: all 0.2s ease;
+
+        &:hover {
+          background: #EDF2F7;
+          transform: translateX(2px);
+        }
+
         .step-number {
           background: #667eea;
           color: white;
-          width: 30px;
-          height: 30px;
+          width: 32px;
+          height: 32px;
           border-radius: 50%;
           display: flex;
           align-items: center;
@@ -977,23 +1117,65 @@ const ModalBody = styled.div`
           font-size: 0.9rem;
           flex-shrink: 0;
         }
-        
+
         .step-text {
           color: #4A5568;
           line-height: 1.6;
+          font-size: 0.95rem;
         }
       }
     }
   }
-  
+
+  .recipe-tips {
+    background: #FFF5F5;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border-left: 4px solid #F56565;
+    margin-bottom: 2rem;
+
+    h4 {
+      color: #2D3748;
+      font-size: 1.1rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+
+      li {
+        color: #4A5568;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: flex-start;
+        gap: 0.5rem;
+        font-size: 0.95rem;
+        line-height: 1.5;
+
+        &:before {
+          content: "💡";
+          flex-shrink: 0;
+        }
+      }
+    }
+  }
+
   .modal-actions {
     display: flex;
     gap: 1rem;
     margin-top: 2rem;
-    
+    padding: 2rem;
+    background: #F8F9FA;
+    border-radius: 0 0 24px 24px;
+
     .modal-btn {
       flex: 1;
-      padding: 1rem;
+      padding: 1rem 1.5rem;
       border-radius: 12px;
       font-weight: 600;
       cursor: pointer;
@@ -1002,26 +1184,39 @@ const ModalBody = styled.div`
       align-items: center;
       justify-content: center;
       gap: 0.5rem;
-      
+      font-size: 1rem;
+
       &.primary {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
         border: none;
-        
+
         &:hover {
           transform: translateY(-2px);
           box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
         }
       }
-      
+
       &.secondary {
-        background: #F7FAFC;
+        background: white;
         color: #4A5568;
         border: 2px solid #E2E8F0;
-        
+
         &:hover {
           background: #EDF2F7;
           border-color: #CBD5E0;
+          transform: translateY(-1px);
+        }
+      }
+
+      &.favorite {
+        background: #F56565;
+        color: white;
+        border: none;
+
+        &:hover {
+          background: #E53E3E;
+          transform: translateY(-2px);
         }
       }
     }
@@ -1029,14 +1224,28 @@ const ModalBody = styled.div`
 `;
 
 const SmartFinder = () => {
-  const [ingredients, setIngredients] = useState([]);
+  const { favorites, toggleFavorite, isFavorite } = useAuth();
+
+  // Load saved state from localStorage
+  const loadSavedState = () => {
+    try {
+      const savedState = localStorage.getItem('smartFinderState');
+      return savedState ? JSON.parse(savedState) : null;
+    } catch (error) {
+      console.error('Error loading saved state:', error);
+      return null;
+    }
+  };
+
+  const savedState = loadSavedState();
+
+  const [ingredients, setIngredients] = useState(savedState?.ingredients || []);
   const [currentInput, setCurrentInput] = useState('');
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState(savedState?.recipes || []);
   const [isSearching, setIsSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [favorites, setFavorites] = useState(new Set());
-  const [sortBy, setSortBy] = useState('relevance');
-  const [filters, setFilters] = useState({
+  const [hasSearched, setHasSearched] = useState(savedState?.hasSearched || false);
+  const [sortBy, setSortBy] = useState(savedState?.sortBy || 'relevance');
+  const [filters, setFilters] = useState(savedState?.filters || {
     cuisine: '',
     diet: '',
     maxTime: '',
@@ -1046,6 +1255,50 @@ const SmartFinder = () => {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const inputRef = useRef(null);
+
+  // Save state to localStorage whenever key state changes
+  useEffect(() => {
+    const stateToSave = {
+      ingredients,
+      recipes,
+      hasSearched,
+      sortBy,
+      filters,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem('smartFinderState', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Error saving state:', error);
+    }
+  }, [ingredients, recipes, hasSearched, sortBy, filters]);
+
+  // Show notification when previous search state is restored
+  useEffect(() => {
+    const savedState = loadSavedState(); // Load fresh to avoid stale closures
+    if (savedState && (savedState.ingredients.length > 0 || savedState.recipes.length > 0)) {
+      const timeDiff = new Date() - new Date(savedState.timestamp);
+      const minutesAgo = Math.floor(timeDiff / (1000 * 60));
+
+      let timeText = 'just now';
+      if (minutesAgo > 60) {
+        timeText = `${Math.floor(minutesAgo / 60)} hour${Math.floor(minutesAgo / 60) > 1 ? 's' : ''} ago`;
+      } else if (minutesAgo > 0) {
+        timeText = `${minutesAgo} minute${minutesAgo > 1 ? 's' : ''} ago`;
+      }
+
+      toast.success(`Previous search restored from ${timeText}`, {
+        icon: '🔄',
+        style: {
+          borderRadius: '12px',
+          background: '#667eea',
+          color: '#fff',
+          fontWeight: '600'
+        },
+      });
+    }
+  }, []); // Only run once on component mount
 
   // Enhanced suggestion categories with Indian focus
   const suggestionCategories = [
@@ -1242,8 +1495,14 @@ const SmartFinder = () => {
       const foundRecipes = await searchRecipesFromMultipleAPIs(ingredients);
       
       if (foundRecipes.length === 0) {
-        toast.error('No recipes found. Try different ingredients.', {
-          icon: '😔',
+        // Provide intelligent suggestions based on ingredients
+        const suggestionMessage = ingredients.length === 1
+          ? `No recipes found for "${ingredients[0]}". Try adding more ingredients like onion, garlic, or tomato.`
+          : `No recipes found for: ${ingredients.join(', ')}. Try simpler combinations or check ingredient spelling.`;
+
+        toast.error(suggestionMessage, {
+          icon: '🤔',
+          duration: 8000,
           style: {
             borderRadius: '12px',
             background: '#F56565',
@@ -1272,8 +1531,21 @@ const SmartFinder = () => {
 
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Search failed. Please try again.', {
+
+      let errorMessage = 'Search failed. Please try again.';
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Search timed out. Please try with fewer ingredients.';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (!navigator.onLine) {
+        errorMessage = 'No internet connection. Please check your network.';
+      }
+
+      toast.error(errorMessage, {
         icon: '❌',
+        duration: 6000,
         style: {
           borderRadius: '12px',
           background: '#F56565',
@@ -1287,21 +1559,10 @@ const SmartFinder = () => {
     }
   };
 
-  const toggleFavorite = (recipeId) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(recipeId)) {
-      newFavorites.delete(recipeId);
-      toast.success('Removed from favorites', {
-        icon: '💔',
-        style: {
-          borderRadius: '12px',
-          background: '#718096',
-          color: '#fff',
-          fontWeight: '600'
-        },
-      });
-    } else {
-      newFavorites.add(recipeId);
+  const handleToggleFavorite = (recipe) => {
+    const wasAdded = toggleFavorite(recipe);
+
+    if (wasAdded) {
       toast.success('Added to favorites', {
         icon: '❤️',
         style: {
@@ -1311,8 +1572,17 @@ const SmartFinder = () => {
           fontWeight: '600'
         },
       });
+    } else {
+      toast.success('Removed from favorites', {
+        icon: '💔',
+        style: {
+          borderRadius: '12px',
+          background: '#718096',
+          color: '#fff',
+          fontWeight: '600'
+        },
+      });
     }
-    setFavorites(newFavorites);
   };
 
   const viewRecipe = (recipe) => {
@@ -1336,13 +1606,22 @@ const SmartFinder = () => {
     setCurrentInput('');
     setRecipes([]);
     setHasSearched(false);
+    setSortBy('relevance');
     setFilters({
       cuisine: '',
       diet: '',
       maxTime: '',
       difficulty: ''
     });
-    toast.success('Cleared all ingredients', {
+
+    // Clear saved state
+    try {
+      localStorage.removeItem('smartFinderState');
+    } catch (error) {
+      console.error('Error clearing saved state:', error);
+    }
+
+    toast.success('Cleared all data and reset search', {
       icon: '🧹',
       style: {
         borderRadius: '12px',
@@ -1660,10 +1939,10 @@ const SmartFinder = () => {
                         </div>
                         
                         <button
-                          className={`favorite-btn ${favorites.has(recipeId) ? 'favorited' : ''}`}
+                          className={`favorite-btn ${isFavorite(recipe) ? 'favorited' : ''}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleFavorite(recipeId);
+                            handleToggleFavorite(recipe);
                           }}
                         >
                           <FaHeart />
@@ -1716,14 +1995,14 @@ const SmartFinder = () => {
                         
                         <div className="recipe-actions">
                           <button
-                            className={`action-btn ${favorites.has(recipeId) ? 'favorited' : ''}`}
+                            className={`action-btn ${isFavorite(recipe) ? 'favorited' : ''}`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleFavorite(recipeId);
+                              handleToggleFavorite(recipe);
                             }}
                           >
                             <FaHeart />
-                            {favorites.has(recipeId) ? 'Saved' : 'Save'}
+                            {isFavorite(recipe) ? 'Saved' : 'Save'}
                           </button>
                           
                           <button
@@ -1817,85 +2096,238 @@ const SmartFinder = () => {
               </ModalHeader>
               
               <ModalBody>
-                <div className="recipe-meta-detailed">
-                  <div className="meta-card">
-                    <FaClock className="meta-icon" />
-                    <div className="meta-label">Cook Time</div>
-                    <div className="meta-value">{selectedRecipe.readyInMinutes || 30} min</div>
-                  </div>
-                  <div className="meta-card">
-                    <FaUsers className="meta-icon" />
-                    <div className="meta-label">Servings</div>
-                    <div className="meta-value">{selectedRecipe.servings || 4}</div>
-                  </div>
-                  <div className="meta-card">
-                    <FaStar className="meta-icon" />
-                    <div className="meta-label">Rating</div>
-                    <div className="meta-value">{(selectedRecipe.rating || 4).toFixed(1)}</div>
-                  </div>
-                  <div className="meta-card">
-                    <FaGlobe className="meta-icon" />
-                    <div className="meta-label">Cuisine</div>
-                    <div className="meta-value">{selectedRecipe.cuisines?.[0] || 'Global'}</div>
-                  </div>
-                </div>
+                <div className="recipe-content-grid">
+                  {/* Left Sidebar - Ingredients & Info */}
+                  <div className="recipe-sidebar">
+                    <div className="recipe-meta-detailed">
+                      <div className="meta-card">
+                        <FaClock className="meta-icon" />
+                        <div className="meta-label">Cook Time</div>
+                        <div className="meta-value">{selectedRecipe.readyInMinutes || 30} min</div>
+                      </div>
+                      <div className="meta-card">
+                        <FaUsers className="meta-icon" />
+                        <div className="meta-label">Servings</div>
+                        <div className="meta-value">{selectedRecipe.servings || 4}</div>
+                      </div>
+                      <div className="meta-card">
+                        <FaStar className="meta-icon" />
+                        <div className="meta-label">Rating</div>
+                        <div className="meta-value">{(selectedRecipe.rating || 4).toFixed(1)}</div>
+                      </div>
+                      <div className="meta-card">
+                        <FaGlobe className="meta-icon" />
+                        <div className="meta-label">Cuisine</div>
+                        <div className="meta-value">{selectedRecipe.cuisines?.[0] || 'Global'}</div>
+                      </div>
+                    </div>
 
-                <div className="recipe-description">
-                  <h3>Description</h3>
-                  <p>
-                    {selectedRecipe.summary ? 
-                      selectedRecipe.summary.replace(/<[^>]*>/g, '') : 
-                      `A delicious ${selectedRecipe.title} recipe that's perfect for any occasion. This recipe combines amazing flavors and is sure to be a hit with your family and friends.`
-                    }
-                  </p>
-                </div>
+                    <div className="recipe-ingredients">
+                      <h3>
+                        <FaUtensils />
+                        Ingredients
+                      </h3>
+                      <div className="ingredients-list">
+                        {selectedRecipe.extendedIngredients ? (
+                          selectedRecipe.extendedIngredients.map((ingredient, index) => (
+                            <div key={index} className="ingredient-item">
+                              <div className="ingredient-icon">🥄</div>
+                              <div className="ingredient-text">{ingredient.original}</div>
+                              <div className="ingredient-amount">
+                                {ingredient.amount ? `${ingredient.amount} ${ingredient.unit}` : ''}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          // Generate intelligent ingredients based on recipe title and metadata
+                          (() => {
+                            const title = selectedRecipe.title?.toLowerCase() || '';
+                            let ingredients = [];
 
-                <div className="recipe-instructions">
-                  <h3>Instructions</h3>
-                  <div className="instructions-list">
-                    {selectedRecipe.analyzedInstructions?.[0]?.steps ? (
-                      selectedRecipe.analyzedInstructions[0].steps.map((step, index) => (
-                        <div key={index} className="instruction-step">
-                          <div className="step-number">{step.number}</div>
-                          <div className="step-text">{step.step}</div>
+                            if (title.includes('curry') || title.includes('indian')) {
+                              ingredients = [
+                                { text: 'Onions, diced', amount: '2 medium' },
+                                { text: 'Garlic cloves, minced', amount: '3-4' },
+                                { text: 'Ginger, grated', amount: '1 inch' },
+                                { text: 'Tomatoes, chopped', amount: '2 large' },
+                                { text: 'Spices (cumin, coriander, turmeric)', amount: '2 tsp each' },
+                                { text: 'Oil or ghee', amount: '2 tbsp' },
+                                { text: 'Salt to taste', amount: '' }
+                              ];
+                            } else if (title.includes('pasta')) {
+                              ingredients = [
+                                { text: 'Pasta', amount: '400g' },
+                                { text: 'Olive oil', amount: '3 tbsp' },
+                                { text: 'Garlic, minced', amount: '3 cloves' },
+                                { text: 'Tomatoes or sauce', amount: '400g' },
+                                { text: 'Fresh herbs', amount: '1/4 cup' },
+                                { text: 'Parmesan cheese', amount: '1/2 cup' },
+                                { text: 'Salt and pepper', amount: 'to taste' }
+                              ];
+                            } else if (title.includes('salad')) {
+                              ingredients = [
+                                { text: 'Mixed greens', amount: '4 cups' },
+                                { text: 'Cherry tomatoes', amount: '1 cup' },
+                                { text: 'Cucumber, sliced', amount: '1 medium' },
+                                { text: 'Red onion, sliced', amount: '1/4 cup' },
+                                { text: 'Olive oil', amount: '3 tbsp' },
+                                { text: 'Lemon juice', amount: '2 tbsp' },
+                                { text: 'Salt and pepper', amount: 'to taste' }
+                              ];
+                            } else {
+                              ingredients = [
+                                { text: 'Main protein or base ingredient', amount: '400g' },
+                                { text: 'Onion, diced', amount: '1 medium' },
+                                { text: 'Garlic, minced', amount: '2-3 cloves' },
+                                { text: 'Cooking oil', amount: '2 tbsp' },
+                                { text: 'Seasonings and spices', amount: 'to taste' },
+                                { text: 'Fresh herbs for garnish', amount: '2 tbsp' }
+                              ];
+                            }
+
+                            return ingredients.map((ingredient, index) => (
+                              <div key={index} className="ingredient-item">
+                                <div className="ingredient-icon">🥄</div>
+                                <div className="ingredient-text">{ingredient.text}</div>
+                                <div className="ingredient-amount">{ingredient.amount}</div>
+                              </div>
+                            ));
+                          })()
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="recipe-nutrition">
+                      <h4>🍽️ Nutrition Info (per serving)</h4>
+                      <div className="nutrition-grid">
+                        <div className="nutrition-item">
+                          <span className="label">Calories</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Calories')?.amount || '250'} kcal</span>
                         </div>
-                      ))
-                    ) : (
-                      [
-                        "Gather all ingredients and prepare your cooking space.",
-                        "Follow the recipe instructions carefully, cooking each step thoroughly.",
-                        "Season to taste and adjust cooking time as needed.",
-                        "Serve hot and enjoy your delicious meal!"
-                      ].map((step, index) => (
-                        <div key={index} className="instruction-step">
-                          <div className="step-number">{index + 1}</div>
-                          <div className="step-text">{step}</div>
+                        <div className="nutrition-item">
+                          <span className="label">Protein</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Protein')?.amount || '15'} g</span>
                         </div>
-                      ))
-                    )}
+                        <div className="nutrition-item">
+                          <span className="label">Carbs</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Carbohydrates')?.amount || '30'} g</span>
+                        </div>
+                        <div className="nutrition-item">
+                          <span className="label">Fat</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Fat')?.amount || '12'} g</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Main Content - Instructions & Description */}
+                  <div className="recipe-main">
+                    <div className="recipe-description">
+                      <h3>
+                        📖 About This Recipe
+                      </h3>
+                      <p>
+                        {selectedRecipe.summary ?
+                          selectedRecipe.summary.replace(/<[^>]*>/g, '') :
+                          `This delicious ${selectedRecipe.title} combines wonderful flavors and textures to create a memorable dish. Perfect for ${selectedRecipe.cuisines?.[0] || 'any'} cuisine lovers, this recipe serves ${selectedRecipe.servings || 4} people and takes about ${selectedRecipe.readyInMinutes || 30} minutes to prepare and cook. Great for both beginners and experienced cooks!`
+                        }
+                      </p>
+                    </div>
+
+                    <div className="recipe-instructions">
+                      <h3>
+                        👨‍🍳 Instructions
+                      </h3>
+                      <div className="instructions-list">
+                        {selectedRecipe.analyzedInstructions?.[0]?.steps ? (
+                          selectedRecipe.analyzedInstructions[0].steps.map((step, index) => (
+                            <div key={index} className="instruction-step">
+                              <div className="step-number">{step.number}</div>
+                              <div className="step-text">{step.step}</div>
+                            </div>
+                          ))
+                        ) : (
+                          (() => {
+                            const title = selectedRecipe.title?.toLowerCase() || '';
+                            let instructions = [];
+
+                            if (title.includes('curry') || title.includes('indian')) {
+                              instructions = [
+                                "Heat oil or ghee in a large pan over medium heat. Add chopped onions and cook until golden brown.",
+                                "Add minced garlic and grated ginger. Cook for 1-2 minutes until fragrant.",
+                                "Add spices (cumin, coriander, turmeric) and cook for 30 seconds until aromatic.",
+                                "Add chopped tomatoes and cook until they break down into a sauce.",
+                                "Add your main ingredients and enough water to create desired consistency.",
+                                "Simmer for 15-20 minutes until ingredients are cooked through.",
+                                "Season with salt, garnish with fresh cilantro, and serve hot with rice or bread."
+                              ];
+                            } else if (title.includes('pasta')) {
+                              instructions = [
+                                "Bring a large pot of salted water to boil. Cook pasta according to package directions until al dente.",
+                                "While pasta cooks, heat olive oil in a large pan over medium heat.",
+                                "Add minced garlic and cook for 1 minute until fragrant.",
+                                "Add tomatoes or sauce and simmer for 5-10 minutes.",
+                                "Drain pasta, reserving 1 cup of pasta water.",
+                                "Add pasta to the sauce, tossing with a little pasta water if needed.",
+                                "Serve immediately topped with fresh herbs and parmesan cheese."
+                              ];
+                            } else {
+                              instructions = [
+                                "Gather all ingredients and prepare your cooking space with necessary equipment.",
+                                "Heat cooking oil in a suitable pan or pot over medium heat.",
+                                "Add aromatics like onions and garlic, cooking until fragrant and translucent.",
+                                "Add main ingredients and cook according to the specific requirements of the dish.",
+                                "Season with salt, pepper, and other spices to taste throughout cooking.",
+                                "Cook until ingredients are properly done and flavors are well combined.",
+                                "Garnish with fresh herbs if desired and serve hot. Enjoy your delicious meal!"
+                              ];
+                            }
+
+                            return instructions.map((step, index) => (
+                              <div key={index} className="instruction-step">
+                                <div className="step-number">{index + 1}</div>
+                                <div className="step-text">{step}</div>
+                              </div>
+                            ));
+                          })()
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="recipe-tips">
+                      <h4>💡 Chef's Tips</h4>
+                      <ul>
+                        <li>Taste and adjust seasonings as you cook for the best flavor balance.</li>
+                        <li>Use fresh ingredients when possible for maximum taste and nutrition.</li>
+                        <li>Don't rush the cooking process - good food takes time!</li>
+                        <li>Feel free to adjust spice levels according to your preference.</li>
+                        <li>Store leftovers in the refrigerator for up to 3 days.</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
                 <div className="modal-actions">
-                  <button 
-                    className="modal-btn secondary"
-                    onClick={() => toggleFavorite(selectedRecipe._id || selectedRecipe.id)}
+                  <button
+                    className={`modal-btn ${isFavorite(selectedRecipe) ? 'favorite' : 'secondary'}`}
+                    onClick={() => handleToggleFavorite(selectedRecipe)}
                   >
-                    <FaBookmark />
-                    {favorites.has(selectedRecipe._id || selectedRecipe.id) ? 'Saved' : 'Save Recipe'}
+                    <FaHeart />
+                    {isFavorite(selectedRecipe) ? 'Saved' : 'Save Recipe'}
                   </button>
-                  
-                  <button 
+
+                  <button
                     className="modal-btn primary"
                     onClick={() => {
                       if (selectedRecipe.sourceUrl) {
                         window.open(selectedRecipe.sourceUrl, '_blank');
                       } else {
-                        toast('Full recipe details coming soon!', {
-                          icon: 'ℹ️',
+                        toast.success('Recipe details shown above! Use the ingredients and instructions to cook.', {
+                          icon: '👨‍🍳',
+                          duration: 4000,
                           style: {
                             borderRadius: '12px',
-                            background: '#4A5568',
+                            background: '#48BB78',
                             color: '#fff',
                             fontWeight: '600'
                           },
@@ -1904,7 +2336,7 @@ const SmartFinder = () => {
                     }}
                   >
                     <FaShare />
-                    View Full Recipe
+                    {selectedRecipe.sourceUrl ? 'View Original' : 'Start Cooking'}
                   </button>
                 </div>
               </ModalBody>

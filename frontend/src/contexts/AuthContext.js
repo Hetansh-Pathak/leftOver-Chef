@@ -15,19 +15,33 @@ export const AuthProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [favorites, setFavorites] = useState(new Set());
 
   useEffect(() => {
     // Check if user is already logged in (e.g., from localStorage)
     const checkAuthStatus = () => {
       const token = localStorage.getItem('authToken');
       const userData = localStorage.getItem('userData');
-      
+      const savedFavorites = localStorage.getItem('userFavorites');
+
       if (token && userData) {
         setIsAuthenticated(true);
         setUser(JSON.parse(userData));
         // Set axios default authorization header
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
+
+      // Load saved favorites
+      if (savedFavorites) {
+        try {
+          const favoritesArray = JSON.parse(savedFavorites);
+          setFavorites(new Set(favoritesArray));
+        } catch (error) {
+          console.error('Error loading favorites:', error);
+          setFavorites(new Set());
+        }
+      }
+
       setIsLoading(false);
     };
 
@@ -47,11 +61,60 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setIsAuthenticated(false);
     setUser(null);
+    setFavorites(new Set());
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
-    
+    localStorage.removeItem('userFavorites');
+
     // Remove axios default authorization header
     delete axios.defaults.headers.common['Authorization'];
+  };
+
+  // Favorites management
+  const toggleFavorite = (recipe) => {
+    const recipeId = recipe._id || recipe.id || recipe.spoonacularId || `recipe_${recipe.title?.replace(/\s+/g, '_')}`;
+    const newFavorites = new Set(favorites);
+
+    if (newFavorites.has(recipeId)) {
+      newFavorites.delete(recipeId);
+    } else {
+      newFavorites.add(recipeId);
+      // Store recipe data for later retrieval
+      const favoriteRecipes = JSON.parse(localStorage.getItem('favoriteRecipes') || '{}');
+      favoriteRecipes[recipeId] = {
+        id: recipeId,
+        title: recipe.title || recipe.name,
+        image: recipe.image,
+        rating: recipe.rating,
+        readyInMinutes: recipe.readyInMinutes,
+        servings: recipe.servings,
+        cuisines: recipe.cuisines,
+        summary: recipe.summary,
+        sourceUrl: recipe.sourceUrl,
+        addedAt: new Date().toISOString()
+      };
+      localStorage.setItem('favoriteRecipes', JSON.stringify(favoriteRecipes));
+    }
+
+    setFavorites(newFavorites);
+    localStorage.setItem('userFavorites', JSON.stringify([...newFavorites]));
+
+    return !favorites.has(recipeId); // return true if added, false if removed
+  };
+
+  const isFavorite = (recipe) => {
+    const recipeId = recipe._id || recipe.id || recipe.spoonacularId || `recipe_${recipe.title?.replace(/\s+/g, '_')}`;
+    return favorites.has(recipeId);
+  };
+
+  const getFavoriteRecipes = () => {
+    try {
+      const favoriteRecipes = JSON.parse(localStorage.getItem('favoriteRecipes') || '{}');
+      return [...favorites].map(id => favoriteRecipes[id]).filter(Boolean);
+    } catch (error) {
+      console.error('Error loading favorite recipes:', error);
+      return [];
+    }
   };
 
   // API functions
@@ -157,7 +220,12 @@ export const AuthProvider = ({ children }) => {
     loginUser,
     googleAuth,
     facebookAuth,
-    checkEmailExists
+    checkEmailExists,
+    // Favorites management
+    favorites,
+    toggleFavorite,
+    isFavorite,
+    getFavoriteRecipes
   };
 
   return (
