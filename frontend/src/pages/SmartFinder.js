@@ -288,9 +288,11 @@ const ActionButtons = styled.div`
   margin-bottom: 2rem;
 `;
 
-const ActionButton = styled(motion.button)`
-  background: ${props => props.primary ? 
-    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 
+const ActionButton = styled(motion.button).withConfig({
+  shouldForwardProp: (prop) => prop !== 'primary'
+})`
+  background: ${props => props.primary ?
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' :
     'linear-gradient(135deg, #718096 0%, #4A5568 100%)'
   };
   color: white;
@@ -309,18 +311,18 @@ const ActionButton = styled(motion.button)`
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  
+
   &:hover:not(:disabled) {
     transform: translateY(-3px);
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   }
-  
+
   &:disabled {
     opacity: 0.6;
     cursor: not-allowed;
     transform: none;
   }
-  
+
   .button-icon {
     font-size: 1.2rem;
   }
