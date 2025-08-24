@@ -2,6 +2,7 @@ const express = require('express');
 const Recipe = require('../models/Recipe');
 const User = require('../models/User');
 const recipeService = require('../services/recipeService');
+const multiApiRecipeService = require('../services/multiApiRecipeService');
 const mockData = require('../mockData');
 const router = express.Router();
 
