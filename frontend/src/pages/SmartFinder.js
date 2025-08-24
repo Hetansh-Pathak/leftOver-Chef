@@ -1368,13 +1368,22 @@ const SmartFinder = () => {
     setCurrentInput('');
     setRecipes([]);
     setHasSearched(false);
+    setSortBy('relevance');
     setFilters({
       cuisine: '',
       diet: '',
       maxTime: '',
       difficulty: ''
     });
-    toast.success('Cleared all ingredients', {
+
+    // Clear saved state
+    try {
+      localStorage.removeItem('smartFinderState');
+    } catch (error) {
+      console.error('Error clearing saved state:', error);
+    }
+
+    toast.success('Cleared all data and reset search', {
       icon: '🧹',
       style: {
         borderRadius: '12px',
