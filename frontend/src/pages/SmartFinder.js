@@ -1031,12 +1031,12 @@ const ModalBody = styled.div`
 `;
 
 const SmartFinder = () => {
+  const { favorites, toggleFavorite, isFavorite } = useAuth();
   const [ingredients, setIngredients] = useState([]);
   const [currentInput, setCurrentInput] = useState('');
   const [recipes, setRecipes] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
-  const [favorites, setFavorites] = useState(new Set());
   const [sortBy, setSortBy] = useState('relevance');
   const [filters, setFilters] = useState({
     cuisine: '',
