@@ -1699,7 +1699,7 @@ const SmartFinder = () => {
                             <div className="meta-value">{recipe.servings || 4}</div>
                           </div>
                           <div className="meta-item">
-                            <FaChef className="meta-icon" />
+                            <FaUser className="meta-icon" />
                             <div className="meta-label">Source</div>
                             <div className="meta-value">{recipe.source || 'Local'}</div>
                           </div>
