@@ -132,9 +132,9 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     let enhancedRecipes = finalRecipes.map((recipe, index) => ({
       ...recipe,
       searchRank: index + 1,
-      image: recipeService.getOptimizedImageUrl(recipe.image, recipe.title || recipe.name),
+      image: recipe.image || `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80`,
       title: recipe.title || recipe.name,
-      summary: recipe.summary || recipeService.generateDefaultSummary(recipe),
+      summary: recipe.summary || 'A delicious recipe perfect for your ingredients',
       readyInMinutes: recipe.readyInMinutes || 30,
       servings: recipe.servings || 4,
       rating: recipe.rating || (recipe.spoonacularScore ? recipe.spoonacularScore / 20 : 4.0),
