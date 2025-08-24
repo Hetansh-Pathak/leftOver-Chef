@@ -453,6 +453,11 @@ Focus on practical transformation ideas that create completely different meals f
 
 Format as an array of strings.`;
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return [];
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
