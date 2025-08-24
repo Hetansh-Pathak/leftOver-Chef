@@ -505,6 +505,11 @@ Highlight the nutritional benefits, what makes it healthy or indulgent, and any 
 
 Format as an array of strings.`;
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return [];
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
