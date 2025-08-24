@@ -144,11 +144,11 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     }));
 
     // 8. Apply filters if provided
-    if (req.body.filters) {
-      const filters = req.body.filters;
+    const { filters } = req.body;
+    if (filters) {
       if (filters.cuisine) {
         enhancedRecipes = enhancedRecipes.filter(recipe =>
-          recipe.cuisines.some(cuisine =>
+          recipe.cuisines && recipe.cuisines.some(cuisine =>
             cuisine.toLowerCase().includes(filters.cuisine.toLowerCase())
           )
         );
