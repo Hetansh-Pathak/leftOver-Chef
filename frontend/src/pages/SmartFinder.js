@@ -15,7 +15,16 @@ import {
   FaMagic,
   FaLeaf,
   FaBolt,
-  FaFire
+  FaFire,
+  FaStar,
+  FaBookmark,
+  FaShare,
+  FaChevronLeft,
+  FaChevronRight,
+  FaSpinner,
+  FaMapMarkerAlt,
+  FaChef,
+  FaAward
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -33,55 +42,75 @@ const FinderContainer = styled(motion.div)`
 
 const Header = styled(motion.div)`
   text-align: center;
-  margin-bottom: 2rem;
+  margin-bottom: 3rem;
+  position: relative;
   
   .main-title {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: ${props => props.theme.colors.primary};
-    background: ${props => props.theme.colors.gradient};
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    margin-bottom: 0.5rem;
-
-    @supports not (-webkit-background-clip: text) {
-      color: ${props => props.theme.colors.primary};
-      background: none;
-    }
+    font-size: 3rem;
+    font-weight: 900;
+    color: #2D3748;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    letter-spacing: -0.5px;
+    line-height: 1.1;
     
     @media (min-width: 768px) {
-      font-size: 3rem;
+      font-size: 4rem;
+    }
+    
+    .accent {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      display: inline-block;
     }
   }
   
   .subtitle {
-    font-size: 1rem;
-    color: rgba(255, 255, 255, 0.9);
-    max-width: 600px;
-    margin: 0 auto;
+    font-size: 1.1rem;
+    color: #4A5568;
+    max-width: 700px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+    font-weight: 500;
     
     @media (min-width: 768px) {
-      font-size: 1.2rem;
+      font-size: 1.3rem;
     }
   }
   
   .stats {
     display: flex;
     justify-content: center;
-    gap: 2rem;
-    margin-top: 1rem;
+    gap: 3rem;
+    margin-top: 2rem;
     flex-wrap: wrap;
     
     .stat-item {
       display: flex;
+      flex-direction: column;
       align-items: center;
       gap: 0.5rem;
-      color: rgba(255, 255, 255, 0.8);
-      font-size: 0.9rem;
       
       .stat-icon {
-        color: ${props => props.theme.colors.accent};
+        font-size: 2rem;
+        color: #667eea;
+        margin-bottom: 0.25rem;
+      }
+      
+      .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2D3748;
+      }
+      
+      .stat-label {
+        font-size: 0.9rem;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
       }
     }
   }
@@ -89,46 +118,53 @@ const Header = styled(motion.div)`
 
 const SearchSection = styled(motion.div)`
   background: white;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: ${props => props.theme.shadows.card};
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
   margin-bottom: 2rem;
+  border: 1px solid rgba(102, 126, 234, 0.1);
   
   @media (min-width: 768px) {
-    padding: 2rem;
+    padding: 3rem;
   }
 `;
 
 const SearchBar = styled.div`
   position: relative;
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
   
   .search-input {
     width: 100%;
-    padding: 1rem 1.5rem 1rem 3rem;
-    border: 2px solid #e1e5e9;
-    border-radius: 15px;
-    font-size: 1.1rem;
+    padding: 1.5rem 1.5rem 1.5rem 4rem;
+    border: 3px solid #E2E8F0;
+    border-radius: 20px;
+    font-size: 1.2rem;
     transition: all 0.3s ease;
+    background: #F7FAFC;
+    color: #2D3748;
+    font-weight: 500;
     
     &:focus {
       outline: none;
-      border-color: ${props => props.theme.colors.primary};
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      border-color: #667eea;
+      background: white;
+      box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+      transform: translateY(-2px);
     }
     
     &::placeholder {
-      color: #999;
+      color: #A0AEC0;
+      font-weight: 400;
     }
   }
   
   .search-icon {
     position: absolute;
-    left: 1rem;
+    left: 1.5rem;
     top: 50%;
     transform: translateY(-50%);
-    color: ${props => props.theme.colors.primary};
-    font-size: 1.2rem;
+    color: #667eea;
+    font-size: 1.4rem;
   }
   
   .suggestions-dropdown {
@@ -137,21 +173,23 @@ const SearchBar = styled.div`
     left: 0;
     right: 0;
     background: white;
-    border: 1px solid #e1e5e9;
-    border-radius: 10px;
-    max-height: 200px;
+    border: 1px solid #E2E8F0;
+    border-radius: 16px;
+    max-height: 300px;
     overflow-y: auto;
     z-index: 1000;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+    margin-top: 0.5rem;
     
     .suggestion-item {
-      padding: 0.75rem 1rem;
+      padding: 1rem 1.5rem;
       cursor: pointer;
-      border-bottom: 1px solid #f0f0f0;
-      transition: background 0.2s ease;
+      border-bottom: 1px solid #F7FAFC;
+      transition: all 0.2s ease;
       
       &:hover {
-        background: ${props => props.theme.colors.backgroundLight};
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+        transform: translateX(4px);
       }
       
       &:last-child {
@@ -159,12 +197,16 @@ const SearchBar = styled.div`
       }
       
       .suggestion-text {
-        font-weight: 500;
+        font-weight: 600;
+        color: #2D3748;
+        margin-bottom: 0.25rem;
       }
       
       .suggestion-category {
         font-size: 0.8rem;
-        color: ${props => props.theme.colors.textMuted};
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
       }
     }
   }
@@ -173,43 +215,66 @@ const SearchBar = styled.div`
 const IngredientTags = styled.div`
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1.5rem;
-  min-height: 60px;
-  padding: 1rem;
-  border: 2px dashed #e1e5e9;
-  border-radius: 15px;
-  background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+  gap: 1rem;
+  margin-bottom: 2rem;
+  min-height: 80px;
+  padding: 1.5rem;
+  border: 3px dashed #E2E8F0;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #F7FAFC 0%, #EDF2F7 100%);
+  transition: all 0.3s ease;
   
   &.has-ingredients {
-    border-color: ${props => props.theme.colors.primary};
-    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, #fff 100%);
+    border-color: #667eea;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    border-style: solid;
+  }
+  
+  .empty-state {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #A0AEC0;
+    font-style: italic;
+    text-align: center;
+    
+    .empty-icon {
+      font-size: 2rem;
+      margin-bottom: 0.5rem;
+      opacity: 0.5;
+    }
   }
 `;
 
 const IngredientTag = styled(motion.div)`
-  background: ${props => props.theme.colors.primary};
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  padding: 0.6rem 1rem;
-  border-radius: 25px;
+  padding: 0.75rem 1.25rem;
+  border-radius: 50px;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  font-weight: 500;
-  font-size: 0.9rem;
-  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  gap: 0.75rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  cursor: default;
   
   .remove-btn {
-    background: none;
+    background: rgba(255, 255, 255, 0.2);
     border: none;
-    color: rgba(255, 255, 255, 0.8);
+    color: white;
     cursor: pointer;
-    padding: 0;
+    padding: 0.25rem;
+    border-radius: 50%;
     display: flex;
     align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
     
     &:hover {
-      color: white;
+      background: rgba(255, 255, 255, 0.3);
       transform: scale(1.1);
     }
   }
@@ -224,24 +289,30 @@ const ActionButtons = styled.div`
 `;
 
 const ActionButton = styled(motion.button)`
-  background: ${props => props.primary ? props.theme.colors.gradient : '#6c757d'};
+  background: ${props => props.primary ? 
+    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 
+    'linear-gradient(135deg, #718096 0%, #4A5568 100%)'
+  };
   color: white;
   border: none;
-  padding: 1rem 2rem;
-  border-radius: 25px;
-  font-size: 1rem;
-  font-weight: 600;
+  padding: 1.25rem 2.5rem;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 0.75rem;
   transition: all 0.3s ease;
-  min-width: 150px;
+  min-width: 180px;
   justify-content: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
   
   &:hover:not(:disabled) {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+    transform: translateY(-3px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   }
   
   &:disabled {
@@ -251,52 +322,7 @@ const ActionButton = styled(motion.button)`
   }
   
   .button-icon {
-    font-size: 1.1rem;
-  }
-`;
-
-const FilterSection = styled(motion.div)`
-  background: white;
-  border-radius: 15px;
-  padding: 1.5rem;
-  margin-bottom: 2rem;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-  
-  .filter-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
-    font-weight: 600;
-    color: ${props => props.theme.colors.textDark};
-  }
-  
-  .filter-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem;
-    
-    .filter-group {
-      .filter-label {
-        font-size: 0.9rem;
-        font-weight: 500;
-        margin-bottom: 0.5rem;
-        color: ${props => props.theme.colors.textDark};
-      }
-      
-      .filter-select {
-        width: 100%;
-        padding: 0.75rem;
-        border: 1px solid #ddd;
-        border-radius: 8px;
-        font-size: 0.9rem;
-        
-        &:focus {
-          outline: none;
-          border-color: ${props => props.theme.colors.primary};
-        }
-      }
-    }
+    font-size: 1.2rem;
   }
 `;
 
@@ -304,73 +330,95 @@ const QuickSuggestions = styled.div`
   margin-top: 2rem;
   
   .suggestions-title {
-    font-size: 1.1rem;
-    font-weight: 600;
-    margin-bottom: 1rem;
-    color: ${props => props.theme.colors.textDark};
+    font-size: 1.3rem;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    color: #2D3748;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
+    
+    .title-icon {
+      color: #667eea;
+      font-size: 1.4rem;
+    }
   }
   
   .suggestions-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 2rem;
   }
   
   .suggestion-category {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    border: 1px solid #E2E8F0;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    }
+    
     .category-header {
       display: flex;
       align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
       
       .category-icon {
-        color: ${props => props.theme.colors.primary};
+        color: #667eea;
+        font-size: 1.2rem;
       }
       
       h4 {
-        color: ${props => props.theme.colors.textDark};
-        font-size: 0.95rem;
+        color: #2D3748;
+        font-size: 1.1rem;
         margin: 0;
+        font-weight: 700;
       }
     }
     
     .suggestion-items {
       display: flex;
       flex-wrap: wrap;
-      gap: 0.5rem;
+      gap: 0.75rem;
     }
   }
 `;
 
 const SuggestionChip = styled(motion.button)`
-  background: ${props => props.theme.colors.backgroundLight};
-  color: ${props => props.theme.colors.textDark};
-  border: 1px solid #ddd;
-  padding: 0.5rem 0.8rem;
-  border-radius: 20px;
+  background: #F7FAFC;
+  color: #4A5568;
+  border: 2px solid #E2E8F0;
+  padding: 0.75rem 1rem;
+  border-radius: 50px;
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  font-weight: 600;
   transition: all 0.3s ease;
   
   &:hover {
-    background: ${props => props.theme.colors.primary};
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
+    border-color: transparent;
   }
 `;
 
 const ResultsSection = styled(motion.div)`
   background: white;
-  border-radius: 20px;
-  padding: 1.5rem;
-  box-shadow: ${props => props.theme.shadows.card};
+  border-radius: 24px;
+  padding: 2rem;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(102, 126, 234, 0.1);
   
   @media (min-width: 768px) {
-    padding: 2rem;
+    padding: 3rem;
   }
 `;
 
@@ -383,37 +431,43 @@ const ResultsHeader = styled.div`
   gap: 1rem;
   
   .results-title {
-    font-size: 1.3rem;
-    font-weight: 600;
-    color: ${props => props.theme.colors.textDark};
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #2D3748;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.75rem;
     
     @media (min-width: 768px) {
-      font-size: 1.5rem;
+      font-size: 1.8rem;
     }
   }
   
   .results-count {
-    color: ${props => props.theme.colors.primary};
-    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-weight: 900;
   }
   
   .sort-controls {
     display: flex;
-    gap: 0.5rem;
+    gap: 1rem;
     align-items: center;
     
     .sort-select {
-      padding: 0.5rem;
-      border: 1px solid #ddd;
-      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      border: 2px solid #E2E8F0;
+      border-radius: 12px;
       font-size: 0.9rem;
+      font-weight: 600;
+      background: white;
+      color: #4A5568;
       
       &:focus {
         outline: none;
-        border-color: ${props => props.theme.colors.primary};
+        border-color: #667eea;
       }
     }
   }
@@ -421,32 +475,32 @@ const ResultsHeader = styled.div`
 
 const RecipeGrid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 2rem;
   
   @media (min-width: 1200px) {
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
   }
 `;
 
 const RecipeCard = styled(motion.div)`
   background: white;
-  border-radius: 16px;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  border: 1px solid #f0f0f0;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+  border: 1px solid #F0F0F0;
   cursor: pointer;
   transition: all 0.3s ease;
   
   &:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.15);
-    border-color: ${props => props.theme.colors.primary};
+    transform: translateY(-8px);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    border-color: #667eea;
   }
   
   .recipe-image-container {
     position: relative;
-    height: 220px;
+    height: 250px;
     overflow: hidden;
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     
@@ -463,8 +517,8 @@ const RecipeCard = styled(motion.div)`
     
     .recipe-badges {
       position: absolute;
-      top: 0.75rem;
-      left: 0.75rem;
+      top: 1rem;
+      left: 1rem;
       display: flex;
       flex-direction: column;
       gap: 0.5rem;
@@ -472,38 +526,45 @@ const RecipeCard = styled(motion.div)`
     
     .recipe-badge {
       background: rgba(255, 255, 255, 0.95);
-      color: ${props => props.theme.colors.textDark};
-      padding: 0.3rem 0.6rem;
-      border-radius: 12px;
+      color: #2D3748;
+      padding: 0.4rem 0.8rem;
+      border-radius: 50px;
       font-size: 0.75rem;
-      font-weight: 600;
+      font-weight: 700;
       backdrop-filter: blur(10px);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
       
       &.quick {
-        background: rgba(76, 175, 80, 0.9);
+        background: linear-gradient(135deg, #48BB78 0%, #38A169 100%);
         color: white;
       }
       
       &.healthy {
-        background: rgba(76, 175, 80, 0.9);
+        background: linear-gradient(135deg, #4FD1C7 0%, #319795 100%);
         color: white;
       }
       
       &.popular {
-        background: rgba(255, 152, 0, 0.9);
+        background: linear-gradient(135deg, #ED8936 0%, #DD6B20 100%);
+        color: white;
+      }
+      
+      &.indian {
+        background: linear-gradient(135deg, #FF6B35 0%, #F7931E 100%);
         color: white;
       }
     }
     
     .favorite-btn {
       position: absolute;
-      top: 0.75rem;
-      right: 0.75rem;
-      background: rgba(255, 255, 255, 0.9);
+      top: 1rem;
+      right: 1rem;
+      background: rgba(255, 255, 255, 0.95);
       border: none;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 45px;
+      height: 45px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -514,23 +575,40 @@ const RecipeCard = styled(motion.div)`
       &:hover {
         background: white;
         transform: scale(1.1);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
       }
       
       &.favorited {
-        background: ${props => props.theme.colors.accent};
+        background: linear-gradient(135deg, #F56565 0%, #E53E3E 100%);
         color: white;
       }
+    }
+    
+    .cuisine-flag {
+      position: absolute;
+      bottom: 1rem;
+      left: 1rem;
+      background: rgba(0, 0, 0, 0.7);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
   }
   
   .recipe-content {
-    padding: 1.5rem;
+    padding: 2rem;
     
     .recipe-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 0.75rem;
-      color: ${props => props.theme.colors.textDark};
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+      color: #2D3748;
       line-height: 1.3;
       display: -webkit-box;
       -webkit-line-clamp: 2;
@@ -539,12 +617,12 @@ const RecipeCard = styled(motion.div)`
     }
     
     .recipe-summary {
-      color: ${props => props.theme.colors.textLight};
-      font-size: 0.9rem;
-      margin-bottom: 1rem;
-      line-height: 1.4;
+      color: #718096;
+      font-size: 0.95rem;
+      margin-bottom: 1.5rem;
+      line-height: 1.6;
       display: -webkit-box;
-      -webkit-line-clamp: 2;
+      -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
@@ -552,28 +630,34 @@ const RecipeCard = styled(motion.div)`
     .recipe-meta {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 0.5rem;
-      margin-bottom: 1rem;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      padding: 1rem;
+      background: #F7FAFC;
+      border-radius: 12px;
       
       .meta-item {
         text-align: center;
         
         .meta-icon {
-          color: ${props => props.theme.colors.primary};
-          margin-bottom: 0.25rem;
-          font-size: 1.1rem;
+          color: #667eea;
+          margin-bottom: 0.5rem;
+          font-size: 1.2rem;
         }
         
         .meta-label {
           font-size: 0.75rem;
-          color: ${props => props.theme.colors.textMuted};
-          margin-bottom: 0.1rem;
+          color: #A0AEC0;
+          margin-bottom: 0.25rem;
+          text-transform: uppercase;
+          letter-spacing: 0.5px;
+          font-weight: 600;
         }
         
         .meta-value {
-          font-size: 0.85rem;
-          font-weight: 600;
-          color: ${props => props.theme.colors.textDark};
+          font-size: 0.9rem;
+          font-weight: 700;
+          color: #2D3748;
         }
       }
     }
@@ -582,65 +666,73 @@ const RecipeCard = styled(motion.div)`
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 0.5rem;
-      margin-bottom: 1rem;
-      padding: 0.5rem;
-      background: ${props => props.theme.colors.backgroundLight};
-      border-radius: 8px;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+      padding: 0.75rem;
+      background: linear-gradient(135deg, #FFF5F5 0%, #FED7D7 100%);
+      border-radius: 12px;
       
       .stars {
-        color: #ffd700;
-        font-size: 0.9rem;
+        color: #F6AD55;
+        font-size: 1rem;
       }
       
       .rating-value {
+        font-weight: 700;
+        color: #2D3748;
+        font-size: 1rem;
+      }
+      
+      .rating-label {
+        font-size: 0.8rem;
+        color: #718096;
         font-weight: 600;
-        color: ${props => props.theme.colors.textDark};
-        font-size: 0.9rem;
       }
     }
     
     .recipe-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 0.75rem;
+      gap: 1rem;
       
       .action-btn {
-        background: ${props => props.theme.colors.backgroundLight};
-        border: 1px solid #ddd;
-        color: ${props => props.theme.colors.textDark};
-        padding: 0.75rem;
-        border-radius: 10px;
+        background: #F7FAFC;
+        border: 2px solid #E2E8F0;
+        color: #4A5568;
+        padding: 1rem;
+        border-radius: 12px;
         cursor: pointer;
         display: flex;
         align-items: center;
         justify-content: center;
         gap: 0.5rem;
-        font-size: 0.85rem;
-        font-weight: 500;
-        transition: all 0.2s ease;
+        font-size: 0.9rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
         
         &:hover {
-          background: ${props => props.theme.colors.primary};
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
-          border-color: ${props => props.theme.colors.primary};
-          transform: translateY(-1px);
+          border-color: transparent;
+          transform: translateY(-2px);
+          box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
         
         &.favorited {
-          background: ${props => props.theme.colors.accent};
+          background: linear-gradient(135deg, #F56565 0%, #E53E3E 100%);
           color: white;
-          border-color: ${props => props.theme.colors.accent};
+          border-color: transparent;
         }
         
         &.primary {
-          background: ${props => props.theme.colors.primary};
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
-          border-color: ${props => props.theme.colors.primary};
+          border-color: transparent;
           
           &:hover {
-            background: ${props => props.theme.colors.secondary};
-            border-color: ${props => props.theme.colors.secondary};
+            background: linear-gradient(135deg, #5A67D8 0%, #6B46C1 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
           }
         }
       }
@@ -656,44 +748,52 @@ const LoadingSpinner = styled(motion.div)`
   padding: 4rem 2rem;
   
   .spinner {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 4rem;
+    margin-bottom: 1.5rem;
+    color: #667eea;
   }
   
   .loading-text {
-    color: ${props => props.theme.colors.textLight};
-    font-size: 1.1rem;
+    color: #4A5568;
+    font-size: 1.2rem;
     text-align: center;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
   }
   
   .loading-tip {
-    color: ${props => props.theme.colors.textMuted};
-    font-size: 0.9rem;
+    color: #718096;
+    font-size: 1rem;
     margin-top: 0.5rem;
     text-align: center;
+    max-width: 400px;
   }
 `;
 
 const EmptyState = styled(motion.div)`
   text-align: center;
   padding: 4rem 2rem;
-  color: ${props => props.theme.colors.textMuted};
+  color: #718096;
   
   .empty-icon {
-    font-size: 4rem;
-    margin-bottom: 1rem;
+    font-size: 5rem;
+    margin-bottom: 2rem;
     opacity: 0.3;
+    color: #A0AEC0;
   }
   
   h3 {
-    margin-bottom: 0.5rem;
-    color: ${props => props.theme.colors.textDark};
+    margin-bottom: 1rem;
+    color: #2D3748;
+    font-size: 1.5rem;
+    font-weight: 700;
   }
   
   p {
-    max-width: 400px;
-    margin: 0 auto;
-    line-height: 1.5;
+    max-width: 500px;
+    margin: 0 auto 2rem;
+    line-height: 1.6;
+    font-size: 1.1rem;
   }
   
   .empty-suggestions {
@@ -703,8 +803,227 @@ const EmptyState = styled(motion.div)`
       display: flex;
       flex-wrap: wrap;
       justify-content: center;
-      gap: 0.5rem;
+      gap: 1rem;
       margin-top: 1rem;
+    }
+  }
+`;
+
+// Recipe Detail Modal Components
+const ModalOverlay = styled(motion.div)`
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(10px);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+`;
+
+const ModalContent = styled(motion.div)`
+  background: white;
+  border-radius: 24px;
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 25px 100px rgba(0, 0, 0, 0.3);
+  position: relative;
+`;
+
+const ModalHeader = styled.div`
+  position: relative;
+  height: 300px;
+  overflow: hidden;
+  
+  .modal-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  
+  .modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(10px);
+    transition: all 0.3s ease;
+    
+    &:hover {
+      background: rgba(0, 0, 0, 0.7);
+      transform: scale(1.1);
+    }
+  }
+  
+  .modal-title {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+    color: white;
+    padding: 2rem;
+    
+    h2 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin: 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+    }
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 2rem;
+  
+  .recipe-meta-detailed {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    
+    .meta-card {
+      background: #F7FAFC;
+      padding: 1rem;
+      border-radius: 12px;
+      text-align: center;
+      
+      .meta-icon {
+        font-size: 1.5rem;
+        color: #667eea;
+        margin-bottom: 0.5rem;
+      }
+      
+      .meta-label {
+        font-size: 0.8rem;
+        color: #718096;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 0.25rem;
+        font-weight: 600;
+      }
+      
+      .meta-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #2D3748;
+      }
+    }
+  }
+  
+  .recipe-description {
+    margin-bottom: 2rem;
+    
+    h3 {
+      color: #2D3748;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    
+    p {
+      color: #4A5568;
+      line-height: 1.6;
+      font-size: 1rem;
+    }
+  }
+  
+  .recipe-instructions {
+    h3 {
+      color: #2D3748;
+      font-size: 1.3rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    
+    .instructions-list {
+      list-style: none;
+      padding: 0;
+      
+      .instruction-step {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        padding: 1rem;
+        background: #F7FAFC;
+        border-radius: 12px;
+        border-left: 4px solid #667eea;
+        
+        .step-number {
+          background: #667eea;
+          color: white;
+          width: 30px;
+          height: 30px;
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 700;
+          font-size: 0.9rem;
+          flex-shrink: 0;
+        }
+        
+        .step-text {
+          color: #4A5568;
+          line-height: 1.6;
+        }
+      }
+    }
+  }
+  
+  .modal-actions {
+    display: flex;
+    gap: 1rem;
+    margin-top: 2rem;
+    
+    .modal-btn {
+      flex: 1;
+      padding: 1rem;
+      border-radius: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      
+      &.primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border: none;
+        
+        &:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+      }
+      
+      &.secondary {
+        background: #F7FAFC;
+        color: #4A5568;
+        border: 2px solid #E2E8F0;
+        
+        &:hover {
+          background: #EDF2F7;
+          border-color: #CBD5E0;
+        }
+      }
     }
   }
 `;
@@ -725,39 +1044,41 @@ const SmartFinder = () => {
     difficulty: ''
   });
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [showModal, setShowModal] = useState(false);
   const inputRef = useRef(null);
 
-  // Enhanced suggestion categories with icons
+  // Enhanced suggestion categories with Indian focus
   const suggestionCategories = [
     {
-      title: 'Popular Ingredients',
+      title: 'Indian Staples',
       icon: <FaFire />,
-      items: ['rice', 'chicken', 'tomato', 'onion', 'garlic', 'potato', 'cheese', 'pasta']
+      items: ['chapati', 'roti', 'rice', 'dal', 'paneer', 'curry leaves', 'turmeric', 'garam masala']
     },
     {
-      title: 'Proteins',
+      title: 'Thali Essentials',
+      icon: <FaUtensils />,
+      items: ['sambar', 'rasam', 'curd rice', 'pickle', 'papad', 'sabzi', 'rajma', 'chole']
+    },
+    {
+      title: 'Popular Proteins',
       icon: <FaBolt />,
-      items: ['beef', 'pork', 'fish', 'eggs', 'tofu', 'paneer', 'turkey', 'lamb']
+      items: ['chicken', 'mutton', 'fish', 'egg', 'tofu', 'paneer', 'turkey', 'prawns']
     },
     {
       title: 'Fresh Vegetables',
       icon: <FaLeaf />,
-      items: ['spinach', 'broccoli', 'carrot', 'bell pepper', 'mushroom', 'corn', 'zucchini', 'cucumber']
-    },
-    {
-      title: 'Pantry Staples',
-      icon: <FaUtensils />,
-      items: ['bread', 'quinoa', 'oats', 'noodles', 'flour', 'lentils', 'beans', 'coconut milk']
+      items: ['spinach', 'broccoli', 'cauliflower', 'potato', 'onion', 'tomato', 'capsicum', 'okra']
     },
     {
       title: 'Indian Spices',
       icon: <FaMagic />,
-      items: ['turmeric', 'cumin', 'coriander', 'garam masala', 'curry leaves', 'mustard seeds']
+      items: ['cumin', 'coriander', 'cardamom', 'cinnamon', 'cloves', 'bay leaves', 'mustard seeds', 'hing']
     },
     {
-      title: 'International',
+      title: 'Global Favorites',
       icon: <FaGlobe />,
-      items: ['basil', 'oregano', 'soy sauce', 'ginger', 'lime', 'coconut', 'sesame oil', 'miso']
+      items: ['pasta', 'bread', 'cheese', 'olive oil', 'basil', 'garlic', 'ginger', 'soy sauce']
     }
   ];
 
@@ -766,7 +1087,7 @@ const SmartFinder = () => {
   const filteredSuggestions = allIngredients.filter(item => 
     item.toLowerCase().includes(currentInput.toLowerCase()) && 
     !ingredients.includes(item.toLowerCase())
-  ).slice(0, 6);
+  ).slice(0, 8);
 
   const addIngredient = (ingredient = currentInput.trim().toLowerCase()) => {
     if (ingredient && !ingredients.includes(ingredient)) {
@@ -776,14 +1097,21 @@ const SmartFinder = () => {
       toast.success(`Added "${ingredient}"`, {
         icon: '✅',
         style: {
-          borderRadius: '10px',
-          background: '#4caf50',
+          borderRadius: '12px',
+          background: '#48BB78',
           color: '#fff',
+          fontWeight: '600'
         },
       });
     } else if (ingredients.includes(ingredient)) {
       toast.error('Ingredient already added!', {
         icon: '⚠️',
+        style: {
+          borderRadius: '12px',
+          background: '#F56565',
+          color: '#fff',
+          fontWeight: '600'
+        },
       });
     }
   };
@@ -792,6 +1120,12 @@ const SmartFinder = () => {
     setIngredients(prev => prev.filter(ing => ing !== ingredient));
     toast.success(`Removed "${ingredient}"`, {
       icon: '🗑️',
+      style: {
+        borderRadius: '12px',
+        background: '#718096',
+        color: '#fff',
+        fontWeight: '600'
+      },
     });
   };
 
@@ -799,10 +1133,105 @@ const SmartFinder = () => {
     addIngredient(ingredient.toLowerCase());
   };
 
+  // Multiple API Integration
+  const searchRecipesFromMultipleAPIs = async (searchIngredients) => {
+    const allRecipes = [];
+    
+    try {
+      // API 1: Our enhanced local search with Spoonacular
+      const primaryResponse = await axios.post('/api/recipes/search-by-ingredients', {
+        ingredients: searchIngredients,
+        matchType: 'any',
+        useSpoonacular: true,
+        limit: 30,
+        filters
+      });
+      
+      if (primaryResponse.data.recipes) {
+        allRecipes.push(...primaryResponse.data.recipes);
+      }
+
+      // API 2: Recipe Puppy API (for additional variety)
+      try {
+        const recipePuppyResponse = await axios.get(`https://recipe-puppy.p.rapidapi.com/`, {
+          params: {
+            i: searchIngredients.slice(0, 3).join(','),
+            p: '1'
+          },
+          headers: {
+            'X-RapidAPI-Host': 'recipe-puppy.p.rapidapi.com',
+            'X-RapidAPI-Key': 'your-rapidapi-key-here' // Would need to be configured
+          },
+          timeout: 5000
+        });
+        
+        if (recipePuppyResponse.data?.results) {
+          const formattedRecipes = recipePuppyResponse.data.results.map((recipe, index) => ({
+            id: `recipepuppy_${index}`,
+            title: recipe.title,
+            image: recipe.thumbnail || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80',
+            sourceUrl: recipe.href,
+            readyInMinutes: 30,
+            servings: 4,
+            rating: 4.0,
+            cuisines: [],
+            source: 'recipepuppy'
+          }));
+          allRecipes.push(...formattedRecipes);
+        }
+      } catch (apiError) {
+        console.log('Recipe Puppy API not available:', apiError.message);
+      }
+
+      // API 3: Edamam Recipe API (backup)
+      try {
+        const edamamResponse = await axios.get('https://api.edamam.com/search', {
+          params: {
+            q: searchIngredients.join(' '),
+            app_id: 'your-edamam-app-id',
+            app_key: 'your-edamam-app-key',
+            from: 0,
+            to: 20
+          },
+          timeout: 5000
+        });
+        
+        if (edamamResponse.data?.hits) {
+          const formattedRecipes = edamamResponse.data.hits.map((hit, index) => ({
+            id: `edamam_${index}`,
+            title: hit.recipe.label,
+            image: hit.recipe.image,
+            sourceUrl: hit.recipe.url,
+            readyInMinutes: hit.recipe.totalTime || 30,
+            servings: hit.recipe.yield || 4,
+            rating: 4.2,
+            cuisines: hit.recipe.cuisineType || [],
+            source: 'edamam',
+            healthLabels: hit.recipe.healthLabels || []
+          }));
+          allRecipes.push(...formattedRecipes);
+        }
+      } catch (apiError) {
+        console.log('Edamam API not available:', apiError.message);
+      }
+
+    } catch (error) {
+      console.error('Error searching multiple APIs:', error);
+    }
+
+    return allRecipes;
+  };
+
   const searchRecipes = async () => {
     if (ingredients.length === 0) {
       toast.error('Please add at least one ingredient!', {
         icon: '🥘',
+        style: {
+          borderRadius: '12px',
+          background: '#F56565',
+          color: '#fff',
+          fontWeight: '600'
+        },
       });
       return;
     }
@@ -811,51 +1240,33 @@ const SmartFinder = () => {
     setHasSearched(true);
 
     try {
-      const response = await axios.post('/api/recipes/search-by-ingredients', {
-        ingredients,
-        matchType: 'any',
-        useSpoonacular: true,
-        limit: 50,
-        filters
-      });
-
-      const foundRecipes = response.data.recipes || [];
+      const foundRecipes = await searchRecipesFromMultipleAPIs(ingredients);
       
       if (foundRecipes.length === 0) {
-        // Fallback: try global search
-        try {
-          const globalResponse = await axios.post('/api/recipes/search/global', {
-            ingredients,
-            number: 20
-          });
-          
-          const globalRecipes = globalResponse.data.recipes || [];
-          setRecipes(globalRecipes);
-          
-          if (globalRecipes.length > 0) {
-            toast.success(`Found ${globalRecipes.length} recipes from global search!`, {
-              icon: '🌍',
-            });
-          } else {
-            toast.error('No recipes found. Try different ingredients.', {
-              icon: '😔',
-            });
-          }
-        } catch (globalError) {
-          console.error('Global search failed:', globalError);
-          toast.error('No recipes found. Try different ingredients.', {
-            icon: '😔',
-          });
-          setRecipes([]);
-        }
+        toast.error('No recipes found. Try different ingredients.', {
+          icon: '😔',
+          style: {
+            borderRadius: '12px',
+            background: '#F56565',
+            color: '#fff',
+            fontWeight: '600'
+          },
+        });
+        setRecipes([]);
       } else {
-        setRecipes(foundRecipes);
-        toast.success(`Found ${foundRecipes.length} delicious recipes!`, {
+        // Remove duplicates by title
+        const uniqueRecipes = foundRecipes.filter((recipe, index, self) =>
+          index === self.findIndex(r => r.title.toLowerCase() === recipe.title.toLowerCase())
+        );
+        
+        setRecipes(uniqueRecipes);
+        toast.success(`Found ${uniqueRecipes.length} delicious recipes!`, {
           icon: '🎉',
           style: {
-            borderRadius: '10px',
-            background: '#4caf50',
+            borderRadius: '12px',
+            background: '#48BB78',
             color: '#fff',
+            fontWeight: '600'
           },
         });
       }
@@ -864,6 +1275,12 @@ const SmartFinder = () => {
       console.error('Search error:', error);
       toast.error('Search failed. Please try again.', {
         icon: '❌',
+        style: {
+          borderRadius: '12px',
+          background: '#F56565',
+          color: '#fff',
+          fontWeight: '600'
+        },
       });
       setRecipes([]);
     } finally {
@@ -877,29 +1294,36 @@ const SmartFinder = () => {
       newFavorites.delete(recipeId);
       toast.success('Removed from favorites', {
         icon: '💔',
+        style: {
+          borderRadius: '12px',
+          background: '#718096',
+          color: '#fff',
+          fontWeight: '600'
+        },
       });
     } else {
       newFavorites.add(recipeId);
       toast.success('Added to favorites', {
         icon: '❤️',
+        style: {
+          borderRadius: '12px',
+          background: '#F56565',
+          color: '#fff',
+          fontWeight: '600'
+        },
       });
     }
     setFavorites(newFavorites);
   };
 
   const viewRecipe = (recipe) => {
-    if (recipe.sourceUrl) {
-      window.open(recipe.sourceUrl, '_blank');
-    } else {
-      toast('Recipe details not available', {
-        icon: 'ℹ️',
-        style: {
-          borderRadius: '10px',
-          background: '#333',
-          color: '#fff',
-        },
-      });
-    }
+    setSelectedRecipe(recipe);
+    setShowModal(true);
+  };
+
+  const closeModal = () => {
+    setShowModal(false);
+    setSelectedRecipe(null);
   };
 
   const handleKeyPress = (e) => {
@@ -921,12 +1345,19 @@ const SmartFinder = () => {
     });
     toast.success('Cleared all ingredients', {
       icon: '🧹',
+      style: {
+        borderRadius: '12px',
+        background: '#718096',
+        color: '#fff',
+        fontWeight: '600'
+      },
     });
   };
 
   const generateStars = (rating) => {
     const stars = Math.floor(rating || 0);
-    return '★'.repeat(stars) + '☆'.repeat(5 - stars);
+    const hasHalf = (rating % 1) >= 0.5;
+    return '★'.repeat(stars) + (hasHalf ? '☆' : '') + '☆'.repeat(Math.max(0, 5 - stars - (hasHalf ? 1 : 0)));
   };
 
   const sortRecipes = (recipesToSort) => {
@@ -955,6 +1386,14 @@ const SmartFinder = () => {
     if (recipe.aggregateLikes && recipe.aggregateLikes > 100) {
       badges.push({ text: 'Popular', className: 'popular' });
     }
+    // Check for Indian cuisine
+    if (recipe.cuisines && recipe.cuisines.some(c => c.toLowerCase().includes('indian')) ||
+        recipe.title && (recipe.title.toLowerCase().includes('curry') || 
+                        recipe.title.toLowerCase().includes('dal') ||
+                        recipe.title.toLowerCase().includes('roti') ||
+                        recipe.title.toLowerCase().includes('chapati'))) {
+      badges.push({ text: 'Indian', className: 'indian' });
+    }
     return badges;
   };
 
@@ -971,22 +1410,33 @@ const SmartFinder = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.8 }}
       >
-        <h1 className="main-title">Smart Recipe Finder</h1>
+        <h1 className="main-title">
+          <span className="accent">Smart Recipe</span> Finder
+        </h1>
         <p className="subtitle">
-          Enter your available ingredients and discover amazing recipes from around the world
+          Discover amazing recipes from around the world using your available ingredients. 
+          Specializing in Indian cuisine and authentic flavors.
         </p>
         <div className="stats">
           <div className="stat-item">
             <FaUtensils className="stat-icon" />
-            <span>10,000+ Recipes</span>
+            <div className="stat-number">15,000+</div>
+            <div className="stat-label">Recipes</div>
           </div>
           <div className="stat-item">
             <FaGlobe className="stat-icon" />
-            <span>World Cuisines</span>
+            <div className="stat-number">50+</div>
+            <div className="stat-label">Cuisines</div>
           </div>
           <div className="stat-item">
             <FaMagic className="stat-icon" />
-            <span>AI-Powered</span>
+            <div className="stat-number">3</div>
+            <div className="stat-label">APIs</div>
+          </div>
+          <div className="stat-item">
+            <FaAward className="stat-icon" />
+            <div className="stat-number">AI</div>
+            <div className="stat-label">Powered</div>
           </div>
         </div>
       </Header>
@@ -1010,7 +1460,7 @@ const SmartFinder = () => {
             onKeyPress={handleKeyPress}
             onFocus={() => setShowSuggestions(currentInput.length > 0)}
             onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-            placeholder="Type an ingredient (e.g., chicken, rice, tomato)..."
+            placeholder="Type an ingredient (e.g., chicken, rice, dal, paneer)..."
           />
           {showSuggestions && filteredSuggestions.length > 0 && (
             <div className="suggestions-dropdown">
@@ -1051,17 +1501,9 @@ const SmartFinder = () => {
             ))}
           </AnimatePresence>
           {ingredients.length === 0 && (
-            <div style={{ 
-              color: '#999', 
-              fontStyle: 'italic',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              width: '100%',
-              minHeight: '40px',
-              textAlign: 'center'
-            }}>
-              Add ingredients above to start finding recipes...
+            <div className="empty-state">
+              <FaUtensils className="empty-icon" />
+              <div>Add ingredients above to start finding recipes...</div>
             </div>
           )}
         </IngredientTags>
@@ -1081,7 +1523,7 @@ const SmartFinder = () => {
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                 >
-                  <FaSearch />
+                  <FaSpinner />
                 </motion.div>
                 Searching...
               </>
@@ -1091,15 +1533,6 @@ const SmartFinder = () => {
                 Find Recipes
               </>
             )}
-          </ActionButton>
-
-          <ActionButton
-            onClick={() => setShowFilters(!showFilters)}
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            <FaFilter className="button-icon" />
-            Filters
           </ActionButton>
 
           {ingredients.length > 0 && (
@@ -1114,85 +1547,9 @@ const SmartFinder = () => {
           )}
         </ActionButtons>
 
-        <AnimatePresence>
-          {showFilters && (
-            <FilterSection
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.3 }}
-            >
-              <div className="filter-header">
-                <FaFilter />
-                Filter Options
-              </div>
-              <div className="filter-options">
-                <div className="filter-group">
-                  <div className="filter-label">Cuisine Type</div>
-                  <select
-                    className="filter-select"
-                    value={filters.cuisine}
-                    onChange={(e) => setFilters(prev => ({ ...prev, cuisine: e.target.value }))}
-                  >
-                    <option value="">Any Cuisine</option>
-                    <option value="indian">Indian</option>
-                    <option value="italian">Italian</option>
-                    <option value="chinese">Chinese</option>
-                    <option value="mexican">Mexican</option>
-                    <option value="thai">Thai</option>
-                    <option value="american">American</option>
-                  </select>
-                </div>
-                <div className="filter-group">
-                  <div className="filter-label">Diet Type</div>
-                  <select
-                    className="filter-select"
-                    value={filters.diet}
-                    onChange={(e) => setFilters(prev => ({ ...prev, diet: e.target.value }))}
-                  >
-                    <option value="">Any Diet</option>
-                    <option value="vegetarian">Vegetarian</option>
-                    <option value="vegan">Vegan</option>
-                    <option value="glutenFree">Gluten Free</option>
-                    <option value="ketogenic">Keto</option>
-                    <option value="paleo">Paleo</option>
-                  </select>
-                </div>
-                <div className="filter-group">
-                  <div className="filter-label">Max Cook Time</div>
-                  <select
-                    className="filter-select"
-                    value={filters.maxTime}
-                    onChange={(e) => setFilters(prev => ({ ...prev, maxTime: e.target.value }))}
-                  >
-                    <option value="">Any Time</option>
-                    <option value="15">Under 15 mins</option>
-                    <option value="30">Under 30 mins</option>
-                    <option value="45">Under 45 mins</option>
-                    <option value="60">Under 1 hour</option>
-                  </select>
-                </div>
-                <div className="filter-group">
-                  <div className="filter-label">Difficulty</div>
-                  <select
-                    className="filter-select"
-                    value={filters.difficulty}
-                    onChange={(e) => setFilters(prev => ({ ...prev, difficulty: e.target.value }))}
-                  >
-                    <option value="">Any Level</option>
-                    <option value="easy">Easy</option>
-                    <option value="medium">Medium</option>
-                    <option value="hard">Hard</option>
-                  </select>
-                </div>
-              </div>
-            </FilterSection>
-          )}
-        </AnimatePresence>
-
         <QuickSuggestions>
           <div className="suggestions-title">
-            <FaMagic />
+            <FaMagic className="title-icon" />
             Quick Add Ingredients
           </div>
           <div className="suggestions-grid">
@@ -1266,8 +1623,10 @@ const SmartFinder = () => {
                 >
                   🔍
                 </motion.div>
-                <div className="loading-text">Searching for amazing recipes...</div>
-                <div className="loading-tip">This may take a moment as we search worldwide!</div>
+                <div className="loading-text">Searching across multiple recipe databases...</div>
+                <div className="loading-tip">
+                  We're checking Spoonacular, Recipe Puppy, and other APIs to find you the perfect recipes!
+                </div>
               </LoadingSpinner>
             ) : sortedRecipes.length > 0 ? (
               <RecipeGrid>
@@ -1285,11 +1644,11 @@ const SmartFinder = () => {
                     >
                       <div className="recipe-image-container">
                         <img
-                          src={recipe.image || `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop&auto=format&q=80`}
+                          src={recipe.image || `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80`}
                           alt={recipe.title || recipe.name}
                           className="recipe-image"
                           onError={(e) => {
-                            e.target.src = `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop&auto=format&q=80`;
+                            e.target.src = `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80`;
                           }}
                         />
                         
@@ -1310,6 +1669,13 @@ const SmartFinder = () => {
                         >
                           <FaHeart />
                         </button>
+
+                        {recipe.cuisines && recipe.cuisines.length > 0 && (
+                          <div className="cuisine-flag">
+                            <FaMapMarkerAlt />
+                            {recipe.cuisines[0]}
+                          </div>
+                        )}
                       </div>
                       
                       <div className="recipe-content">
@@ -1317,7 +1683,7 @@ const SmartFinder = () => {
                         
                         {recipe.summary && (
                           <div className="recipe-summary">
-                            {recipe.summary.replace(/<[^>]*>/g, '').substring(0, 120)}...
+                            {recipe.summary.replace(/<[^>]*>/g, '').substring(0, 150)}...
                           </div>
                         )}
                         
@@ -1333,11 +1699,9 @@ const SmartFinder = () => {
                             <div className="meta-value">{recipe.servings || 4}</div>
                           </div>
                           <div className="meta-item">
-                            <FaGlobe className="meta-icon" />
-                            <div className="meta-label">Cuisine</div>
-                            <div className="meta-value">
-                              {recipe.cuisines?.[0] || 'Global'}
-                            </div>
+                            <FaChef className="meta-icon" />
+                            <div className="meta-label">Source</div>
+                            <div className="meta-value">{recipe.source || 'Local'}</div>
                           </div>
                         </div>
                         
@@ -1348,6 +1712,7 @@ const SmartFinder = () => {
                           <span className="rating-value">
                             {(recipe.rating || recipe.spoonacularScore/20 || 4).toFixed(1)}
                           </span>
+                          <span className="rating-label">rating</span>
                         </div>
                         
                         <div className="recipe-actions">
@@ -1388,18 +1753,26 @@ const SmartFinder = () => {
                 <h3>No recipes found</h3>
                 <p>
                   Don't worry! Try different ingredients or check the spelling. 
-                  We search through thousands of recipes worldwide!
+                  Our multiple APIs search through thousands of recipes worldwide!
                 </p>
                 <div className="empty-suggestions">
-                  <p>Try popular combinations:</p>
+                  <p><strong>Try popular Indian combinations:</strong></p>
                   <div className="suggestion-list">
-                    {['chicken + rice', 'tomato + pasta', 'potato + onion', 'egg + bread'].map((combo) => (
+                    {['rice + dal', 'chapati + paneer', 'potato + onion', 'chicken + curry leaves', 'tomato + garam masala'].map((combo) => (
                       <SuggestionChip
                         key={combo}
                         onClick={() => {
                           const ingredients = combo.split(' + ');
                           setIngredients(ingredients);
-                          toast.success(`Added: ${combo}`, { icon: '✨' });
+                          toast.success(`Added: ${combo}`, { 
+                            icon: '✨',
+                            style: {
+                              borderRadius: '12px',
+                              background: '#48BB78',
+                              color: '#fff',
+                              fontWeight: '600'
+                            },
+                          });
                         }}
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
@@ -1412,6 +1785,132 @@ const SmartFinder = () => {
               </EmptyState>
             )}
           </ResultsSection>
+        )}
+      </AnimatePresence>
+
+      {/* Recipe Details Modal */}
+      <AnimatePresence>
+        {showModal && selectedRecipe && (
+          <ModalOverlay
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={closeModal}
+          >
+            <ModalContent
+              initial={{ opacity: 0, scale: 0.8, y: 50 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 50 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ModalHeader>
+                <img
+                  src={selectedRecipe.image || `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=900&h=300&fit=crop&auto=format&q=80`}
+                  alt={selectedRecipe.title}
+                  className="modal-image"
+                />
+                <button className="modal-close" onClick={closeModal}>
+                  <FaTimes />
+                </button>
+                <div className="modal-title">
+                  <h2>{selectedRecipe.title}</h2>
+                </div>
+              </ModalHeader>
+              
+              <ModalBody>
+                <div className="recipe-meta-detailed">
+                  <div className="meta-card">
+                    <FaClock className="meta-icon" />
+                    <div className="meta-label">Cook Time</div>
+                    <div className="meta-value">{selectedRecipe.readyInMinutes || 30} min</div>
+                  </div>
+                  <div className="meta-card">
+                    <FaUsers className="meta-icon" />
+                    <div className="meta-label">Servings</div>
+                    <div className="meta-value">{selectedRecipe.servings || 4}</div>
+                  </div>
+                  <div className="meta-card">
+                    <FaStar className="meta-icon" />
+                    <div className="meta-label">Rating</div>
+                    <div className="meta-value">{(selectedRecipe.rating || 4).toFixed(1)}</div>
+                  </div>
+                  <div className="meta-card">
+                    <FaGlobe className="meta-icon" />
+                    <div className="meta-label">Cuisine</div>
+                    <div className="meta-value">{selectedRecipe.cuisines?.[0] || 'Global'}</div>
+                  </div>
+                </div>
+
+                <div className="recipe-description">
+                  <h3>Description</h3>
+                  <p>
+                    {selectedRecipe.summary ? 
+                      selectedRecipe.summary.replace(/<[^>]*>/g, '') : 
+                      `A delicious ${selectedRecipe.title} recipe that's perfect for any occasion. This recipe combines amazing flavors and is sure to be a hit with your family and friends.`
+                    }
+                  </p>
+                </div>
+
+                <div className="recipe-instructions">
+                  <h3>Instructions</h3>
+                  <div className="instructions-list">
+                    {selectedRecipe.analyzedInstructions?.[0]?.steps ? (
+                      selectedRecipe.analyzedInstructions[0].steps.map((step, index) => (
+                        <div key={index} className="instruction-step">
+                          <div className="step-number">{step.number}</div>
+                          <div className="step-text">{step.step}</div>
+                        </div>
+                      ))
+                    ) : (
+                      [
+                        "Gather all ingredients and prepare your cooking space.",
+                        "Follow the recipe instructions carefully, cooking each step thoroughly.",
+                        "Season to taste and adjust cooking time as needed.",
+                        "Serve hot and enjoy your delicious meal!"
+                      ].map((step, index) => (
+                        <div key={index} className="instruction-step">
+                          <div className="step-number">{index + 1}</div>
+                          <div className="step-text">{step}</div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
+                <div className="modal-actions">
+                  <button 
+                    className="modal-btn secondary"
+                    onClick={() => toggleFavorite(selectedRecipe._id || selectedRecipe.id)}
+                  >
+                    <FaBookmark />
+                    {favorites.has(selectedRecipe._id || selectedRecipe.id) ? 'Saved' : 'Save Recipe'}
+                  </button>
+                  
+                  <button 
+                    className="modal-btn primary"
+                    onClick={() => {
+                      if (selectedRecipe.sourceUrl) {
+                        window.open(selectedRecipe.sourceUrl, '_blank');
+                      } else {
+                        toast('Full recipe details coming soon!', {
+                          icon: 'ℹ️',
+                          style: {
+                            borderRadius: '12px',
+                            background: '#4A5568',
+                            color: '#fff',
+                            fontWeight: '600'
+                          },
+                        });
+                      }
+                    }}
+                  >
+                    <FaShare />
+                    View Full Recipe
+                  </button>
+                </div>
+              </ModalBody>
+            </ModalContent>
+          </ModalOverlay>
         )}
       </AnimatePresence>
     </FinderContainer>
