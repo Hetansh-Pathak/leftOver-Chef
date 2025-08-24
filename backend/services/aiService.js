@@ -217,6 +217,11 @@ Please provide:
 
 Format as a JSON object with keys: tips, mistakes, substitutions, mealPrep, leftovers`;
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return this.getBasicCookingTips(recipe, userSkillLevel);
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
