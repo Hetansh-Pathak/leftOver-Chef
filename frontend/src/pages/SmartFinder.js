@@ -1301,8 +1301,14 @@ const SmartFinder = () => {
       const foundRecipes = await searchRecipesFromMultipleAPIs(ingredients);
       
       if (foundRecipes.length === 0) {
-        toast.error('No recipes found. Try different ingredients.', {
-          icon: '😔',
+        // Provide intelligent suggestions based on ingredients
+        const suggestionMessage = ingredients.length === 1
+          ? `No recipes found for "${ingredients[0]}". Try adding more ingredients like onion, garlic, or tomato.`
+          : `No recipes found for: ${ingredients.join(', ')}. Try simpler combinations or check ingredient spelling.`;
+
+        toast.error(suggestionMessage, {
+          icon: '🤔',
+          duration: 8000,
           style: {
             borderRadius: '12px',
             background: '#F56565',
