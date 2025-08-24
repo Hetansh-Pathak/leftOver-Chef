@@ -1383,11 +1383,11 @@ const SmartFinder = () => {
       badges.push({ text: 'Popular', className: 'popular' });
     }
     // Check for Indian cuisine
-    if (recipe.cuisines && recipe.cuisines.some(c => c.toLowerCase().includes('indian')) ||
-        recipe.title && (recipe.title.toLowerCase().includes('curry') || 
-                        recipe.title.toLowerCase().includes('dal') ||
-                        recipe.title.toLowerCase().includes('roti') ||
-                        recipe.title.toLowerCase().includes('chapati'))) {
+    if ((recipe.cuisines && recipe.cuisines.some(c => c.toLowerCase().includes('indian'))) ||
+        (recipe.title && (recipe.title.toLowerCase().includes('curry') ||
+                         recipe.title.toLowerCase().includes('dal') ||
+                         recipe.title.toLowerCase().includes('roti') ||
+                         recipe.title.toLowerCase().includes('chapati')))) {
       badges.push({ text: 'Indian', className: 'indian' });
     }
     return badges;
