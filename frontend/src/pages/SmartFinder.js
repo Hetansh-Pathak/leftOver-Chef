@@ -1084,6 +1084,7 @@ const SmartFinder = () => {
 
   // Show notification when previous search state is restored
   useEffect(() => {
+    const savedState = loadSavedState(); // Load fresh to avoid stale closures
     if (savedState && (savedState.ingredients.length > 0 || savedState.recipes.length > 0)) {
       const timeDiff = new Date() - new Date(savedState.timestamp);
       const minutesAgo = Math.floor(timeDiff / (1000 * 60));
