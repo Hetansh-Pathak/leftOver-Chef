@@ -4,13 +4,20 @@ const Recipe = require('../models/Recipe');
 // TODO: Add your OpenAI API key here
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // Get your API key from https://platform.openai.com/
 
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY
-});
-
 class AIService {
   constructor() {
     this.model = 'gpt-3.5-turbo';
+    this._openai = null;
+  }
+
+  // Lazy initialization of OpenAI client
+  getOpenAIClient() {
+    if (!this._openai && OPENAI_API_KEY) {
+      this._openai = new OpenAI({
+        apiKey: OPENAI_API_KEY
+      });
+    }
+    return this._openai;
   }
 
   // Generate personalized recipe recommendations using AI
