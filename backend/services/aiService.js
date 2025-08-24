@@ -412,6 +412,11 @@ Ingredients: ${recipe.extendedIngredients?.slice(0, 5).map(ing => ing.name).join
 
 The summary should be 2-3 sentences that highlight what makes this recipe special, its flavor profile, and why someone would want to cook it. Focus on appetizing descriptions and practical benefits.`;
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return '';
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
