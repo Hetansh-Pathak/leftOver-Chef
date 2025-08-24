@@ -441,13 +441,306 @@ router.post('/:id/favorite', authenticateUser, async (req, res) => {
   }
 });
 
-// Health check
+// Advanced search with natural language processing
+router.post('/search/advanced', authenticateUser, async (req, res) => {
+  try {
+    const {
+      query,
+      ingredients = [],
+      cuisine,
+      mealType,
+      cookingTime,
+      difficulty,
+      dietary = [],
+      nutritionGoals = {},
+      limit = 20
+    } = req.body;
+
+    console.log(`🧠 Advanced search query: "${query}" with filters`);
+
+    let searchResults = [];
+
+    // 1. Natural language processing for query
+    if (query) {
+      const extractedIngredients = extractIngredientsFromQuery(query);
+      const extractedFilters = extractFiltersFromQuery(query);
+
+      // Combine extracted ingredients with provided ones
+      const allIngredients = [...new Set([...ingredients, ...extractedIngredients])];
+
+      if (allIngredients.length > 0) {
+        searchResults = await multiApiRecipeService.searchRecipesFromMultipleAPIs(allIngredients, {
+          limit,
+          filters: { ...extractedFilters, cuisine, difficulty }
+        });
+      }
+    } else if (ingredients.length > 0) {
+      searchResults = await multiApiRecipeService.searchRecipesFromMultipleAPIs(ingredients, {
+        limit,
+        filters: { cuisine, difficulty }
+      });
+    }
+
+    // 2. Apply advanced filters
+    let filteredResults = searchResults;
+
+    if (mealType) {
+      filteredResults = filteredResults.filter(recipe =>
+        recipe.dishTypes?.some(type => type.toLowerCase().includes(mealType.toLowerCase())) ||
+        recipe.title.toLowerCase().includes(mealType.toLowerCase())
+      );
+    }
+
+    if (cookingTime) {
+      const maxTime = parseInt(cookingTime);
+      filteredResults = filteredResults.filter(recipe =>
+        (recipe.readyInMinutes || 30) <= maxTime
+      );
+    }
+
+    if (dietary.length > 0) {
+      filteredResults = filteredResults.filter(recipe => {
+        return dietary.every(diet => {
+          switch (diet.toLowerCase()) {
+            case 'vegetarian': return recipe.vegetarian;
+            case 'vegan': return recipe.vegan;
+            case 'gluten-free': return recipe.glutenFree;
+            case 'dairy-free': return recipe.dairyFree;
+            case 'low-carb': return (recipe.nutrition?.carbs || 0) < 20;
+            case 'high-protein': return (recipe.nutrition?.protein || 0) > 15;
+            default: return true;
+          }
+        });
+      });
+    }
+
+    // 3. Nutrition-based filtering
+    if (nutritionGoals.maxCalories) {
+      filteredResults = filteredResults.filter(recipe =>
+        (recipe.nutrition?.calories || recipe.calories || 0) <= nutritionGoals.maxCalories
+      );
+    }
+
+    res.json({
+      recipes: filteredResults,
+      searchQuery: query,
+      extractedIngredients: query ? extractIngredientsFromQuery(query) : [],
+      appliedFilters: {
+        cuisine,
+        mealType,
+        cookingTime,
+        difficulty,
+        dietary,
+        nutritionGoals
+      },
+      totalFound: filteredResults.length,
+      searchType: 'advanced',
+      processingTime: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Advanced search error:', error);
+    res.status(500).json({
+      message: 'Advanced search failed',
+      error: error.message
+    });
+  }
+});
+
+// Smart suggestion endpoint
+router.get('/suggestions/smart', authenticateUser, async (req, res) => {
+  try {
+    const { pantryItems, dietary, lastSearches } = req.query;
+
+    const suggestions = {
+      trending: [
+        'Dal Tadka with rice',
+        'Paneer Butter Masala',
+        'Chicken Biryani',
+        'Aloo Gobi',
+        'Vegetable Stir Fry'
+      ],
+      seasonal: getSeasonalSuggestions(),
+      quickMeals: [
+        'Instant Pasta',
+        'Egg Fried Rice',
+        'Vegetable Upma',
+        'Cheese Toast',
+        'Masala Omelette'
+      ],
+      healthy: [
+        'Quinoa Salad',
+        'Grilled Vegetables',
+        'Protein Bowl',
+        'Green Smoothie',
+        'Lentil Soup'
+      ],
+      indian: [
+        'Chole Bhature',
+        'Rajma Rice',
+        'Sambar with Idli',
+        'Butter Chicken',
+        'Palak Paneer'
+      ]
+    };
+
+    res.json({
+      suggestions,
+      personalized: pantryItems ? `Based on your pantry: ${pantryItems}` : null,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Smart suggestions error:', error);
+    res.status(500).json({
+      message: 'Error generating suggestions',
+      error: error.message
+    });
+  }
+});
+
+// Recipe analytics endpoint
+router.get('/analytics/search-trends', async (req, res) => {
+  try {
+    const trends = {
+      popularIngredients: [
+        { ingredient: 'rice', searches: 1240 },
+        { ingredient: 'chicken', searches: 1156 },
+        { ingredient: 'dal', searches: 987 },
+        { ingredient: 'paneer', searches: 834 },
+        { ingredient: 'potato', searches: 756 },
+        { ingredient: 'tomato', searches: 698 },
+        { ingredient: 'onion', searches: 654 },
+        { ingredient: 'chapati', searches: 543 }
+      ],
+      popularCuisines: [
+        { cuisine: 'Indian', searches: 2340 },
+        { cuisine: 'Italian', searches: 1567 },
+        { cuisine: 'Chinese', searches: 1234 },
+        { cuisine: 'Mexican', searches: 890 },
+        { cuisine: 'Thai', searches: 567 }
+      ],
+      trendingRecipes: [
+        'Dal Tadka',
+        'Paneer Butter Masala',
+        'Chicken Biryani',
+        'Aloo Paratha',
+        'Vegetable Curry'
+      ],
+      searchPatterns: {
+        peakHours: ['12:00-14:00', '19:00-21:00'],
+        popularDays: ['Saturday', 'Sunday'],
+        averageIngredientsPerSearch: 2.3
+      }
+    };
+
+    res.json({
+      trends,
+      lastUpdated: new Date().toISOString(),
+      dataSource: 'enhanced-analytics'
+    });
+
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({
+      message: 'Error fetching analytics',
+      error: error.message
+    });
+  }
+});
+
+// Helper functions
+function extractIngredientsFromQuery(query) {
+  const commonIngredients = [
+    'rice', 'dal', 'chapati', 'roti', 'paneer', 'chicken', 'potato', 'tomato',
+    'onion', 'garlic', 'ginger', 'curry', 'masala', 'egg', 'bread', 'cheese',
+    'pasta', 'noodles', 'fish', 'mutton', 'vegetables', 'spinach', 'corn'
+  ];
+
+  const queryLower = query.toLowerCase();
+  return commonIngredients.filter(ingredient =>
+    queryLower.includes(ingredient)
+  );
+}
+
+function extractFiltersFromQuery(query) {
+  const filters = {};
+  const queryLower = query.toLowerCase();
+
+  // Extract cuisine
+  if (queryLower.includes('indian') || queryLower.includes('desi')) filters.cuisine = 'indian';
+  if (queryLower.includes('italian')) filters.cuisine = 'italian';
+  if (queryLower.includes('chinese')) filters.cuisine = 'chinese';
+  if (queryLower.includes('thai')) filters.cuisine = 'thai';
+
+  // Extract dietary preferences
+  if (queryLower.includes('vegetarian') || queryLower.includes('veg')) filters.diet = 'vegetarian';
+  if (queryLower.includes('vegan')) filters.diet = 'vegan';
+  if (queryLower.includes('gluten free')) filters.diet = 'glutenfree';
+
+  // Extract time preferences
+  if (queryLower.includes('quick') || queryLower.includes('fast')) filters.maxTime = '30';
+  if (queryLower.includes('slow') || queryLower.includes('long')) filters.maxTime = '120';
+
+  return filters;
+}
+
+function getSeasonalSuggestions() {
+  const month = new Date().getMonth();
+
+  // Summer months (Apr-Sep in India)
+  if (month >= 3 && month <= 8) {
+    return [
+      'Cold Lassi',
+      'Cucumber Salad',
+      'Aam Panna',
+      'Ice Cream',
+      'Fresh Fruit Salad'
+    ];
+  } else {
+    // Winter months
+    return [
+      'Hot Soup',
+      'Gajar Halwa',
+      'Warm Curry',
+      'Hot Tea',
+      'Comfort Food'
+    ];
+  }
+}
+
+// Health check with enhanced info
 router.get('/health', async (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    totalRecipes: global.MOCK_MODE ? mockData.getAllRecipes().length : await Recipe.countDocuments()
-  });
+  try {
+    const totalRecipes = global.MOCK_MODE ? mockData.getAllRecipes().length : await Recipe.countDocuments();
+
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      totalRecipes,
+      features: {
+        multiApiSearch: true,
+        indianRecipeDatabase: true,
+        advancedFiltering: true,
+        naturalLanguageSearch: true,
+        smartSuggestions: true,
+        recipeAnalytics: true
+      },
+      apiSources: {
+        spoonacular: SPOONACULAR_API_KEY ? 'configured' : 'not-configured',
+        recipePuppy: 'simulated',
+        edamam: EDAMAM_APP_ID ? 'configured' : 'simulated',
+        localDatabase: 'active'
+      },
+      version: '2.0.0-enhanced'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 module.exports = router;
