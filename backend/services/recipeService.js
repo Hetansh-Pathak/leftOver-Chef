@@ -223,10 +223,132 @@ class RecipeService {
   calculateDifficulty(recipeData) {
     const ingredientCount = (recipeData.extendedIngredients || []).length;
     const cookTime = recipeData.readyInMinutes || 30;
-    
+
     if (ingredientCount <= 5 && cookTime <= 30) return 'Easy';
     if (ingredientCount <= 10 && cookTime <= 60) return 'Medium';
     return 'Hard';
+  }
+
+  // Get optimized image URL with fallbacks
+  getOptimizedImageUrl(originalImage, recipeTitle = '') {
+    // If we have a Spoonacular image, optimize it
+    if (originalImage && originalImage.includes('spoonacular')) {
+      // Spoonacular images can be resized by changing the size parameter
+      return originalImage.replace(/(\d+x\d+)/, '636x393');
+    }
+
+    // If we have any other image, return it
+    if (originalImage) {
+      return originalImage;
+    }
+
+    // Generate fallback image based on recipe type
+    const fallbackImages = [
+      'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80', // General food
+      'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=636&h=393&fit=crop&auto=format&q=80', // Pizza
+      'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=636&h=393&fit=crop&auto=format&q=80', // Burger
+      'https://images.unsplash.com/photo-1563379091339-03246963d7d3?w=636&h=393&fit=crop&auto=format&q=80', // Pasta
+      'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=636&h=393&fit=crop&auto=format&q=80', // Salad
+      'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=636&h=393&fit=crop&auto=format&q=80', // Asian
+      'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=636&h=393&fit=crop&auto=format&q=80', // Soup
+      'https://images.unsplash.com/photo-1574484284002-952d92456975?w=636&h=393&fit=crop&auto=format&q=80'  // Curry
+    ];
+
+    // Use title to pick a more relevant fallback
+    const title = (recipeTitle || '').toLowerCase();
+    if (title.includes('pizza')) return fallbackImages[1];
+    if (title.includes('burger') || title.includes('sandwich')) return fallbackImages[2];
+    if (title.includes('pasta') || title.includes('spaghetti') || title.includes('noodle')) return fallbackImages[3];
+    if (title.includes('salad')) return fallbackImages[4];
+    if (title.includes('asian') || title.includes('chinese') || title.includes('thai')) return fallbackImages[5];
+    if (title.includes('soup') || title.includes('broth')) return fallbackImages[6];
+    if (title.includes('curry') || title.includes('indian')) return fallbackImages[7];
+
+    // Default fallback
+    return fallbackImages[0];
+  }
+
+  // Generate default summary if none provided
+  generateDefaultSummary(recipeData) {
+    const title = recipeData.title || 'This recipe';
+    const cuisines = recipeData.cuisines || [];
+    const time = recipeData.readyInMinutes || 30;
+    const servings = recipeData.servings || 4;
+
+    let summary = `${title} is a delicious`;
+
+    if (cuisines.length > 0) {
+      summary += ` ${cuisines[0].toLowerCase()}`;
+    }
+
+    summary += ` dish that serves ${servings} people and takes about ${time} minutes to prepare.`;
+
+    if (recipeData.vegetarian) summary += ' This vegetarian-friendly recipe';
+    if (recipeData.vegan) summary += ' This vegan recipe';
+    if (recipeData.glutenFree) summary += ' This gluten-free option';
+
+    summary += ' is perfect for a satisfying meal.';
+
+    return summary;
+  }
+
+  // Generate tags for better categorization
+  generateTags(recipeData) {
+    const tags = [];
+
+    // Diet tags
+    if (recipeData.vegetarian) tags.push('vegetarian');
+    if (recipeData.vegan) tags.push('vegan');
+    if (recipeData.glutenFree) tags.push('gluten-free');
+    if (recipeData.dairyFree) tags.push('dairy-free');
+
+    // Time-based tags
+    const time = recipeData.readyInMinutes || 30;
+    if (time <= 15) tags.push('quick', 'fast');
+    if (time <= 30) tags.push('easy');
+    if (time >= 120) tags.push('slow-cooked');
+
+    // Health tags
+    const healthScore = recipeData.healthScore || 0;
+    if (healthScore > 70) tags.push('healthy');
+    if (healthScore > 85) tags.push('super-healthy');
+
+    // Popularity tags
+    const likes = recipeData.aggregateLikes || 0;
+    if (likes > 100) tags.push('popular');
+    if (likes > 500) tags.push('trending');
+
+    // Cuisine tags
+    if (recipeData.cuisines) {
+      tags.push(...recipeData.cuisines.map(c => c.toLowerCase()));
+    }
+
+    // Dish type tags
+    if (recipeData.dishTypes) {
+      tags.push(...recipeData.dishTypes.map(d => d.toLowerCase()));
+    }
+
+    return [...new Set(tags)]; // Remove duplicates
+  }
+
+  // Enhanced basic recipe formatter
+  formatBasicRecipe(basicRecipeData) {
+    return {
+      spoonacularId: basicRecipeData.id,
+      title: basicRecipeData.title,
+      summary: this.generateDefaultSummary(basicRecipeData),
+      readyInMinutes: 30,
+      servings: 4,
+      image: this.getOptimizedImageUrl(basicRecipeData.image, basicRecipeData.title),
+      rating: 4.0,
+      source: 'spoonacular-basic',
+      difficulty: 'Medium',
+      leftoverFriendly: true,
+      quickMeal: true,
+      matchScore: 0,
+      tags: [],
+      lastUpdated: new Date()
+    };
   }
 
   // Search local recipes (fallback)
