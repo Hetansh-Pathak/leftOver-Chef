@@ -179,11 +179,69 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       );
     }
 
-    // 6. Enhanced recipe formatting
+    // 6. Enhanced recipe formatting with diverse images
+    const getFallbackImage = (recipe, index) => {
+      // Diverse high-quality food images for different recipe types
+      const fallbackImages = [
+        'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80', // Indian curry
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=636&h=393&fit=crop&auto=format&q=80', // Pizza
+        'https://images.unsplash.com/photo-1484723091739-30a097e8f929?w=636&h=393&fit=crop&auto=format&q=80', // Healthy salad
+        'https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=636&h=393&fit=crop&auto=format&q=80', // Pasta
+        'https://images.unsplash.com/photo-1512058564366-18510be2db19?w=636&h=393&fit=crop&auto=format&q=80', // Stir fry
+        'https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=636&h=393&fit=crop&auto=format&q=80', // Chinese food
+        'https://images.unsplash.com/photo-1585937421612-70a008356fbe?w=636&h=393&fit=crop&auto=format&q=80', // Tacos
+        'https://images.unsplash.com/photo-1505253716362-afaea1d3d1af?w=636&h=393&fit=crop&auto=format&q=80', // Burger
+        'https://images.unsplash.com/photo-1563379091339-03246963d51a?w=636&h=393&fit=crop&auto=format&q=80', // Thai food
+        'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=636&h=393&fit=crop&auto=format&q=80', // Soup
+        'https://images.unsplash.com/photo-1606787366850-de6330128bfc?w=636&h=393&fit=crop&auto=format&q=80', // Chicken dish
+        'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=636&h=393&fit=crop&auto=format&q=80', // Vegetarian bowl
+        'https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=636&h=393&fit=crop&auto=format&q=80', // Breakfast
+        'https://images.unsplash.com/photo-1547637589-f54c34f5d7a4?w=636&h=393&fit=crop&auto=format&q=80', // Seafood
+        'https://images.unsplash.com/photo-1579952363873-27d3bfad9c0d?w=636&h=393&fit=crop&auto=format&q=80', // Dessert
+        'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=636&h=393&fit=crop&auto=format&q=80', // Rice dish
+        'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=636&h=393&fit=crop&auto=format&q=80', // Meat dish
+        'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=636&h=393&fit=crop&auto=format&q=80', // Japanese food
+        'https://images.unsplash.com/photo-1514326640560-7d063ef2aed5?w=636&h=393&fit=crop&auto=format&q=80', // Bread/sandwich
+        'https://images.unsplash.com/photo-1562967914-608f82629710?w=636&h=393&fit=crop&auto=format&q=80'  // Mediterranean
+      ];
+
+      // Smart image selection based on recipe properties
+      let imageIndex = index % fallbackImages.length;
+
+      // Use cuisine-specific images when possible
+      if (recipe.cuisines && recipe.cuisines.length > 0) {
+        const cuisine = recipe.cuisines[0].toLowerCase();
+        if (cuisine.includes('indian')) imageIndex = 0;
+        else if (cuisine.includes('italian')) imageIndex = 3;
+        else if (cuisine.includes('chinese') || cuisine.includes('asian')) imageIndex = 5;
+        else if (cuisine.includes('mexican')) imageIndex = 6;
+        else if (cuisine.includes('thai')) imageIndex = 8;
+        else if (cuisine.includes('japanese')) imageIndex = 17;
+        else if (cuisine.includes('mediterranean')) imageIndex = 19;
+      }
+
+      // Use ingredient-based selection for better matching
+      const title = (recipe.title || '').toLowerCase();
+      if (title.includes('curry') || title.includes('dal') || title.includes('masala')) imageIndex = 0;
+      else if (title.includes('pizza')) imageIndex = 1;
+      else if (title.includes('salad')) imageIndex = 2;
+      else if (title.includes('pasta') || title.includes('spaghetti')) imageIndex = 3;
+      else if (title.includes('stir') || title.includes('fry')) imageIndex = 4;
+      else if (title.includes('taco')) imageIndex = 6;
+      else if (title.includes('burger')) imageIndex = 7;
+      else if (title.includes('soup')) imageIndex = 9;
+      else if (title.includes('chicken')) imageIndex = 10;
+      else if (title.includes('rice')) imageIndex = 15;
+      else if (title.includes('fish') || title.includes('seafood')) imageIndex = 13;
+      else if (title.includes('dessert') || title.includes('sweet')) imageIndex = 14;
+
+      return fallbackImages[imageIndex];
+    };
+
     const enhancedRecipes = filteredRecipes.slice(0, limit).map((recipe, index) => ({
       ...recipe,
       searchRank: index + 1,
-      image: recipe.image || `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80`,
+      image: recipe.image || getFallbackImage(recipe, index),
       title: recipe.title || recipe.name,
       summary: recipe.summary || 'A delicious recipe perfect for your ingredients',
       readyInMinutes: recipe.readyInMinutes || 30,
