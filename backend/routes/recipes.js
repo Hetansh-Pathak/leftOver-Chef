@@ -1,12 +1,9 @@
 const express = require('express');
 const Recipe = require('../models/Recipe');
 const User = require('../models/User');
-const RecipeService = require('../services/recipeService');
+const recipeService = require('../services/recipeService');
 const mockData = require('../mockData');
 const router = express.Router();
-
-// Create instance of RecipeService
-const recipeService = new RecipeService();
 
 // Middleware for authentication (optional for most routes)
 const authenticateUser = async (req, res, next) => {
