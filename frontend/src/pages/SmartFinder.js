@@ -1032,13 +1032,27 @@ const ModalBody = styled.div`
 
 const SmartFinder = () => {
   const { favorites, toggleFavorite, isFavorite } = useAuth();
-  const [ingredients, setIngredients] = useState([]);
+
+  // Load saved state from localStorage
+  const loadSavedState = () => {
+    try {
+      const savedState = localStorage.getItem('smartFinderState');
+      return savedState ? JSON.parse(savedState) : null;
+    } catch (error) {
+      console.error('Error loading saved state:', error);
+      return null;
+    }
+  };
+
+  const savedState = loadSavedState();
+
+  const [ingredients, setIngredients] = useState(savedState?.ingredients || []);
   const [currentInput, setCurrentInput] = useState('');
-  const [recipes, setRecipes] = useState([]);
+  const [recipes, setRecipes] = useState(savedState?.recipes || []);
   const [isSearching, setIsSearching] = useState(false);
-  const [hasSearched, setHasSearched] = useState(false);
-  const [sortBy, setSortBy] = useState('relevance');
-  const [filters, setFilters] = useState({
+  const [hasSearched, setHasSearched] = useState(savedState?.hasSearched || false);
+  const [sortBy, setSortBy] = useState(savedState?.sortBy || 'relevance');
+  const [filters, setFilters] = useState(savedState?.filters || {
     cuisine: '',
     diet: '',
     maxTime: '',
@@ -1048,6 +1062,24 @@ const SmartFinder = () => {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const inputRef = useRef(null);
+
+  // Save state to localStorage whenever key state changes
+  useEffect(() => {
+    const stateToSave = {
+      ingredients,
+      recipes,
+      hasSearched,
+      sortBy,
+      filters,
+      timestamp: new Date().toISOString()
+    };
+
+    try {
+      localStorage.setItem('smartFinderState', JSON.stringify(stateToSave));
+    } catch (error) {
+      console.error('Error saving state:', error);
+    }
+  }, [ingredients, recipes, hasSearched, sortBy, filters]);
 
   // Enhanced suggestion categories with Indian focus
   const suggestionCategories = [
