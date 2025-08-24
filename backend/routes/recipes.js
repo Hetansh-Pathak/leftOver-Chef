@@ -334,24 +334,56 @@ router.post('/search/global', authenticateUser, async (req, res) => {
   }
 });
 
-// Get daily featured recipe
+// Get daily featured recipe with enhanced API support
 router.get('/daily/featured', async (req, res) => {
   try {
-    if (global.MOCK_MODE) {
-      return res.json(mockData.getDailyRecipe());
+    // Try multi-API service first for diverse content
+    try {
+      const featuredRecipe = await multiApiRecipeService.getFeaturedRecipeOfTheDay();
+      if (featuredRecipe) {
+        return res.json({
+          ...featuredRecipe,
+          isFeatured: true,
+          featuredReason: 'Popular Indian recipe from our enhanced database',
+          featuredDate: new Date().toISOString().split('T')[0]
+        });
+      }
+    } catch (apiError) {
+      console.log('Multi-API featured recipe failed, using fallback:', apiError.message);
     }
 
-    const dailyRecipe = await recipeService.getFeaturedRecipeOfTheDay();
+    // Fallback to mock data
+    if (global.MOCK_MODE) {
+      const mockFeatured = mockData.getDailyRecipe();
+      return res.json({
+        ...mockFeatured,
+        isFeatured: true,
+        featuredReason: 'Traditional recipe perfect for today',
+        featuredDate: new Date().toISOString().split('T')[0]
+      });
+    }
 
+    // Database fallback
+    const dailyRecipe = await recipeService.getFeaturedRecipeOfTheDay();
     if (!dailyRecipe) {
       const fallbackRecipe = await Recipe.findOne({
         rating: { $gte: 4.0 }
       }).sort({ aggregateLikes: -1 });
 
-      return res.json(fallbackRecipe);
+      return res.json({
+        ...fallbackRecipe?.toObject(),
+        isFeatured: true,
+        featuredReason: 'Highly rated community favorite',
+        featuredDate: new Date().toISOString().split('T')[0]
+      });
     }
 
-    res.json(dailyRecipe);
+    res.json({
+      ...dailyRecipe,
+      isFeatured: true,
+      featuredReason: 'Recipe of the day',
+      featuredDate: new Date().toISOString().split('T')[0]
+    });
 
   } catch (error) {
     console.error('Error fetching daily recipe:', error);
