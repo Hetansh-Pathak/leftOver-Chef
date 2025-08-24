@@ -401,20 +401,6 @@ class RecipeService {
     return await Promise.all(savePromises);
   }
 
-  // Format basic recipe when detailed info is not available
-  formatBasicRecipe(basicData) {
-    return {
-      spoonacularId: basicData.id,
-      title: basicData.title || 'Recipe',
-      image: basicData.image,
-      readyInMinutes: 30,
-      servings: 4,
-      rating: 4.0,
-      source: 'spoonacular',
-      difficulty: 'Medium',
-      leftoverFriendly: true
-    };
-  }
 
   // Get featured recipe of the day
   async getFeaturedRecipeOfTheDay() {
