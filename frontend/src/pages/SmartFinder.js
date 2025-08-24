@@ -1032,7 +1032,6 @@ const SmartFinder = () => {
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
   const [favorites, setFavorites] = useState(new Set());
-  const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState('relevance');
   const [filters, setFilters] = useState({
     cuisine: '',
