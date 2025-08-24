@@ -234,7 +234,7 @@ const Favorites = () => {
   useEffect(() => {
     const recipes = getFavoriteRecipes();
     setFavoriteRecipes(recipes);
-  }, []);
+  }, [getFavoriteRecipes]);
 
   const handleRemoveFavorite = (recipe) => {
     toggleFavorite(recipe);
