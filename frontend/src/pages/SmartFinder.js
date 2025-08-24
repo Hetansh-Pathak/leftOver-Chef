@@ -25,6 +25,7 @@ import {
 } from 'react-icons/fa';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAuth } from '../contexts/AuthContext';
 
 const FinderContainer = styled(motion.div)`
   max-width: 1400px;
