@@ -184,19 +184,30 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       }
     }
 
-    console.log(`🎯 Final result: ${enhancedRecipes.length} recipes found`);
+    // 9. Final limit after filtering
+    const finalFilteredRecipes = enhancedRecipes.slice(0, limit);
+
+    console.log(`🎯 Final result: ${finalFilteredRecipes.length} recipes found (${enhancedRecipes.length} before filtering)`);
 
     res.json({
-      recipes: enhancedRecipes,
-      totalFound: enhancedRecipes.length,
+      recipes: finalFilteredRecipes,
+      totalFound: finalFilteredRecipes.length,
+      totalBeforeFiltering: enhancedRecipes.length,
       searchedIngredients: ingredients,
+      appliedFilters: filters,
       sources: {
         spoonacular: spoonacularResults.length,
         local: localResults.length
       },
-      message: enhancedRecipes.length > 0 ? 
-        `Found ${enhancedRecipes.length} recipes for your ingredients` :
-        'No recipes found. Try different ingredients.',
+      message: finalFilteredRecipes.length > 0 ?
+        `Found ${finalFilteredRecipes.length} recipes for your ingredients` :
+        'No recipes found. Try different ingredients or adjust filters.',
+      searchTips: finalFilteredRecipes.length === 0 ? [
+        'Try using more common ingredients',
+        'Check your spelling',
+        'Remove some filters to see more results',
+        'Try ingredient combinations like "chicken rice" or "pasta tomato"'
+      ] : [],
       timestamp: new Date().toISOString()
     });
     
