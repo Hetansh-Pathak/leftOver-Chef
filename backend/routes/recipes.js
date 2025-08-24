@@ -128,18 +128,61 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
     // 6. Limit final results
     const finalRecipes = uniqueRecipes.slice(0, limit);
 
-    // 7. Enhance recipes with proper formatting
-    const enhancedRecipes = finalRecipes.map((recipe, index) => ({
+    // 7. Enhance recipes with proper formatting and apply filters
+    let enhancedRecipes = finalRecipes.map((recipe, index) => ({
       ...recipe,
       searchRank: index + 1,
-      image: recipe.image || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop',
+      image: recipeService.getOptimizedImageUrl(recipe.image, recipe.title || recipe.name),
       title: recipe.title || recipe.name,
-      summary: recipe.summary || 'A delicious recipe perfect for your ingredients',
+      summary: recipe.summary || recipeService.generateDefaultSummary(recipe),
       readyInMinutes: recipe.readyInMinutes || 30,
       servings: recipe.servings || 4,
       rating: recipe.rating || (recipe.spoonacularScore ? recipe.spoonacularScore / 20 : 4.0),
-      cuisines: recipe.cuisines && recipe.cuisines.length > 0 ? recipe.cuisines : ['International']
+      cuisines: recipe.cuisines && recipe.cuisines.length > 0 ? recipe.cuisines : ['International'],
+      tags: recipe.tags || [],
+      lastUpdated: new Date()
     }));
+
+    // 8. Apply filters if provided
+    if (filters) {
+      if (filters.cuisine) {
+        enhancedRecipes = enhancedRecipes.filter(recipe =>
+          recipe.cuisines.some(cuisine =>
+            cuisine.toLowerCase().includes(filters.cuisine.toLowerCase())
+          )
+        );
+      }
+
+      if (filters.diet) {
+        enhancedRecipes = enhancedRecipes.filter(recipe => {
+          switch (filters.diet.toLowerCase()) {
+            case 'vegetarian':
+              return recipe.vegetarian === true;
+            case 'vegan':
+              return recipe.vegan === true;
+            case 'glutenfree':
+              return recipe.glutenFree === true;
+            case 'dairyfree':
+              return recipe.dairyFree === true;
+            default:
+              return true;
+          }
+        });
+      }
+
+      if (filters.maxTime) {
+        const maxTime = parseInt(filters.maxTime);
+        enhancedRecipes = enhancedRecipes.filter(recipe =>
+          (recipe.readyInMinutes || 30) <= maxTime
+        );
+      }
+
+      if (filters.difficulty) {
+        enhancedRecipes = enhancedRecipes.filter(recipe =>
+          (recipe.difficulty || 'Medium').toLowerCase() === filters.difficulty.toLowerCase()
+        );
+      }
+    }
 
     console.log(`🎯 Final result: ${enhancedRecipes.length} recipes found`);
 
