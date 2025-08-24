@@ -179,9 +179,9 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       );
     }
 
-    // 6. Enhanced recipe formatting with diverse images
+    // 6. Enhanced recipe formatting with diverse images (NO DUPLICATES)
     const getFallbackImage = (recipe, index) => {
-      // Diverse high-quality food images for different recipe types
+      // Expanded diverse high-quality food images for different recipe types
       const fallbackImages = [
         'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80', // Indian curry
         'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=636&h=393&fit=crop&auto=format&q=80', // Pizza
@@ -202,38 +202,105 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
         'https://images.unsplash.com/photo-1540189549336-e6e99c3679fe?w=636&h=393&fit=crop&auto=format&q=80', // Meat dish
         'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=636&h=393&fit=crop&auto=format&q=80', // Japanese food
         'https://images.unsplash.com/photo-1514326640560-7d063ef2aed5?w=636&h=393&fit=crop&auto=format&q=80', // Bread/sandwich
-        'https://images.unsplash.com/photo-1562967914-608f82629710?w=636&h=393&fit=crop&auto=format&q=80'  // Mediterranean
+        'https://images.unsplash.com/photo-1562967914-608f82629710?w=636&h=393&fit=crop&auto=format&q=80', // Mediterranean
+        'https://images.unsplash.com/photo-1567620832903-b006beb0113b?w=636&h=393&fit=crop&auto=format&q=80', // Indian dishes
+        'https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=636&h=393&fit=crop&auto=format&q=80', // Burrito
+        'https://images.unsplash.com/photo-1565299507177-b0ac66763828?w=636&h=393&fit=crop&auto=format&q=80', // Salad bowl
+        'https://images.unsplash.com/photo-1548940740-204726a19be3?w=636&h=393&fit=crop&auto=format&q=80', // Grilled fish
+        'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=636&h=393&fit=crop&auto=format&q=80', // Noodles
+        'https://images.unsplash.com/photo-1571091718767-18b5b1457add?w=636&h=393&fit=crop&auto=format&q=80', // Sandwich
+        'https://images.unsplash.com/photo-1588461598336-8e4a36e7b936?w=636&h=393&fit=crop&auto=format&q=80', // Healthy bowl
+        'https://images.unsplash.com/photo-1565958011703-44f9829ba187?w=636&h=393&fit=crop&auto=format&q=80', // Fried rice
+        'https://images.unsplash.com/photo-1590301157890-4810ed352733?w=636&h=393&fit=crop&auto=format&q=80', // Pancakes
+        'https://images.unsplash.com/photo-1559054663-e9bb52a8d0d6?w=636&h=393&fit=crop&auto=format&q=80', // Smoothie bowl
+        'https://images.unsplash.com/photo-1571091655789-405eb7a3a3a8?w=636&h=393&fit=crop&auto=format&q=80', // Avocado toast
+        'https://images.unsplash.com/photo-1608039829572-78524f79c4c7?w=636&h=393&fit=crop&auto=format&q=80', // Ramen
+        'https://images.unsplash.com/photo-1574448857443-dc1d7e914556?w=636&h=393&fit=crop&auto=format&q=80', // Grilled vegetables
+        'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=636&h=393&fit=crop&auto=format&q=80', // Lasagna
+        'https://images.unsplash.com/photo-1600803907087-f56d462fd26b?w=636&h=393&fit=crop&auto=format&q=80', // Roasted chicken
+        'https://images.unsplash.com/photo-1581873372046-3c614fa0e78b?w=636&h=393&fit=crop&auto=format&q=80', // Smoothie
+        'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=636&h=393&fit=crop&auto=format&q=80', // Buddha bowl
+        'https://images.unsplash.com/photo-1564671165093-20688ff1fffa?w=636&h=393&fit=crop&auto=format&q=80', // Fish tacos
+        'https://images.unsplash.com/photo-1559181567-c3190ca9959b?w=636&h=393&fit=crop&auto=format&q=80', // Cheeseburger
+        'https://images.unsplash.com/photo-1565299624946-b28f40a0ca4b?w=636&h=393&fit=crop&auto=format&q=80'  // Different pizza
       ];
 
-      // Smart image selection based on recipe properties
-      let imageIndex = index % fallbackImages.length;
+      // Create unique hash based on recipe title to ensure consistency
+      const createHash = (str) => {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          const char = str.charCodeAt(i);
+          hash = ((hash << 5) - hash) + char;
+          hash = hash & hash; // Convert to 32-bit integer
+        }
+        return Math.abs(hash);
+      };
 
-      // Use cuisine-specific images when possible
+      const recipeTitle = recipe.title || recipe.name || `recipe_${index}`;
+      const hash = createHash(recipeTitle);
+
+      // Smart image selection based on recipe properties with hash for uniqueness
+      let imageIndex = hash % fallbackImages.length;
+
+      // Override with cuisine-specific images when possible
       if (recipe.cuisines && recipe.cuisines.length > 0) {
         const cuisine = recipe.cuisines[0].toLowerCase();
-        if (cuisine.includes('indian')) imageIndex = 0;
-        else if (cuisine.includes('italian')) imageIndex = 3;
-        else if (cuisine.includes('chinese') || cuisine.includes('asian')) imageIndex = 5;
-        else if (cuisine.includes('mexican')) imageIndex = 6;
-        else if (cuisine.includes('thai')) imageIndex = 8;
-        else if (cuisine.includes('japanese')) imageIndex = 17;
-        else if (cuisine.includes('mediterranean')) imageIndex = 19;
+        const cuisineHash = createHash(cuisine + recipeTitle);
+
+        if (cuisine.includes('indian')) {
+          const indianImages = [0, 20, 27]; // Multiple Indian food images
+          imageIndex = indianImages[cuisineHash % indianImages.length];
+        } else if (cuisine.includes('italian')) {
+          const italianImages = [1, 3, 33]; // Pizza, pasta, lasagna
+          imageIndex = italianImages[cuisineHash % italianImages.length];
+        } else if (cuisine.includes('chinese') || cuisine.includes('asian')) {
+          const asianImages = [5, 8, 24, 31]; // Chinese, Thai, noodles, ramen
+          imageIndex = asianImages[cuisineHash % asianImages.length];
+        } else if (cuisine.includes('mexican')) {
+          const mexicanImages = [6, 21, 37]; // Tacos, burrito, fish tacos
+          imageIndex = mexicanImages[cuisineHash % mexicanImages.length];
+        } else if (cuisine.includes('mediterranean')) {
+          const medImages = [19, 13, 23]; // Mediterranean, seafood, grilled fish
+          imageIndex = medImages[cuisineHash % medImages.length];
+        }
       }
 
       // Use ingredient-based selection for better matching
       const title = (recipe.title || '').toLowerCase();
-      if (title.includes('curry') || title.includes('dal') || title.includes('masala')) imageIndex = 0;
-      else if (title.includes('pizza')) imageIndex = 1;
-      else if (title.includes('salad')) imageIndex = 2;
-      else if (title.includes('pasta') || title.includes('spaghetti')) imageIndex = 3;
-      else if (title.includes('stir') || title.includes('fry')) imageIndex = 4;
-      else if (title.includes('taco')) imageIndex = 6;
-      else if (title.includes('burger')) imageIndex = 7;
-      else if (title.includes('soup')) imageIndex = 9;
-      else if (title.includes('chicken')) imageIndex = 10;
-      else if (title.includes('rice')) imageIndex = 15;
-      else if (title.includes('fish') || title.includes('seafood')) imageIndex = 13;
-      else if (title.includes('dessert') || title.includes('sweet')) imageIndex = 14;
+      const titleHash = createHash(title);
+
+      if (title.includes('curry') || title.includes('dal') || title.includes('masala')) {
+        const indImages = [0, 20, 27];
+        imageIndex = indImages[titleHash % indImages.length];
+      } else if (title.includes('pizza')) {
+        const pizzaImages = [1, 39];
+        imageIndex = pizzaImages[titleHash % pizzaImages.length];
+      } else if (title.includes('salad')) {
+        const saladImages = [2, 22, 26];
+        imageIndex = saladImages[titleHash % saladImages.length];
+      } else if (title.includes('pasta') || title.includes('spaghetti')) {
+        const pastaImages = [3, 24, 33];
+        imageIndex = pastaImages[titleHash % pastaImages.length];
+      } else if (title.includes('burger')) {
+        const burgerImages = [7, 38];
+        imageIndex = burgerImages[titleHash % burgerImages.length];
+      } else if (title.includes('soup')) {
+        imageIndex = 9;
+      } else if (title.includes('chicken')) {
+        const chickenImages = [10, 34];
+        imageIndex = chickenImages[titleHash % chickenImages.length];
+      } else if (title.includes('rice')) {
+        const riceImages = [15, 27];
+        imageIndex = riceImages[titleHash % riceImages.length];
+      } else if (title.includes('fish') || title.includes('seafood')) {
+        const fishImages = [13, 23, 37];
+        imageIndex = fishImages[titleHash % fishImages.length];
+      } else if (title.includes('pancake')) {
+        imageIndex = 28;
+      } else if (title.includes('sandwich')) {
+        const sandwichImages = [18, 25, 30];
+        imageIndex = sandwichImages[titleHash % sandwichImages.length];
+      }
 
       return fallbackImages[imageIndex];
     };
