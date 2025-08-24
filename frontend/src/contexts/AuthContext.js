@@ -22,13 +22,26 @@ export const AuthProvider = ({ children }) => {
     const checkAuthStatus = () => {
       const token = localStorage.getItem('authToken');
       const userData = localStorage.getItem('userData');
-      
+      const savedFavorites = localStorage.getItem('userFavorites');
+
       if (token && userData) {
         setIsAuthenticated(true);
         setUser(JSON.parse(userData));
         // Set axios default authorization header
         axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       }
+
+      // Load saved favorites
+      if (savedFavorites) {
+        try {
+          const favoritesArray = JSON.parse(savedFavorites);
+          setFavorites(new Set(favoritesArray));
+        } catch (error) {
+          console.error('Error loading favorites:', error);
+          setFavorites(new Set());
+        }
+      }
+
       setIsLoading(false);
     };
 
