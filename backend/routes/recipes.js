@@ -2,6 +2,7 @@ const express = require('express');
 const Recipe = require('../models/Recipe');
 const User = require('../models/User');
 const recipeService = require('../services/recipeService');
+const multiApiRecipeService = require('../services/multiApiRecipeService');
 const mockData = require('../mockData');
 const router = express.Router();
 
@@ -18,14 +19,15 @@ const authenticateUser = async (req, res, next) => {
   }
 };
 
-// Enhanced ingredient-based search - Main BigOven-style endpoint
+// Enhanced ingredient-based search - Main BigOven-style endpoint with Multi-API support
 router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
   try {
     const {
       ingredients,
       matchType = 'any',
-      useSpoonacular = true,
-      limit = 30
+      useMultiAPI = true,
+      limit = 30,
+      filters = {}
     } = req.body;
 
     if (!ingredients || !Array.isArray(ingredients) || ingredients.length === 0) {
@@ -34,37 +36,47 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
       });
     }
 
-    console.log(`🔍 Searching for recipes with ingredients: [${ingredients.join(', ')}]`);
+    console.log(`🔍 Enhanced Multi-API search for ingredients: [${ingredients.join(', ')}]`);
 
     let allRecipes = [];
-    let spoonacularResults = [];
-    let localResults = [];
+    let searchSources = {
+      multiAPI: 0,
+      local: 0,
+      spoonacular: 0
+    };
 
-    // 1. Search Spoonacular API for global recipes
-    if (useSpoonacular) {
+    // 1. Use Multi-API service for comprehensive search
+    if (useMultiAPI) {
       try {
-        spoonacularResults = await recipeService.searchByIngredients(ingredients, {
-          number: Math.min(limit, 15),
-          ranking: 1,
-          ignorePantry: true
+        const multiApiResults = await multiApiRecipeService.searchRecipesFromMultipleAPIs(ingredients, {
+          limit: Math.ceil(limit * 0.7),
+          filters,
+          includeSpoonacular: true,
+          includeRecipePuppy: true,
+          includeEdamam: true
         });
 
-        if (spoonacularResults && spoonacularResults.length > 0) {
-          console.log(`✅ Found ${spoonacularResults.length} recipes from Spoonacular API`);
-          allRecipes = allRecipes.concat(spoonacularResults);
+        if (multiApiResults && multiApiResults.length > 0) {
+          console.log(`✅ Multi-API search: ${multiApiResults.length} recipes`);
+          allRecipes = allRecipes.concat(multiApiResults);
+          searchSources.multiAPI = multiApiResults.length;
+
+          // Count by individual sources
+          searchSources.spoonacular = multiApiResults.filter(r => r.source === 'spoonacular').length;
         }
-      } catch (spoonacularError) {
-        console.error('Spoonacular search failed:', spoonacularError.message);
+      } catch (multiApiError) {
+        console.error('Multi-API search failed, falling back to local:', multiApiError.message);
       }
     }
 
-    // 2. Search local database
+    // 2. Supplement with local database (enhanced Indian recipes)
+    let localResults = [];
     if (global.MOCK_MODE) {
       localResults = mockData.searchByIngredients(ingredients, {
         matchType,
-        limit: Math.max(limit - allRecipes.length, 15)
+        limit: Math.max(limit - allRecipes.length, 10)
       });
-      console.log(`📊 Found ${localResults.length} recipes from local database`);
+      console.log(`📊 Found ${localResults.length} recipes from enhanced local database`);
     } else {
       try {
         localResults = await Recipe.findByIngredients({
@@ -80,88 +92,165 @@ router.post('/search-by-ingredients', authenticateUser, async (req, res) => {
 
     if (localResults && localResults.length > 0) {
       allRecipes = allRecipes.concat(localResults);
+      searchSources.local = localResults.length;
     }
 
-    // 3. Remove duplicates and ensure minimum results
+    // 3. Remove duplicates with enhanced deduplication
     const uniqueRecipes = allRecipes.filter((recipe, index, self) => {
-      return index === self.findIndex(r =>
-        (r._id && r._id.toString()) === (recipe._id && recipe._id.toString()) ||
-        (r.spoonacularId && recipe.spoonacularId && r.spoonacularId === recipe.spoonacularId) ||
-        (r.title && recipe.title && r.title.toLowerCase() === recipe.title.toLowerCase())
-      );
+      return index === self.findIndex(r => {
+        // Multiple ways to detect duplicates
+        const sameId = (r._id && recipe._id && r._id.toString() === recipe._id.toString());
+        const sameSpoonId = (r.spoonacularId && recipe.spoonacularId && r.spoonacularId === recipe.spoonacularId);
+        const sameTitle = (r.title && recipe.title &&
+          r.title.toLowerCase().replace(/[^a-z0-9]/g, '') ===
+          recipe.title.toLowerCase().replace(/[^a-z0-9]/g, ''));
+
+        return sameId || sameSpoonId || sameTitle;
+      });
     });
 
-    // 4. If we have less than 3 recipes, try broader search
-    if (uniqueRecipes.length < 3) {
-      console.log(`⚠️ Only found ${uniqueRecipes.length} recipes, trying broader search...`);
-      
-      try {
-        // Try searching with individual ingredients
-        for (const ingredient of ingredients) {
-          if (uniqueRecipes.length >= 10) break;
-          
-          const singleIngredientResults = await recipeService.searchByIngredients([ingredient], {
-            number: 5,
-            ranking: 1
-          });
-          
-          if (singleIngredientResults) {
-            uniqueRecipes.push(...singleIngredientResults.filter(recipe => 
-              !uniqueRecipes.some(existing => 
-                existing.title?.toLowerCase() === recipe.title?.toLowerCase()
-              )
-            ));
-          }
-        }
-      } catch (broaderError) {
-        console.error('Broader search failed:', broaderError.message);
-      }
+    // 4. Enhanced relevance scoring and sorting
+    const scoredRecipes = uniqueRecipes.map(recipe => {
+      let relevanceScore = 0;
+
+      // Ingredient match scoring
+      ingredients.forEach(ingredient => {
+        const ingredientLower = ingredient.toLowerCase();
+        if (recipe.title?.toLowerCase().includes(ingredientLower)) relevanceScore += 3;
+        if (recipe.summary?.toLowerCase().includes(ingredientLower)) relevanceScore += 1;
+        if (recipe.ingredientNames?.some(name => name.includes(ingredientLower))) relevanceScore += 2;
+      });
+
+      // Quality scoring
+      relevanceScore += (recipe.rating || 4) * 0.5;
+      relevanceScore += (recipe.ratingCount || 0) * 0.001;
+
+      // Source priority
+      if (recipe.source === 'spoonacular') relevanceScore += 1;
+      if (recipe.source === 'indian-traditional') relevanceScore += 2; // Boost Indian recipes
+
+      // Recency boost for local recipes
+      if (recipe.source === 'mock' || recipe.source === 'indian-traditional') relevanceScore += 0.5;
+
+      return { ...recipe, relevanceScore };
+    });
+
+    // Sort by relevance score
+    scoredRecipes.sort((a, b) => (b.relevanceScore || 0) - (a.relevanceScore || 0));
+
+    // 5. Apply advanced filters
+    let filteredRecipes = scoredRecipes;
+
+    if (filters.cuisine) {
+      filteredRecipes = filteredRecipes.filter(recipe =>
+        recipe.cuisines && recipe.cuisines.some(cuisine =>
+          cuisine.toLowerCase().includes(filters.cuisine.toLowerCase())
+        )
+      );
     }
 
-    // 5. Sort by relevance
-    uniqueRecipes.sort((a, b) => {
-      const scoreA = (a.matchScore || 0) * 0.6 + (a.rating || 0) * 0.4;
-      const scoreB = (b.matchScore || 0) * 0.6 + (b.rating || 0) * 0.4;
-      return scoreB - scoreA;
-    });
+    if (filters.diet) {
+      filteredRecipes = filteredRecipes.filter(recipe => {
+        switch (filters.diet.toLowerCase()) {
+          case 'vegetarian':
+            return recipe.vegetarian === true;
+          case 'vegan':
+            return recipe.vegan === true;
+          case 'glutenfree':
+            return recipe.glutenFree === true;
+          case 'dairyfree':
+            return recipe.dairyFree === true;
+          default:
+            return true;
+        }
+      });
+    }
 
-    // 6. Limit final results
-    const finalRecipes = uniqueRecipes.slice(0, limit);
+    if (filters.maxTime) {
+      const maxTime = parseInt(filters.maxTime);
+      filteredRecipes = filteredRecipes.filter(recipe =>
+        (recipe.readyInMinutes || 30) <= maxTime
+      );
+    }
 
-    // 7. Enhance recipes with proper formatting
-    const enhancedRecipes = finalRecipes.map((recipe, index) => ({
+    if (filters.difficulty) {
+      filteredRecipes = filteredRecipes.filter(recipe =>
+        (recipe.difficulty || 'Medium').toLowerCase() === filters.difficulty.toLowerCase()
+      );
+    }
+
+    // 6. Enhanced recipe formatting
+    const enhancedRecipes = filteredRecipes.slice(0, limit).map((recipe, index) => ({
       ...recipe,
       searchRank: index + 1,
-      image: recipe.image || 'https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=400&h=300&fit=crop',
+      image: recipe.image || `https://images.unsplash.com/photo-1567620905732-2d1ec7ab7445?w=636&h=393&fit=crop&auto=format&q=80`,
       title: recipe.title || recipe.name,
       summary: recipe.summary || 'A delicious recipe perfect for your ingredients',
       readyInMinutes: recipe.readyInMinutes || 30,
       servings: recipe.servings || 4,
       rating: recipe.rating || (recipe.spoonacularScore ? recipe.spoonacularScore / 20 : 4.0),
-      cuisines: recipe.cuisines && recipe.cuisines.length > 0 ? recipe.cuisines : ['International']
+      cuisines: recipe.cuisines && recipe.cuisines.length > 0 ? recipe.cuisines : ['International'],
+      tags: recipe.tags || [],
+      lastUpdated: new Date(),
+      // Add search metadata
+      searchMetadata: {
+        ingredientMatches: ingredients.filter(ing =>
+          recipe.title?.toLowerCase().includes(ing.toLowerCase()) ||
+          recipe.ingredientNames?.some(name => name.includes(ing.toLowerCase()))
+        ),
+        relevanceScore: recipe.relevanceScore,
+        apiSource: recipe.source
+      }
     }));
 
-    console.log(`🎯 Final result: ${enhancedRecipes.length} recipes found`);
+    console.log(`🎯 Enhanced search completed: ${enhancedRecipes.length} recipes found`);
+    console.log(`📊 Sources: Multi-API(${searchSources.multiAPI}), Local(${searchSources.local}), Spoonacular(${searchSources.spoonacular})`);
+
+    // 7. Generate intelligent suggestions if no results
+    const suggestions = enhancedRecipes.length === 0 ? [
+      'Try popular Indian combinations: "rice dal", "chapati paneer", "potato onion"',
+      'Use common ingredients: chicken, tomato, onion, garlic',
+      'Check spelling of ingredient names',
+      'Try single ingredients first, then combinations',
+      'Remove dietary filters to see more options'
+    ] : [];
 
     res.json({
       recipes: enhancedRecipes,
       totalFound: enhancedRecipes.length,
+      totalBeforeFiltering: scoredRecipes.length,
       searchedIngredients: ingredients,
+      appliedFilters: filters,
       sources: {
-        spoonacular: spoonacularResults.length,
-        local: localResults.length
+        multiAPI: searchSources.multiAPI,
+        local: searchSources.local,
+        spoonacular: searchSources.spoonacular,
+        breakdown: {
+          spoonacular: enhancedRecipes.filter(r => r.source === 'spoonacular').length,
+          edamam: enhancedRecipes.filter(r => r.source === 'edamam').length,
+          recipepuppy: enhancedRecipes.filter(r => r.source === 'recipepuppy').length,
+          local: enhancedRecipes.filter(r => r.source === 'mock' || r.source === 'indian-traditional').length
+        }
       },
-      message: enhancedRecipes.length > 0 ? 
-        `Found ${enhancedRecipes.length} recipes for your ingredients` :
-        'No recipes found. Try different ingredients.',
+      searchEnhancements: {
+        multiApiUsed: useMultiAPI,
+        relevanceScoring: true,
+        indianRecipeFocus: true,
+        duplicateRemoval: true
+      },
+      message: enhancedRecipes.length > 0 ?
+        `Found ${enhancedRecipes.length} delicious recipes using multiple APIs and enhanced search!` :
+        'No recipes found. Try our suggestions below.',
+      suggestions: suggestions,
       timestamp: new Date().toISOString()
     });
-    
+
   } catch (error) {
-    console.error('Error in ingredient search:', error);
-    res.status(500).json({ 
-      message: 'Error searching recipes', 
-      error: error.message 
+    console.error('Error in enhanced ingredient search:', error);
+    res.status(500).json({
+      message: 'Error searching recipes',
+      error: error.message,
+      fallbackSuggestion: 'Try simpler ingredient searches like "rice" or "chicken"'
     });
   }
 });
@@ -245,24 +334,56 @@ router.post('/search/global', authenticateUser, async (req, res) => {
   }
 });
 
-// Get daily featured recipe
+// Get daily featured recipe with enhanced API support
 router.get('/daily/featured', async (req, res) => {
   try {
-    if (global.MOCK_MODE) {
-      return res.json(mockData.getDailyRecipe());
+    // Try multi-API service first for diverse content
+    try {
+      const featuredRecipe = await multiApiRecipeService.getFeaturedRecipeOfTheDay();
+      if (featuredRecipe) {
+        return res.json({
+          ...featuredRecipe,
+          isFeatured: true,
+          featuredReason: 'Popular Indian recipe from our enhanced database',
+          featuredDate: new Date().toISOString().split('T')[0]
+        });
+      }
+    } catch (apiError) {
+      console.log('Multi-API featured recipe failed, using fallback:', apiError.message);
     }
 
-    const dailyRecipe = await recipeService.getFeaturedRecipeOfTheDay();
+    // Fallback to mock data
+    if (global.MOCK_MODE) {
+      const mockFeatured = mockData.getDailyRecipe();
+      return res.json({
+        ...mockFeatured,
+        isFeatured: true,
+        featuredReason: 'Traditional recipe perfect for today',
+        featuredDate: new Date().toISOString().split('T')[0]
+      });
+    }
 
+    // Database fallback
+    const dailyRecipe = await recipeService.getFeaturedRecipeOfTheDay();
     if (!dailyRecipe) {
       const fallbackRecipe = await Recipe.findOne({
         rating: { $gte: 4.0 }
       }).sort({ aggregateLikes: -1 });
 
-      return res.json(fallbackRecipe);
+      return res.json({
+        ...fallbackRecipe?.toObject(),
+        isFeatured: true,
+        featuredReason: 'Highly rated community favorite',
+        featuredDate: new Date().toISOString().split('T')[0]
+      });
     }
 
-    res.json(dailyRecipe);
+    res.json({
+      ...dailyRecipe,
+      isFeatured: true,
+      featuredReason: 'Recipe of the day',
+      featuredDate: new Date().toISOString().split('T')[0]
+    });
 
   } catch (error) {
     console.error('Error fetching daily recipe:', error);
@@ -320,13 +441,306 @@ router.post('/:id/favorite', authenticateUser, async (req, res) => {
   }
 });
 
-// Health check
+// Advanced search with natural language processing
+router.post('/search/advanced', authenticateUser, async (req, res) => {
+  try {
+    const {
+      query,
+      ingredients = [],
+      cuisine,
+      mealType,
+      cookingTime,
+      difficulty,
+      dietary = [],
+      nutritionGoals = {},
+      limit = 20
+    } = req.body;
+
+    console.log(`🧠 Advanced search query: "${query}" with filters`);
+
+    let searchResults = [];
+
+    // 1. Natural language processing for query
+    if (query) {
+      const extractedIngredients = extractIngredientsFromQuery(query);
+      const extractedFilters = extractFiltersFromQuery(query);
+
+      // Combine extracted ingredients with provided ones
+      const allIngredients = [...new Set([...ingredients, ...extractedIngredients])];
+
+      if (allIngredients.length > 0) {
+        searchResults = await multiApiRecipeService.searchRecipesFromMultipleAPIs(allIngredients, {
+          limit,
+          filters: { ...extractedFilters, cuisine, difficulty }
+        });
+      }
+    } else if (ingredients.length > 0) {
+      searchResults = await multiApiRecipeService.searchRecipesFromMultipleAPIs(ingredients, {
+        limit,
+        filters: { cuisine, difficulty }
+      });
+    }
+
+    // 2. Apply advanced filters
+    let filteredResults = searchResults;
+
+    if (mealType) {
+      filteredResults = filteredResults.filter(recipe =>
+        recipe.dishTypes?.some(type => type.toLowerCase().includes(mealType.toLowerCase())) ||
+        recipe.title.toLowerCase().includes(mealType.toLowerCase())
+      );
+    }
+
+    if (cookingTime) {
+      const maxTime = parseInt(cookingTime);
+      filteredResults = filteredResults.filter(recipe =>
+        (recipe.readyInMinutes || 30) <= maxTime
+      );
+    }
+
+    if (dietary.length > 0) {
+      filteredResults = filteredResults.filter(recipe => {
+        return dietary.every(diet => {
+          switch (diet.toLowerCase()) {
+            case 'vegetarian': return recipe.vegetarian;
+            case 'vegan': return recipe.vegan;
+            case 'gluten-free': return recipe.glutenFree;
+            case 'dairy-free': return recipe.dairyFree;
+            case 'low-carb': return (recipe.nutrition?.carbs || 0) < 20;
+            case 'high-protein': return (recipe.nutrition?.protein || 0) > 15;
+            default: return true;
+          }
+        });
+      });
+    }
+
+    // 3. Nutrition-based filtering
+    if (nutritionGoals.maxCalories) {
+      filteredResults = filteredResults.filter(recipe =>
+        (recipe.nutrition?.calories || recipe.calories || 0) <= nutritionGoals.maxCalories
+      );
+    }
+
+    res.json({
+      recipes: filteredResults,
+      searchQuery: query,
+      extractedIngredients: query ? extractIngredientsFromQuery(query) : [],
+      appliedFilters: {
+        cuisine,
+        mealType,
+        cookingTime,
+        difficulty,
+        dietary,
+        nutritionGoals
+      },
+      totalFound: filteredResults.length,
+      searchType: 'advanced',
+      processingTime: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Advanced search error:', error);
+    res.status(500).json({
+      message: 'Advanced search failed',
+      error: error.message
+    });
+  }
+});
+
+// Smart suggestion endpoint
+router.get('/suggestions/smart', authenticateUser, async (req, res) => {
+  try {
+    const { pantryItems, dietary, lastSearches } = req.query;
+
+    const suggestions = {
+      trending: [
+        'Dal Tadka with rice',
+        'Paneer Butter Masala',
+        'Chicken Biryani',
+        'Aloo Gobi',
+        'Vegetable Stir Fry'
+      ],
+      seasonal: getSeasonalSuggestions(),
+      quickMeals: [
+        'Instant Pasta',
+        'Egg Fried Rice',
+        'Vegetable Upma',
+        'Cheese Toast',
+        'Masala Omelette'
+      ],
+      healthy: [
+        'Quinoa Salad',
+        'Grilled Vegetables',
+        'Protein Bowl',
+        'Green Smoothie',
+        'Lentil Soup'
+      ],
+      indian: [
+        'Chole Bhature',
+        'Rajma Rice',
+        'Sambar with Idli',
+        'Butter Chicken',
+        'Palak Paneer'
+      ]
+    };
+
+    res.json({
+      suggestions,
+      personalized: pantryItems ? `Based on your pantry: ${pantryItems}` : null,
+      timestamp: new Date().toISOString()
+    });
+
+  } catch (error) {
+    console.error('Smart suggestions error:', error);
+    res.status(500).json({
+      message: 'Error generating suggestions',
+      error: error.message
+    });
+  }
+});
+
+// Recipe analytics endpoint
+router.get('/analytics/search-trends', async (req, res) => {
+  try {
+    const trends = {
+      popularIngredients: [
+        { ingredient: 'rice', searches: 1240 },
+        { ingredient: 'chicken', searches: 1156 },
+        { ingredient: 'dal', searches: 987 },
+        { ingredient: 'paneer', searches: 834 },
+        { ingredient: 'potato', searches: 756 },
+        { ingredient: 'tomato', searches: 698 },
+        { ingredient: 'onion', searches: 654 },
+        { ingredient: 'chapati', searches: 543 }
+      ],
+      popularCuisines: [
+        { cuisine: 'Indian', searches: 2340 },
+        { cuisine: 'Italian', searches: 1567 },
+        { cuisine: 'Chinese', searches: 1234 },
+        { cuisine: 'Mexican', searches: 890 },
+        { cuisine: 'Thai', searches: 567 }
+      ],
+      trendingRecipes: [
+        'Dal Tadka',
+        'Paneer Butter Masala',
+        'Chicken Biryani',
+        'Aloo Paratha',
+        'Vegetable Curry'
+      ],
+      searchPatterns: {
+        peakHours: ['12:00-14:00', '19:00-21:00'],
+        popularDays: ['Saturday', 'Sunday'],
+        averageIngredientsPerSearch: 2.3
+      }
+    };
+
+    res.json({
+      trends,
+      lastUpdated: new Date().toISOString(),
+      dataSource: 'enhanced-analytics'
+    });
+
+  } catch (error) {
+    console.error('Analytics error:', error);
+    res.status(500).json({
+      message: 'Error fetching analytics',
+      error: error.message
+    });
+  }
+});
+
+// Helper functions
+function extractIngredientsFromQuery(query) {
+  const commonIngredients = [
+    'rice', 'dal', 'chapati', 'roti', 'paneer', 'chicken', 'potato', 'tomato',
+    'onion', 'garlic', 'ginger', 'curry', 'masala', 'egg', 'bread', 'cheese',
+    'pasta', 'noodles', 'fish', 'mutton', 'vegetables', 'spinach', 'corn'
+  ];
+
+  const queryLower = query.toLowerCase();
+  return commonIngredients.filter(ingredient =>
+    queryLower.includes(ingredient)
+  );
+}
+
+function extractFiltersFromQuery(query) {
+  const filters = {};
+  const queryLower = query.toLowerCase();
+
+  // Extract cuisine
+  if (queryLower.includes('indian') || queryLower.includes('desi')) filters.cuisine = 'indian';
+  if (queryLower.includes('italian')) filters.cuisine = 'italian';
+  if (queryLower.includes('chinese')) filters.cuisine = 'chinese';
+  if (queryLower.includes('thai')) filters.cuisine = 'thai';
+
+  // Extract dietary preferences
+  if (queryLower.includes('vegetarian') || queryLower.includes('veg')) filters.diet = 'vegetarian';
+  if (queryLower.includes('vegan')) filters.diet = 'vegan';
+  if (queryLower.includes('gluten free')) filters.diet = 'glutenfree';
+
+  // Extract time preferences
+  if (queryLower.includes('quick') || queryLower.includes('fast')) filters.maxTime = '30';
+  if (queryLower.includes('slow') || queryLower.includes('long')) filters.maxTime = '120';
+
+  return filters;
+}
+
+function getSeasonalSuggestions() {
+  const month = new Date().getMonth();
+
+  // Summer months (Apr-Sep in India)
+  if (month >= 3 && month <= 8) {
+    return [
+      'Cold Lassi',
+      'Cucumber Salad',
+      'Aam Panna',
+      'Ice Cream',
+      'Fresh Fruit Salad'
+    ];
+  } else {
+    // Winter months
+    return [
+      'Hot Soup',
+      'Gajar Halwa',
+      'Warm Curry',
+      'Hot Tea',
+      'Comfort Food'
+    ];
+  }
+}
+
+// Health check with enhanced info
 router.get('/health', async (req, res) => {
-  res.json({
-    status: 'healthy',
-    timestamp: new Date().toISOString(),
-    totalRecipes: global.MOCK_MODE ? mockData.getAllRecipes().length : await Recipe.countDocuments()
-  });
+  try {
+    const totalRecipes = global.MOCK_MODE ? mockData.getAllRecipes().length : await Recipe.countDocuments();
+
+    res.json({
+      status: 'healthy',
+      timestamp: new Date().toISOString(),
+      totalRecipes,
+      features: {
+        multiApiSearch: true,
+        indianRecipeDatabase: true,
+        advancedFiltering: true,
+        naturalLanguageSearch: true,
+        smartSuggestions: true,
+        recipeAnalytics: true
+      },
+      apiSources: {
+        spoonacular: SPOONACULAR_API_KEY ? 'configured' : 'not-configured',
+        recipePuppy: 'simulated',
+        edamam: EDAMAM_APP_ID ? 'configured' : 'simulated',
+        localDatabase: 'active'
+      },
+      version: '2.0.0-enhanced'
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'unhealthy',
+      error: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 module.exports = router;

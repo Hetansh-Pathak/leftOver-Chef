@@ -4,13 +4,20 @@ const Recipe = require('../models/Recipe');
 // TODO: Add your OpenAI API key here
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY; // Get your API key from https://platform.openai.com/
 
-const openai = new OpenAI({
-  apiKey: OPENAI_API_KEY
-});
-
 class AIService {
   constructor() {
     this.model = 'gpt-3.5-turbo';
+    this._openai = null;
+  }
+
+  // Lazy initialization of OpenAI client
+  getOpenAIClient() {
+    if (!this._openai && OPENAI_API_KEY) {
+      this._openai = new OpenAI({
+        apiKey: OPENAI_API_KEY
+      });
+    }
+    return this._openai;
   }
 
   // Generate personalized recipe recommendations using AI
@@ -22,6 +29,12 @@ class AIService {
       }
 
       const prompt = this.buildPersonalizationPrompt(user, availableIngredients);
+
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        console.log('OpenAI API key not provided, using rule-based recommendations');
+        return await this.getRuleBasedRecommendations(user, availableIngredients);
+      }
 
       const response = await openai.chat.completions.create({
         model: this.model,
@@ -204,6 +217,11 @@ Please provide:
 
 Format as a JSON object with keys: tips, mistakes, substitutions, mealPrep, leftovers`;
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return this.getBasicCookingTips(recipe, userSkillLevel);
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
@@ -279,6 +297,11 @@ Format as JSON with structure:
   },
   ...
 }`;
+
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return await user.generateMealPlan(days);
+      }
 
       const response = await openai.chat.completions.create({
         model: this.model,
@@ -389,6 +412,11 @@ Ingredients: ${recipe.extendedIngredients?.slice(0, 5).map(ing => ing.name).join
 
 The summary should be 2-3 sentences that highlight what makes this recipe special, its flavor profile, and why someone would want to cook it. Focus on appetizing descriptions and practical benefits.`;
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return '';
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
@@ -424,6 +452,11 @@ Main ingredients: ${recipe.extendedIngredients?.slice(0, 5).map(ing => ing.name)
 Focus on practical transformation ideas that create completely different meals from the leftovers. Include storage tips and how long leftovers will keep.
 
 Format as an array of strings.`;
+
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return [];
+      }
 
       const response = await openai.chat.completions.create({
         model: this.model,
@@ -471,6 +504,11 @@ Fiber: ${nutrition.fiber}g
 Highlight the nutritional benefits, what makes it healthy or indulgent, and any notable nutritional facts. Keep it positive and informative.
 
 Format as an array of strings.`;
+
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        return [];
+      }
 
       const response = await openai.chat.completions.create({
         model: this.model,

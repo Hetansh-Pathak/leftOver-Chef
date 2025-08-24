@@ -31,15 +31,14 @@ const HeroTitle = styled(motion.h1)`
   font-size: 4rem;
   font-weight: 800;
   margin-bottom: 1rem;
-  color: ${props => props.theme.colors.primary};
-  background: ${props => props.theme.colors.gradient};
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 25%, #ff9ff3 50%, #54a0ff 75%, #5f27cd 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   line-height: 1.2;
 
   @supports not (-webkit-background-clip: text) {
-    color: ${props => props.theme.colors.primary};
+    color: #ff6b6b;
     background: none;
   }
 
