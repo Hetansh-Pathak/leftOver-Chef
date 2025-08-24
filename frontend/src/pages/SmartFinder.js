@@ -1081,6 +1081,31 @@ const SmartFinder = () => {
     }
   }, [ingredients, recipes, hasSearched, sortBy, filters]);
 
+  // Show notification when previous search state is restored
+  useEffect(() => {
+    if (savedState && (savedState.ingredients.length > 0 || savedState.recipes.length > 0)) {
+      const timeDiff = new Date() - new Date(savedState.timestamp);
+      const minutesAgo = Math.floor(timeDiff / (1000 * 60));
+
+      let timeText = 'just now';
+      if (minutesAgo > 60) {
+        timeText = `${Math.floor(minutesAgo / 60)} hour${Math.floor(minutesAgo / 60) > 1 ? 's' : ''} ago`;
+      } else if (minutesAgo > 0) {
+        timeText = `${minutesAgo} minute${minutesAgo > 1 ? 's' : ''} ago`;
+      }
+
+      toast.success(`Previous search restored from ${timeText}`, {
+        icon: '🔄',
+        style: {
+          borderRadius: '12px',
+          background: '#667eea',
+          color: '#fff',
+          fontWeight: '600'
+        },
+      });
+    }
+  }, []); // Only run once on component mount
+
   // Enhanced suggestion categories with Indian focus
   const suggestionCategories = [
     {
