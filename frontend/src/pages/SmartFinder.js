@@ -1331,8 +1331,21 @@ const SmartFinder = () => {
 
     } catch (error) {
       console.error('Search error:', error);
-      toast.error('Search failed. Please try again.', {
+
+      let errorMessage = 'Search failed. Please try again.';
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = 'Search timed out. Please try with fewer ingredients.';
+      } else if (error.response?.status === 429) {
+        errorMessage = 'Too many requests. Please wait a moment and try again.';
+      } else if (error.response?.status >= 500) {
+        errorMessage = 'Server error. Please try again later.';
+      } else if (!navigator.onLine) {
+        errorMessage = 'No internet connection. Please check your network.';
+      }
+
+      toast.error(errorMessage, {
         icon: '❌',
+        duration: 6000,
         style: {
           borderRadius: '12px',
           background: '#F56565',
