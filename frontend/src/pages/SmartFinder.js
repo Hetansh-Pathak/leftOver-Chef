@@ -895,8 +895,13 @@ const SmartFinder = () => {
     if (recipe.sourceUrl) {
       window.open(recipe.sourceUrl, '_blank');
     } else {
-      toast.info('Recipe details not available', {
+      toast('Recipe details not available', {
         icon: 'ℹ️',
+        style: {
+          borderRadius: '10px',
+          background: '#333',
+          color: '#fff',
+        },
       });
     }
   };
