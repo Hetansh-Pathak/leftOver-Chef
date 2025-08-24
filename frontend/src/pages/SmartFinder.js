@@ -1,24 +1,20 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import styled from 'styled-components';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaSearch,
-  FaPlus,
   FaTimes,
   FaClock,
   FaUsers,
-  FaStar,
   FaUtensils,
   FaGlobe,
   FaHeart,
   FaEye,
   FaFilter,
   FaSortAmountDown,
-  FaCheckCircle,
   FaMagic,
   FaLeaf,
   FaBolt,
-  FaDollarSign,
   FaFire
 } from 'react-icons/fa';
 import axios from 'axios';
