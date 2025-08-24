@@ -61,11 +61,60 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     setIsAuthenticated(false);
     setUser(null);
+    setFavorites(new Set());
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
-    
+    localStorage.removeItem('userFavorites');
+
     // Remove axios default authorization header
     delete axios.defaults.headers.common['Authorization'];
+  };
+
+  // Favorites management
+  const toggleFavorite = (recipe) => {
+    const recipeId = recipe._id || recipe.id || recipe.spoonacularId || `recipe_${recipe.title?.replace(/\s+/g, '_')}`;
+    const newFavorites = new Set(favorites);
+
+    if (newFavorites.has(recipeId)) {
+      newFavorites.delete(recipeId);
+    } else {
+      newFavorites.add(recipeId);
+      // Store recipe data for later retrieval
+      const favoriteRecipes = JSON.parse(localStorage.getItem('favoriteRecipes') || '{}');
+      favoriteRecipes[recipeId] = {
+        id: recipeId,
+        title: recipe.title || recipe.name,
+        image: recipe.image,
+        rating: recipe.rating,
+        readyInMinutes: recipe.readyInMinutes,
+        servings: recipe.servings,
+        cuisines: recipe.cuisines,
+        summary: recipe.summary,
+        sourceUrl: recipe.sourceUrl,
+        addedAt: new Date().toISOString()
+      };
+      localStorage.setItem('favoriteRecipes', JSON.stringify(favoriteRecipes));
+    }
+
+    setFavorites(newFavorites);
+    localStorage.setItem('userFavorites', JSON.stringify([...newFavorites]));
+
+    return !favorites.has(recipeId); // return true if added, false if removed
+  };
+
+  const isFavorite = (recipe) => {
+    const recipeId = recipe._id || recipe.id || recipe.spoonacularId || `recipe_${recipe.title?.replace(/\s+/g, '_')}`;
+    return favorites.has(recipeId);
+  };
+
+  const getFavoriteRecipes = () => {
+    try {
+      const favoriteRecipes = JSON.parse(localStorage.getItem('favoriteRecipes') || '{}');
+      return [...favorites].map(id => favoriteRecipes[id]).filter(Boolean);
+    } catch (error) {
+      console.error('Error loading favorite recipes:', error);
+      return [];
+    }
   };
 
   // API functions
