@@ -220,7 +220,12 @@ export const AuthProvider = ({ children }) => {
     loginUser,
     googleAuth,
     facebookAuth,
-    checkEmailExists
+    checkEmailExists,
+    // Favorites management
+    favorites,
+    toggleFavorite,
+    isFavorite,
+    getFavoriteRecipes
   };
 
   return (
