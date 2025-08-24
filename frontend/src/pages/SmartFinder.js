@@ -16,7 +16,6 @@ import {
   FaBolt,
   FaFire,
   FaStar,
-  FaBookmark,
   FaShare,
   FaSpinner,
   FaMapMarkerAlt,
