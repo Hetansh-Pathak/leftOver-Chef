@@ -23,7 +23,7 @@ import {
   FaChevronRight,
   FaSpinner,
   FaMapMarkerAlt,
-  FaChef,
+  FaUser,
   FaAward
 } from 'react-icons/fa';
 import axios from 'axios';
