@@ -30,6 +30,12 @@ class AIService {
 
       const prompt = this.buildPersonalizationPrompt(user, availableIngredients);
 
+      const openai = this.getOpenAIClient();
+      if (!openai) {
+        console.log('OpenAI API key not provided, using rule-based recommendations');
+        return await this.getRuleBasedRecommendations(user, availableIngredients);
+      }
+
       const response = await openai.chat.completions.create({
         model: this.model,
         messages: [
