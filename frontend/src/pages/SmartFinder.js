@@ -831,12 +831,17 @@ const ModalOverlay = styled(motion.div)`
 const ModalContent = styled(motion.div)`
   background: white;
   border-radius: 24px;
-  max-width: 900px;
+  max-width: 1200px;
   width: 100%;
-  max-height: 90vh;
+  max-height: 95vh;
   overflow-y: auto;
   box-shadow: 0 25px 100px rgba(0, 0, 0, 0.3);
   position: relative;
+
+  @media (max-width: 768px) {
+    max-width: 95%;
+    border-radius: 16px;
+  }
 `;
 
 const ModalHeader = styled.div`
