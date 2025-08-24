@@ -1289,21 +1289,10 @@ const SmartFinder = () => {
     }
   };
 
-  const toggleFavorite = (recipeId) => {
-    const newFavorites = new Set(favorites);
-    if (newFavorites.has(recipeId)) {
-      newFavorites.delete(recipeId);
-      toast.success('Removed from favorites', {
-        icon: '💔',
-        style: {
-          borderRadius: '12px',
-          background: '#718096',
-          color: '#fff',
-          fontWeight: '600'
-        },
-      });
-    } else {
-      newFavorites.add(recipeId);
+  const handleToggleFavorite = (recipe) => {
+    const wasAdded = toggleFavorite(recipe);
+
+    if (wasAdded) {
       toast.success('Added to favorites', {
         icon: '❤️',
         style: {
@@ -1313,8 +1302,17 @@ const SmartFinder = () => {
           fontWeight: '600'
         },
       });
+    } else {
+      toast.success('Removed from favorites', {
+        icon: '💔',
+        style: {
+          borderRadius: '12px',
+          background: '#718096',
+          color: '#fff',
+          fontWeight: '600'
+        },
+      });
     }
-    setFavorites(newFavorites);
   };
 
   const viewRecipe = (recipe) => {
