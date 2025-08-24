@@ -351,6 +351,12 @@ class RecipeService {
     };
   }
 
+  // Strip HTML tags from text
+  stripHtml(html) {
+    if (!html) return '';
+    return html.replace(/<[^>]*>/g, '').trim();
+  }
+
   // Search local recipes (fallback)
   async searchLocalRecipesByIngredients(ingredients, options = {}) {
     const { limit = 20 } = options;
