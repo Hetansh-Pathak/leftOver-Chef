@@ -1716,14 +1716,14 @@ const SmartFinder = () => {
                         
                         <div className="recipe-actions">
                           <button
-                            className={`action-btn ${favorites.has(recipeId) ? 'favorited' : ''}`}
+                            className={`action-btn ${isFavorite(recipe) ? 'favorited' : ''}`}
                             onClick={(e) => {
                               e.stopPropagation();
-                              toggleFavorite(recipeId);
+                              handleToggleFavorite(recipe);
                             }}
                           >
                             <FaHeart />
-                            {favorites.has(recipeId) ? 'Saved' : 'Save'}
+                            {isFavorite(recipe) ? 'Saved' : 'Save'}
                           </button>
                           
                           <button
