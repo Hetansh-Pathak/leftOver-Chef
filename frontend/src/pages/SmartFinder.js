@@ -45,18 +45,21 @@ const Header = styled(motion.div)`
   .main-title {
     font-size: 3rem;
     font-weight: 900;
-    color: #2D3748;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 25%, #ff9ff3 50%, #54a0ff 75%, #5f27cd 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
     margin-bottom: 1rem;
     letter-spacing: -0.5px;
     line-height: 1.1;
-    
+
     @media (min-width: 768px) {
       font-size: 4rem;
     }
-    
+
     .accent {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 25%, #ff9ff3 50%, #54a0ff 75%, #5f27cd 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
