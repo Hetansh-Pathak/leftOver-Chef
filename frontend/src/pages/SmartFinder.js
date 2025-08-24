@@ -2097,85 +2097,238 @@ const SmartFinder = () => {
               </ModalHeader>
               
               <ModalBody>
-                <div className="recipe-meta-detailed">
-                  <div className="meta-card">
-                    <FaClock className="meta-icon" />
-                    <div className="meta-label">Cook Time</div>
-                    <div className="meta-value">{selectedRecipe.readyInMinutes || 30} min</div>
-                  </div>
-                  <div className="meta-card">
-                    <FaUsers className="meta-icon" />
-                    <div className="meta-label">Servings</div>
-                    <div className="meta-value">{selectedRecipe.servings || 4}</div>
-                  </div>
-                  <div className="meta-card">
-                    <FaStar className="meta-icon" />
-                    <div className="meta-label">Rating</div>
-                    <div className="meta-value">{(selectedRecipe.rating || 4).toFixed(1)}</div>
-                  </div>
-                  <div className="meta-card">
-                    <FaGlobe className="meta-icon" />
-                    <div className="meta-label">Cuisine</div>
-                    <div className="meta-value">{selectedRecipe.cuisines?.[0] || 'Global'}</div>
-                  </div>
-                </div>
+                <div className="recipe-content-grid">
+                  {/* Left Sidebar - Ingredients & Info */}
+                  <div className="recipe-sidebar">
+                    <div className="recipe-meta-detailed">
+                      <div className="meta-card">
+                        <FaClock className="meta-icon" />
+                        <div className="meta-label">Cook Time</div>
+                        <div className="meta-value">{selectedRecipe.readyInMinutes || 30} min</div>
+                      </div>
+                      <div className="meta-card">
+                        <FaUsers className="meta-icon" />
+                        <div className="meta-label">Servings</div>
+                        <div className="meta-value">{selectedRecipe.servings || 4}</div>
+                      </div>
+                      <div className="meta-card">
+                        <FaStar className="meta-icon" />
+                        <div className="meta-label">Rating</div>
+                        <div className="meta-value">{(selectedRecipe.rating || 4).toFixed(1)}</div>
+                      </div>
+                      <div className="meta-card">
+                        <FaGlobe className="meta-icon" />
+                        <div className="meta-label">Cuisine</div>
+                        <div className="meta-value">{selectedRecipe.cuisines?.[0] || 'Global'}</div>
+                      </div>
+                    </div>
 
-                <div className="recipe-description">
-                  <h3>Description</h3>
-                  <p>
-                    {selectedRecipe.summary ? 
-                      selectedRecipe.summary.replace(/<[^>]*>/g, '') : 
-                      `A delicious ${selectedRecipe.title} recipe that's perfect for any occasion. This recipe combines amazing flavors and is sure to be a hit with your family and friends.`
-                    }
-                  </p>
-                </div>
+                    <div className="recipe-ingredients">
+                      <h3>
+                        <FaUtensils />
+                        Ingredients
+                      </h3>
+                      <div className="ingredients-list">
+                        {selectedRecipe.extendedIngredients ? (
+                          selectedRecipe.extendedIngredients.map((ingredient, index) => (
+                            <div key={index} className="ingredient-item">
+                              <div className="ingredient-icon">🥄</div>
+                              <div className="ingredient-text">{ingredient.original}</div>
+                              <div className="ingredient-amount">
+                                {ingredient.amount ? `${ingredient.amount} ${ingredient.unit}` : ''}
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          // Generate intelligent ingredients based on recipe title and metadata
+                          (() => {
+                            const title = selectedRecipe.title?.toLowerCase() || '';
+                            let ingredients = [];
 
-                <div className="recipe-instructions">
-                  <h3>Instructions</h3>
-                  <div className="instructions-list">
-                    {selectedRecipe.analyzedInstructions?.[0]?.steps ? (
-                      selectedRecipe.analyzedInstructions[0].steps.map((step, index) => (
-                        <div key={index} className="instruction-step">
-                          <div className="step-number">{step.number}</div>
-                          <div className="step-text">{step.step}</div>
+                            if (title.includes('curry') || title.includes('indian')) {
+                              ingredients = [
+                                { text: 'Onions, diced', amount: '2 medium' },
+                                { text: 'Garlic cloves, minced', amount: '3-4' },
+                                { text: 'Ginger, grated', amount: '1 inch' },
+                                { text: 'Tomatoes, chopped', amount: '2 large' },
+                                { text: 'Spices (cumin, coriander, turmeric)', amount: '2 tsp each' },
+                                { text: 'Oil or ghee', amount: '2 tbsp' },
+                                { text: 'Salt to taste', amount: '' }
+                              ];
+                            } else if (title.includes('pasta')) {
+                              ingredients = [
+                                { text: 'Pasta', amount: '400g' },
+                                { text: 'Olive oil', amount: '3 tbsp' },
+                                { text: 'Garlic, minced', amount: '3 cloves' },
+                                { text: 'Tomatoes or sauce', amount: '400g' },
+                                { text: 'Fresh herbs', amount: '1/4 cup' },
+                                { text: 'Parmesan cheese', amount: '1/2 cup' },
+                                { text: 'Salt and pepper', amount: 'to taste' }
+                              ];
+                            } else if (title.includes('salad')) {
+                              ingredients = [
+                                { text: 'Mixed greens', amount: '4 cups' },
+                                { text: 'Cherry tomatoes', amount: '1 cup' },
+                                { text: 'Cucumber, sliced', amount: '1 medium' },
+                                { text: 'Red onion, sliced', amount: '1/4 cup' },
+                                { text: 'Olive oil', amount: '3 tbsp' },
+                                { text: 'Lemon juice', amount: '2 tbsp' },
+                                { text: 'Salt and pepper', amount: 'to taste' }
+                              ];
+                            } else {
+                              ingredients = [
+                                { text: 'Main protein or base ingredient', amount: '400g' },
+                                { text: 'Onion, diced', amount: '1 medium' },
+                                { text: 'Garlic, minced', amount: '2-3 cloves' },
+                                { text: 'Cooking oil', amount: '2 tbsp' },
+                                { text: 'Seasonings and spices', amount: 'to taste' },
+                                { text: 'Fresh herbs for garnish', amount: '2 tbsp' }
+                              ];
+                            }
+
+                            return ingredients.map((ingredient, index) => (
+                              <div key={index} className="ingredient-item">
+                                <div className="ingredient-icon">🥄</div>
+                                <div className="ingredient-text">{ingredient.text}</div>
+                                <div className="ingredient-amount">{ingredient.amount}</div>
+                              </div>
+                            ));
+                          })()
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="recipe-nutrition">
+                      <h4>🍽️ Nutrition Info (per serving)</h4>
+                      <div className="nutrition-grid">
+                        <div className="nutrition-item">
+                          <span className="label">Calories</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Calories')?.amount || '250'} kcal</span>
                         </div>
-                      ))
-                    ) : (
-                      [
-                        "Gather all ingredients and prepare your cooking space.",
-                        "Follow the recipe instructions carefully, cooking each step thoroughly.",
-                        "Season to taste and adjust cooking time as needed.",
-                        "Serve hot and enjoy your delicious meal!"
-                      ].map((step, index) => (
-                        <div key={index} className="instruction-step">
-                          <div className="step-number">{index + 1}</div>
-                          <div className="step-text">{step}</div>
+                        <div className="nutrition-item">
+                          <span className="label">Protein</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Protein')?.amount || '15'} g</span>
                         </div>
-                      ))
-                    )}
+                        <div className="nutrition-item">
+                          <span className="label">Carbs</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Carbohydrates')?.amount || '30'} g</span>
+                        </div>
+                        <div className="nutrition-item">
+                          <span className="label">Fat</span>
+                          <span className="value">{selectedRecipe.nutrition?.nutrients?.find(n => n.name === 'Fat')?.amount || '12'} g</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Right Main Content - Instructions & Description */}
+                  <div className="recipe-main">
+                    <div className="recipe-description">
+                      <h3>
+                        📖 About This Recipe
+                      </h3>
+                      <p>
+                        {selectedRecipe.summary ?
+                          selectedRecipe.summary.replace(/<[^>]*>/g, '') :
+                          `This delicious ${selectedRecipe.title} combines wonderful flavors and textures to create a memorable dish. Perfect for ${selectedRecipe.cuisines?.[0] || 'any'} cuisine lovers, this recipe serves ${selectedRecipe.servings || 4} people and takes about ${selectedRecipe.readyInMinutes || 30} minutes to prepare and cook. Great for both beginners and experienced cooks!`
+                        }
+                      </p>
+                    </div>
+
+                    <div className="recipe-instructions">
+                      <h3>
+                        👨‍🍳 Instructions
+                      </h3>
+                      <div className="instructions-list">
+                        {selectedRecipe.analyzedInstructions?.[0]?.steps ? (
+                          selectedRecipe.analyzedInstructions[0].steps.map((step, index) => (
+                            <div key={index} className="instruction-step">
+                              <div className="step-number">{step.number}</div>
+                              <div className="step-text">{step.step}</div>
+                            </div>
+                          ))
+                        ) : (
+                          (() => {
+                            const title = selectedRecipe.title?.toLowerCase() || '';
+                            let instructions = [];
+
+                            if (title.includes('curry') || title.includes('indian')) {
+                              instructions = [
+                                "Heat oil or ghee in a large pan over medium heat. Add chopped onions and cook until golden brown.",
+                                "Add minced garlic and grated ginger. Cook for 1-2 minutes until fragrant.",
+                                "Add spices (cumin, coriander, turmeric) and cook for 30 seconds until aromatic.",
+                                "Add chopped tomatoes and cook until they break down into a sauce.",
+                                "Add your main ingredients and enough water to create desired consistency.",
+                                "Simmer for 15-20 minutes until ingredients are cooked through.",
+                                "Season with salt, garnish with fresh cilantro, and serve hot with rice or bread."
+                              ];
+                            } else if (title.includes('pasta')) {
+                              instructions = [
+                                "Bring a large pot of salted water to boil. Cook pasta according to package directions until al dente.",
+                                "While pasta cooks, heat olive oil in a large pan over medium heat.",
+                                "Add minced garlic and cook for 1 minute until fragrant.",
+                                "Add tomatoes or sauce and simmer for 5-10 minutes.",
+                                "Drain pasta, reserving 1 cup of pasta water.",
+                                "Add pasta to the sauce, tossing with a little pasta water if needed.",
+                                "Serve immediately topped with fresh herbs and parmesan cheese."
+                              ];
+                            } else {
+                              instructions = [
+                                "Gather all ingredients and prepare your cooking space with necessary equipment.",
+                                "Heat cooking oil in a suitable pan or pot over medium heat.",
+                                "Add aromatics like onions and garlic, cooking until fragrant and translucent.",
+                                "Add main ingredients and cook according to the specific requirements of the dish.",
+                                "Season with salt, pepper, and other spices to taste throughout cooking.",
+                                "Cook until ingredients are properly done and flavors are well combined.",
+                                "Garnish with fresh herbs if desired and serve hot. Enjoy your delicious meal!"
+                              ];
+                            }
+
+                            return instructions.map((step, index) => (
+                              <div key={index} className="instruction-step">
+                                <div className="step-number">{index + 1}</div>
+                                <div className="step-text">{step}</div>
+                              </div>
+                            ));
+                          })()
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="recipe-tips">
+                      <h4>💡 Chef's Tips</h4>
+                      <ul>
+                        <li>Taste and adjust seasonings as you cook for the best flavor balance.</li>
+                        <li>Use fresh ingredients when possible for maximum taste and nutrition.</li>
+                        <li>Don't rush the cooking process - good food takes time!</li>
+                        <li>Feel free to adjust spice levels according to your preference.</li>
+                        <li>Store leftovers in the refrigerator for up to 3 days.</li>
+                      </ul>
+                    </div>
                   </div>
                 </div>
 
                 <div className="modal-actions">
-                  <button 
-                    className="modal-btn secondary"
-                    onClick={() => toggleFavorite(selectedRecipe._id || selectedRecipe.id)}
+                  <button
+                    className={`modal-btn ${isFavorite(selectedRecipe) ? 'favorite' : 'secondary'}`}
+                    onClick={() => handleToggleFavorite(selectedRecipe)}
                   >
-                    <FaBookmark />
-                    {favorites.has(selectedRecipe._id || selectedRecipe.id) ? 'Saved' : 'Save Recipe'}
+                    <FaHeart />
+                    {isFavorite(selectedRecipe) ? 'Saved' : 'Save Recipe'}
                   </button>
-                  
-                  <button 
+
+                  <button
                     className="modal-btn primary"
                     onClick={() => {
                       if (selectedRecipe.sourceUrl) {
                         window.open(selectedRecipe.sourceUrl, '_blank');
                       } else {
-                        toast('Full recipe details coming soon!', {
-                          icon: 'ℹ️',
+                        toast.success('Recipe details shown above! Use the ingredients and instructions to cook.', {
+                          icon: '👨‍🍳',
+                          duration: 4000,
                           style: {
                             borderRadius: '12px',
-                            background: '#4A5568',
+                            background: '#48BB78',
                             color: '#fff',
                             fontWeight: '600'
                           },
@@ -2184,7 +2337,7 @@ const SmartFinder = () => {
                     }}
                   >
                     <FaShare />
-                    View Full Recipe
+                    {selectedRecipe.sourceUrl ? 'View Original' : 'Start Cooking'}
                   </button>
                 </div>
               </ModalBody>
